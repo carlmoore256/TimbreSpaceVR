@@ -1,7 +1,8 @@
 # TimbreSpaceVR
 
-TimbreSpace VR is a granular synthesis application which visualizes the abstract concept of timbre in three-dimensional space.  
+TimbreSpace VR is a granular synthesis application which visualizes the abstract concept of timbre in three-dimensional space. 36 different features are extracted from discrete audio events and are plotted in various combinations in 3D space for the user to interact with in real time.  
 
-36 different features are extracted from discrete audio events called grains, and are plotted in various combinations in 3D space for the user to interact with in real time.
+Presented at the International Conference on Auditory Display, 2019
+paper: https://smartech.gatech.edu/handle/1853/61530
 
-![cover-photo](photos/CoverImage.jpg)
+![cover-photo](photos/CoverImage2.jpg)
