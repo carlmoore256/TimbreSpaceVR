@@ -5,4 +5,6 @@ TimbreSpace VR is a granular synthesis application which visualizes the abstract
 Presented at the International Conference on Auditory Display, 2019
 paper: https://smartech.gatech.edu/handle/1853/61530
 
+Video: https://youtu.be/qFNO6aaSM0k
+
 ![cover-photo](photos/CoverImage2.jpg)
