@@ -1,0 +1,18 @@
+0 energy
+1 rms
+2 zcr
+3 entropy (TD)
+4 centroid
+5 spread
+6 flatness
+7 noiseness
+8 rolloff
+9 crest
+10 entropy
+11 decrease
+12 c1
+13 c2
+14 c3
+15 c4
+16 c5
+17 c6
