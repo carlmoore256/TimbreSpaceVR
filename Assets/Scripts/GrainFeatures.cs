@@ -27,8 +27,10 @@ public class GrainFeatures
     public int grainIndex;
     public int sampleRate;
 
+    public Dictionary<string, float> featureDict;
+
     public GrainFeatures(
-        float[] audioSamples,
+        float[] _audioSamples,
         float[] mfccs,
         float[] contrast,
         float centroid,
@@ -46,7 +48,7 @@ public class GrainFeatures
         int grainIndex,
         int sampleRate)
     {
-        this.audioSamples = audioSamples;
+        this.audioSamples = _audioSamples;
         this.mfccs = mfccs;
         this.contrast = contrast;
         this.centroid = centroid;
@@ -65,5 +67,10 @@ public class GrainFeatures
 
         this.grainIndex = grainIndex;
         this.sampleRate = sampleRate;
+
+        //featureDict = new Dictionary<string, float>
+        //{
+        //    ""
+        //}
     }
 }

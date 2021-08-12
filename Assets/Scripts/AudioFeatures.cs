@@ -117,7 +117,6 @@ public class AudioFeatures : MonoBehaviour
 
         float[][] mfccCoeffs = ComputeMfccVectors(signal, mfccs, windowSize, hop, 26).ToArray();
 
-        GrainFeatures[] grainFeatures = new GrainFeatures[audioFrames.Length];
 
         var opts = new MultiFeatureOptions
         {
@@ -135,13 +134,18 @@ public class AudioFeatures : MonoBehaviour
               timeDomainExtractor.ParallelComputeFrom(signal),
               spectralExtractor.ParallelComputeFrom(signal));
 
+        GrainFeatures[] grainFeatures = new GrainFeatures[audioFrames.Length];
+
         for (int i = 0; i < audioFrames.Length - 1; i++)
         {
             float[] v = vectors[i];
             float[] contrast = new float[] { v[12], v[13], v[14], v[15], v[16] };
+            float[] audioSamples = new float[audioFrames[i].Length];
+
+            audioFrames[i].CopyTo(audioSamples, 0);
 
             grainFeatures[i] = new GrainFeatures(
-                audioFrames[i],
+                audioSamples,
                 mfccCoeffs[i],
                 contrast,
                 v[4],
@@ -158,15 +162,7 @@ public class AudioFeatures : MonoBehaviour
                 v[3],
                 i,
                 signal.SamplingRate);
-
-
-
         }
-
-        //foreach(GrainFeatures gf in grainFeatures)
-        //{
-        //    //print($"SAMPLE {gf.audioSamples[(int)(windowSize / 2)]}");
-        //}
 
         return grainFeatures;
     }
