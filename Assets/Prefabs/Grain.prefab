@@ -12,8 +12,8 @@ GameObject:
   - component: {fileID: 6638529451573728747}
   - component: {fileID: 4974429018553018989}
   - component: {fileID: 7574831872266444721}
-  - component: {fileID: 3555337538821370012}
   - component: {fileID: 2730079702668225620}
+  - component: {fileID: 7481353193716447138}
   m_Layer: 0
   m_Name: Grain
   m_TagString: Untagged
@@ -97,18 +97,6 @@ SphereCollider:
   serializedVersion: 2
   m_Radius: 0.5
   m_Center: {x: 0, y: 0, z: 0}
---- !u!114 &3555337538821370012
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 3015697369275448574}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: e2e49f2ae36dba944b0718ee5bc82c8c, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: 
 --- !u!82 &2730079702668225620
 AudioSource:
   m_ObjectHideFlags: 0
@@ -205,3 +193,16 @@ AudioSource:
     m_PreInfinity: 2
     m_PostInfinity: 2
     m_RotationOrder: 4
+--- !u!114 &7481353193716447138
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 3015697369275448574}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: e2e49f2ae36dba944b0718ee5bc82c8c, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  displayInfo: 0

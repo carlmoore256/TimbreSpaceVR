@@ -97,6 +97,13 @@ public class AudioFeatures : MonoBehaviour
         return windowedAudio;
     }
 
+    //int[] autoWindowHop(int sigLength)
+    //{
+        //sigLength /= 
+    //}
+
+
+
     public float[][] LoadAudioFeatures(string path)
     {
         //DiscreteSignal audio = ReadAudioMono(path);
@@ -109,6 +116,13 @@ public class AudioFeatures : MonoBehaviour
     public GrainFeatures[] GenerateAudioFeatures(string path, int windowSize, int hop, int mfccs)
     {
         DiscreteSignal signal = ReadAudioMono(path);
+
+        // autocalculate ideal size
+        //if (windowSize == 0)
+        //{
+        //    windowSize = 
+        //}
+
         float[][] audioFrames = WindowAudio(signal, windowSize, hop);
 
         // clip the audio to total frames size so that features line up with windows
@@ -160,7 +174,7 @@ public class AudioFeatures : MonoBehaviour
                 v[1],
                 v[2],
                 v[3],
-                i,
+                i/(float)audioFrames.Length, // normalized index along audio file
                 signal.SamplingRate);
         }
 

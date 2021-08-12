@@ -11,9 +11,11 @@ public class RuntimeMgr : MonoBehaviour
     public int hop = 4096;
 
     public GameObject grainPf;
+    public GameObject modelPf;
 
     // grainModel contains a collection of grains
     public Transform grainModel;
+    GrainModel selectedModel;
 
     public List<GameObject> allGrains;
 
@@ -21,55 +23,53 @@ public class RuntimeMgr : MonoBehaviour
 
     int count = 0;
 
-    bool lookAtGrain = false;
+    public bool lookAtGrain = false;
+    public Vector3 lookAtPos = new Vector3(0,-1,-4);
 
     void Start()
     {
-        audioFeatures = new AudioFeatures();
-        GrainFeatures[] grainFeatures = audioFeatures.GenerateAudioFeatures($"Assets/Resources/Audio/{audioFile}", frameSize, hop, 6);
-
-        foreach (GrainFeatures gf in grainFeatures)
-        {
-            SpawnGrain(gf);
-        }
+        SpawnGrainModel(Vector3.zero, audioFile);
     }
 
     // create a GrainModel
-    void SpawnGrainModel()
+    void SpawnGrainModel(Vector3 spawnPos, string audioPath=null)
     {
+        // how objects will be spawned from now on
+        GameObject newModel = Instantiate(modelPf, GameObject.Find("--SCENE--").transform);
+        GrainModel gm = newModel.AddComponent<GrainModel>();
+        selectedModel = gm;
+        gm.Initialize(grainPf, spawnPos, audioPath);
 
     }
 
     // consider moving to "grainModel" which will control aspects of an individual model,
     // and the inner workings of those collections
-    void SpawnGrain(GrainFeatures gf)
-    {
-        GameObject grain = Instantiate(grainPf, grainModel);
-        gameObject.name = $"grain_{grainCount}";
-        grain.transform.position = new Vector3(gf.mfccs[0], gf.mfccs[1], gf.mfccs[2]);
-        grain.transform.localScale = new Vector3(gf.rms, gf.rms, gf.rms);
-        AudioClip newClip = AudioClip.Create(name, gf.audioSamples.Length, 1, gf.sampleRate, false);
-        AudioSource grainAudioSource = grain.GetComponent<AudioSource>();
-        grainAudioSource.clip = AudioClip.Create(name, gf.audioSamples.Length, 1, gf.sampleRate, false);
-        grain.GetComponent<AudioSource>().clip.SetData(gf.audioSamples, 0);
-        grain.GetComponent<Renderer>().material.color = new Color(gf.mfccs[3], gf.mfccs[4], gf.mfccs[5]);
-        grain.GetComponent<GrainBehavior>().grainFeatures = gf;
-        //grain.GetComponent<GrainBehavior>().rtmgr = this;
-        allGrains.Add(grain);
-        grainCount++;
-    }
+    //void SpawnGrain(GrainFeatures gf)
+    //{
+    //    GameObject grain = Instantiate(grainPf, grainModel);
+    //    gameObject.name = $"grain_{grainCount}";
+    //    grain.transform.position = new Vector3(gf.mfccs[0], gf.mfccs[1], gf.mfccs[2]);
+    //    grain.transform.localScale = new Vector3(gf.rms, gf.rms, gf.rms);
+    //    AudioClip newClip = AudioClip.Create(name, gf.audioSamples.Length, 1, gf.sampleRate, false);
+    //    AudioSource grainAudioSource = grain.GetComponent<AudioSource>();
+    //    grainAudioSource.clip = AudioClip.Create(name, gf.audioSamples.Length, 1, gf.sampleRate, false);
+    //    grain.GetComponent<AudioSource>().clip.SetData(gf.audioSamples, 0);
+    //    grain.GetComponent<Renderer>().material.color = new Color(gf.mfccs[3], gf.mfccs[4], gf.mfccs[5]);
+    //    grain.GetComponent<Grain>().features = gf;
+    //    //grain.GetComponent<GrainBehavior>().rtmgr = this;
+    //    allGrains.Add(grain);
+    //    grainCount++;
+    //}
 
 
     void Update()
     {
-        //GameObject randGrain = allGrains[Random.Range(0, allGrains.Count - 1)];
-        GameObject randGrain = allGrains[count % (allGrains.Count-1)];
-        randGrain.GetComponent<GrainBehavior>().PlayGrain();
-        count++;
-
-        if(lookAtGrain)
+        if (lookAtGrain && selectedModel != null)
         {
-
+            lookAtGrain = false;
+            selectedModel.MoveLookAt(
+                Camera.main.transform.position,
+                Camera.main.transform.position + lookAtPos);
         }
     }
 }

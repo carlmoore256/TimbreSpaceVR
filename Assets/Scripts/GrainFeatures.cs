@@ -24,7 +24,7 @@ public class GrainFeatures
     public float timeEntropy;
 
     // data features
-    public int grainIndex;
+    public float grainIndex;
     public int sampleRate;
 
     public Dictionary<string, float> featureDict;
@@ -45,7 +45,7 @@ public class GrainFeatures
         float rms,
         float zcr,
         float timeEntropy,
-        int grainIndex,
+        float grainIndex,
         int sampleRate)
     {
         this.audioSamples = _audioSamples;
@@ -68,9 +68,27 @@ public class GrainFeatures
         this.grainIndex = grainIndex;
         this.sampleRate = sampleRate;
 
-        //featureDict = new Dictionary<string, float>
-        //{
-        //    ""
-        //}
+        featureDict = new Dictionary<string, float>
+        {
+            { "centriod", centroid },
+            { "spread", spread},
+            { "flatness", flatness },
+            { "noiseness", noiseness},
+            { "rolloff", rolloff},
+            { "crest", crest},
+            { "entropy", entropy},
+            { "decrease", decrease},
+            { "energy", energy},
+            { "rms", rms},
+            { "zcr", zcr},
+            { "timeEntropy", timeEntropy},
+            { "grainIndex", grainIndex}
+        };
+
+        for (int i = 0; i < mfccs.Length; i++)
+            featureDict.Add($"mfcc_{i}", mfccs[i]);
+
+        for (int i = 0; i < contrast.Length; i++)
+            featureDict.Add($"contrast_{i}", contrast[i]);
     }
 }
