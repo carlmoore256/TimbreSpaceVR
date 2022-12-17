@@ -16,7 +16,7 @@ GameObject:
   - component: {fileID: 7481353193716447138}
   m_Layer: 0
   m_Name: Grain
-  m_TagString: Untagged
+  m_TagString: grain
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0

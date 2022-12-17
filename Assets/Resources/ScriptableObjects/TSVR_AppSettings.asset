@@ -1,0 +1,22 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 98e4bebaa01a2244c8140c3584149f55, type: 3}
+  m_Name: TSVR_AppSettings
+  m_EditorClassIdentifier: 
+  wandDistIncrement: 5
+  wandSizeIncrement: 5
+  wandMaxDist: 10
+  wandMinDist: 0.2
+  wandMaxRadius: 5
+  wandMinRadius: 0.1
+  wandLineSegments: 50
+  wandLineElasticity: 1

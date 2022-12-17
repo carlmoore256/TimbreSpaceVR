@@ -1,0 +1,140 @@
+{
+    "name": "TestControls",
+    "maps": [
+        {
+            "name": "gameplay",
+            "id": "199850a1-9a02-4b52-b809-49d23071fe48",
+            "actions": [
+                {
+                    "name": "translate",
+                    "type": "Value",
+                    "id": "8b5a2bfe-c239-40da-b535-a977f3277a43",
+                    "expectedControlType": "Vector2",
+                    "processors": "",
+                    "interactions": "",
+                    "initialStateCheck": true
+                }
+            ],
+            "bindings": [
+                {
+                    "name": "",
+                    "id": "f61f9f44-1b32-433c-9a73-5bb195cd48dc",
+                    "path": "<XRController>{LeftHand}/joystick",
+                    "interactions": "",
+                    "processors": "",
+                    "groups": "OVR_Controller",
+                    "action": "translate",
+                    "isComposite": false,
+                    "isPartOfComposite": false
+                },
+                {
+                    "name": "wasd",
+                    "id": "f4598ba4-7e60-443f-a21f-a27b531b428e",
+                    "path": "2DVector",
+                    "interactions": "",
+                    "processors": "",
+                    "groups": "",
+                    "action": "translate",
+                    "isComposite": true,
+                    "isPartOfComposite": false
+                },
+                {
+                    "name": "up",
+                    "id": "9e1b8e79-8d5b-4261-9cd1-df5f59ebbfd7",
+                    "path": "<Keyboard>/w",
+                    "interactions": "",
+                    "processors": "",
+                    "groups": "Keyboard",
+                    "action": "translate",
+                    "isComposite": false,
+                    "isPartOfComposite": true
+                },
+                {
+                    "name": "down",
+                    "id": "7f2a6879-df41-4eb9-9c51-f7b815f25946",
+                    "path": "<Keyboard>/s",
+                    "interactions": "",
+                    "processors": "",
+                    "groups": "Keyboard",
+                    "action": "translate",
+                    "isComposite": false,
+                    "isPartOfComposite": true
+                },
+                {
+                    "name": "left",
+                    "id": "61051e71-d42c-497e-b620-b28db020df89",
+                    "path": "<Keyboard>/a",
+                    "interactions": "",
+                    "processors": "",
+                    "groups": "Keyboard",
+                    "action": "translate",
+                    "isComposite": false,
+                    "isPartOfComposite": true
+                },
+                {
+                    "name": "right",
+                    "id": "91a59e27-5063-46e5-bf80-494ee34648f1",
+                    "path": "<Keyboard>/d",
+                    "interactions": "",
+                    "processors": "",
+                    "groups": "Keyboard",
+                    "action": "translate",
+                    "isComposite": false,
+                    "isPartOfComposite": true
+                }
+            ]
+        },
+        {
+            "name": "menu",
+            "id": "264080ff-63ac-4083-9b0f-4e04c9d3a52e",
+            "actions": [
+                {
+                    "name": "New action",
+                    "type": "Button",
+                    "id": "2cef51ec-9289-49b9-9d46-646fab7f6267",
+                    "expectedControlType": "Button",
+                    "processors": "",
+                    "interactions": "",
+                    "initialStateCheck": false
+                }
+            ],
+            "bindings": [
+                {
+                    "name": "",
+                    "id": "a854f418-62c7-451f-b687-3414b1b469ed",
+                    "path": "",
+                    "interactions": "",
+                    "processors": "",
+                    "groups": "",
+                    "action": "New action",
+                    "isComposite": false,
+                    "isPartOfComposite": false
+                }
+            ]
+        }
+    ],
+    "controlSchemes": [
+        {
+            "name": "OVR_Controller",
+            "bindingGroup": "OVR_Controller",
+            "devices": [
+                {
+                    "devicePath": "<OpenVROculusTouchController>",
+                    "isOptional": true,
+                    "isOR": false
+                }
+            ]
+        },
+        {
+            "name": "Keyboard",
+            "bindingGroup": "Keyboard",
+            "devices": [
+                {
+                    "devicePath": "<Keyboard>",
+                    "isOptional": true,
+                    "isOR": false
+                }
+            ]
+        }
+    ]
+}
