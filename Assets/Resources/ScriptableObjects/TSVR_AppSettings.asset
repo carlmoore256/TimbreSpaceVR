@@ -20,3 +20,4 @@ MonoBehaviour:
   wandMinRadius: 0.1
   wandLineSegments: 50
   wandLineElasticity: 1
+  particleTolerance: 0.1

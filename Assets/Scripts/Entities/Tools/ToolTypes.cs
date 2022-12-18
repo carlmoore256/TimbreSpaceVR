@@ -37,6 +37,7 @@ public enum TsvrToolType {
     DeleteWand,
     ConstellationWand,
     Menu,
+    GrainSpawner,
     Teleport,
     Grab,
     VolumeSlector,
@@ -47,7 +48,6 @@ public enum TsvrToolType {
     AudioMixer,
     Eraser,
     StatsDisplay,
-
 }
 
 public enum TsvrToolSound {

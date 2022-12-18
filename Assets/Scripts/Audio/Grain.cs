@@ -16,6 +16,7 @@ public class Grain : MonoBehaviour
 
     Coroutine colorLerp;
 
+    private Vector3 anchorPosition;
     private Vector3 targetPosition;
     private Quaternion targetRotation;
     private Vector3 targetScale;
@@ -23,6 +24,9 @@ public class Grain : MonoBehaviour
     public bool displayInfo = false;
 
     bool grainEnabled = false;
+    bool grainMoving = false;
+
+    private SpringJoint springJoint;
 
     //public RuntimeMgr rtmgr;
 
@@ -33,7 +37,8 @@ public class Grain : MonoBehaviour
         string name
         )
     {
-        transform.localPosition = position;
+        transform.position = position;
+        anchorPosition = position;
         //transform.localScale = scale;
         transform.localScale = Vector3.zero; // start invisible, lerp up in size
         targetPosition = position;
@@ -50,7 +55,16 @@ public class Grain : MonoBehaviour
         renderer = GetComponent<Renderer>();
         targetColor = new Color(gf.mfccs[3], gf.mfccs[4], gf.mfccs[5]);
 
+        UpdateSpringProperties();
+
         grainEnabled = true;
+
+    }
+
+    void UpdateSpringProperties() {
+        springJoint = GetComponent<SpringJoint>(); 
+        springJoint.connectedAnchor = anchorPosition;
+        springJoint.tolerance = TsvrApplication.Settings.particleTolerance;
     }
 
     void Start()
@@ -64,7 +78,7 @@ public class Grain : MonoBehaviour
             if (!renderer.material.color.Equals(targetColor))
                 renderer.material.color = Color.Lerp(renderer.material.color, targetColor, Time.deltaTime * 10f);
 
-            if (!Vector3.Equals(transform.position, targetPosition))
+            if (grainMoving && !Vector3.Equals(transform.position, targetPosition))
             {
                 //transform.localPosition = Vector3.MoveTowards(transform.localPosition, targetPosition, Time.deltaTime * 5f);
                 transform.localPosition = Vector3.Lerp(transform.localPosition, targetPosition, Time.deltaTime * 10f);

@@ -478,7 +478,7 @@ GameObject:
   - component: {fileID: 2377529979667022796}
   - component: {fileID: 8236338178782814391}
   m_Layer: 6
-  m_Name: TSVR_Wand
+  m_Name: TSVR_WandOLD
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0

@@ -11,6 +11,7 @@ GameObject:
   - component: {fileID: 3642327968750183183}
   - component: {fileID: 1802993353325524698}
   - component: {fileID: 2786538778605732544}
+  - component: {fileID: 2961757922377233675}
   m_Layer: 0
   m_Name: Menu
   m_TagString: Untagged
@@ -31,7 +32,7 @@ Transform:
   m_ConstrainProportionsScale: 0
   m_Children: []
   m_Father: {fileID: 0}
-  m_RootOrder: 4
+  m_RootOrder: 0
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!33 &1802993353325524698
 MeshFilter:
@@ -83,3 +84,15 @@ MeshRenderer:
   m_SortingLayer: 0
   m_SortingOrder: 0
   m_AdditionalVertexStreams: {fileID: 0}
+--- !u!114 &2961757922377233675
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 3165432181441587983}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: f2c1a9f475c6b064490d525aa390addc, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 

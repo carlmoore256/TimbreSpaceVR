@@ -4,6 +4,7 @@ using UnityEngine;
 using UnityEngine.XR.Interaction.Toolkit;
 using UnityEngine.Events;
 using UnityEngine.UI;
+using UnityEngine.InputSystem;
 
 public class Wand : TsvrTool {
 
@@ -25,30 +26,34 @@ public class Wand : TsvrTool {
     private GameObject lineObject;
     private LineRenderer wandLine;
     private float wandLineElasticity;
-    
-    // public TsvrToolType ToolType { get { return TsvrToolType.PlayWand; } }
+
     public ActionBasedController Controller { get; set; }
     public Transform ToolGameObject { get; protected set; }
 
+    // void Start() {
+    //     ToolType = TsvrToolType.PlayWand;
+    //     toolController = transform.parent.GetComponent<ToolController>();
+    // }
+
+    public WandTipCollider WandTipCollider { get; protected set; }
+
     public void OnEnable() {
         ToolType = TsvrToolType.PlayWand; // find out a better way to do this, maybe tools aren't structured perfectly...
-
         lineObject = Instantiate(lineObjectPrefab);
         wandLine = lineObject.GetComponent<LineRenderer>();
-        // lineObject.name = "WandLine";
-
-        // lineObject = GameObject.Find("WandLine");
-        // if (lineObject == null) {
-        //     lineObject = Instantiate(new GameObject());
-        //     lineObject.name = "WandLine";
-        // } else {
-        // }
-
         numLineSegments = TsvrApplication.Settings.wandLineSegments;
         wandLineElasticity = TsvrApplication.Settings.wandLineElasticity;
         wandLine.positionCount = numLineSegments;
 
+        WandTipCollider = wandTip.gameObject.AddComponent<WandTipCollider>();
+        
         SubscribeActions();
+        if (animations != null) {
+            Debug.Log("Playing equip animation");
+            animations.Play("EquipPlayWand");
+            // animations['EquipPlayWand'].wrapMode = WrapMode.Once;
+            // animations.Play("Base.EquipPlayWand", -1, 0f);
+        }
     }
 
     void Update() {
@@ -56,6 +61,10 @@ public class Wand : TsvrTool {
     }
 
     public void OnDisable() {
+        if (animations != null) {
+            Debug.Log("Playing unequip animation");
+            animations.Play("UnequipPlayWand");
+        }
         UnsubscribeActions();
         Destroy(lineObject);
     }
@@ -64,7 +73,7 @@ public class Wand : TsvrTool {
     // Subscribe Tool Actions to Control Actions (e.g. twist lock)
     // ============================================================
     public void SubscribeActions() {
-        ControllerActions controllerActions = transform.parent.GetComponent<ControllerActions>();
+        // ControllerActions controllerActions = transform.parent.GetComponent<ControllerActions>();
 
         // changes the distance of the wand
         wandDistanceTwistAction = new TwistLockAction(
@@ -72,10 +81,10 @@ public class Wand : TsvrTool {
             TsvrApplication.Settings.wandMinDist, TsvrApplication.Settings.wandMaxDist,
             1f,
             TsvrApplication.Settings.wandDistIncrement,// <- eventually set these from global parameters
-            controllerActions.twistLock.action,
-            controllerActions.rotationAction.action,
+            ControllerActions.twistLock.action,
+            ControllerActions.rotationAction.action,
             ChangeWandDistance,
-            controllerActions.hand == ControllerHand.Left
+            ControllerActions.Hand == ControllerHand.Left
         );
         // changes the size of the wand
         wandSizeTwistAction = new TwistLockAction(
@@ -83,16 +92,31 @@ public class Wand : TsvrTool {
             TsvrApplication.Settings.wandMinRadius, TsvrApplication.Settings.wandMaxRadius,
             0.5f,
             TsvrApplication.Settings.wandDistIncrement,
-            controllerActions.toolOptionButton.action, // <- eventually set this from global parameters
-            controllerActions.rotationAction.action,
+            ControllerActions.toolOptionButton.action, // <- eventually set this from global parameters
+            ControllerActions.rotationAction.action,
             ChangeWandSize,
-            controllerActions.hand == ControllerHand.Left
+            ControllerActions.Hand == ControllerHand.Left
         );
+
+
+        ControllerActions.triggerValue.action.performed += TriggerTest;
+    }
+
+    void TriggerTest(InputAction.CallbackContext context) {
+        Debug.Log("TriggerTest" + context.ReadValue<float>());
+        if (context.ReadValue<float>() < 0.001f) return;
+        foreach(Collider collider in WandTipCollider.ColliderBuffer) {
+            if (collider.tag == "grain") {
+                collider.gameObject.GetComponent<Grain>().PlayGrain();
+            }
+        }
     }
 
     public void UnsubscribeActions() {
         wandDistanceTwistAction.UnsubscribeActions();
         wandSizeTwistAction.UnsubscribeActions();
+
+        ControllerActions.triggerValue.action.performed -= TriggerTest;
     }
 
     public void Spawn(ActionBasedController controller) {
@@ -103,6 +127,10 @@ public class Wand : TsvrTool {
         // Controller.modelPrefab = null; <- make a custom class to deal with this instead
         // TsvrApplication.AudioManager.PlayInterfaceSound(Prefab)
     }
+
+    // public virtual void WandActivatedCallback() {
+
+    // }
 
     private Vector3[] CalculateLinePositions(int numPositions) {
         Vector3[] positions = new Vector3[numPositions];

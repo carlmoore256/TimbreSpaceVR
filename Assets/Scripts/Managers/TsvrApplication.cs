@@ -15,8 +15,13 @@ public class TsvrApplication : SingletonScriptableObject<TsvrApplication>
     public static AudioManager AudioManager => Instance._audioManager; 
 
     [SerializeField]
-    private AppSettings _appSettings; 
-    public static AppSettings Settings => Instance._appSettings;
+    private AppSettings _settings; 
+    public static AppSettings Settings => Instance._settings;
+
+    [SerializeField]
+    private AppConfig _config;
+    public static AppConfig Config => Instance._config;
+
 
     [SerializeField] 
     private InputActionAsset _inputActions;
@@ -33,8 +38,8 @@ public class TsvrApplication : SingletonScriptableObject<TsvrApplication>
             Instance._audioManager = Resources.Load<AudioManager>("ScriptableObjects/TSVR_AudioManager");
         }
 
-        if (Instance._appSettings == null) {
-            Instance._appSettings = Resources.Load<AppSettings>("ScriptableObjects/TSVR_AppSettings");
+        if (Instance._settings == null) {
+            Instance._settings = Resources.Load<AppSettings>("ScriptableObjects/TSVR_AppSettings");
         }
     }
 }

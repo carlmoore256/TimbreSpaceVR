@@ -30,6 +30,12 @@ public class Menu : TsvrTool
     //     return _prefab;
     // } }
 
+
+    void OnEnable() {
+        ToolType = TsvrToolType.Menu;
+        SubscribeActions();
+    }
+
     public void SubscribeActions() {}
 
     public void UnsubscribeActions() {}

@@ -4,6 +4,7 @@ using UnityEngine;
 using UnityEngine.XR.Interaction.Toolkit;
 public class RuntimeManager : MonoBehaviour
 {
+    // monobehaviour scripts can reference this to get things like settings
     [SerializeField]
     public ScriptableObject masterManager;
 

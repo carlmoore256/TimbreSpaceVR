@@ -6,7 +6,7 @@ public class RuntimeMgr : MonoBehaviour
 {
     AudioFeatures audioFeatures;
 
-    public string audioFile = "AnalogDrums.wav";
+    public string audioFile = "Assets/Resources/Audio/sax.wav";
     public int frameSize = 4096;
     public int hop = 4096;
 
@@ -25,12 +25,6 @@ public class RuntimeMgr : MonoBehaviour
 
     public bool lookAtGrain = false;
     public Vector3 lookAtPos = new Vector3(0,-1,-4);
-
-    void Start()
-    {
-        SpawnGrainModel(Vector3.zero, audioFile);
-    }
-
     // create a GrainModel
     void SpawnGrainModel(Vector3 spawnPos, string audioPath=null)
     {
@@ -41,6 +35,14 @@ public class RuntimeMgr : MonoBehaviour
         gm.Initialize(grainPf, spawnPos, audioPath);
 
     }
+    void Start()
+    {
+        Debug.Log(audioFile);
+        Debug.Log(Vector3.zero);
+        SpawnGrainModel(Vector3.zero, audioFile);
+    }
+
+
 
     // consider moving to "grainModel" which will control aspects of an individual model,
     // and the inner workings of those collections

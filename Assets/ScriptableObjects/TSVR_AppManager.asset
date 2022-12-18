@@ -12,8 +12,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: ebf20737c408dec438b44ec3a7002c5e, type: 3}
   m_Name: TSVR_AppManager
   m_EditorClassIdentifier: 
-  _playerProperties: {fileID: 11400000, guid: e2581d4dbc78c7841b1bbaf38013209f, type: 2}
   _audioManager: {fileID: 11400000, guid: 62c4edd30a022b648b2b10aa21fa0f50, type: 2}
-  _appSettings: {fileID: 11400000, guid: 99de5b75ce7baba46bbf51bd3c616c28, type: 2}
-  _inputActions: {fileID: -944628639613478452, guid: c348712bda248c246b8c49b3db54643f, type: 3}
-  _DefaultXRRig: {fileID: 7589700832776683856, guid: c1aa5494030774a45a9449da8e9895c4, type: 3}
+  _settings: {fileID: 11400000, guid: 99de5b75ce7baba46bbf51bd3c616c28, type: 2}
+  _config: {fileID: 11400000, guid: 11b91bbe2825f63439e12ac9145aa127, type: 2}
+  _inputActions: {fileID: -944628639613478452, guid: 69622e516e87ac947868d5226c5d1f8d, type: 3}

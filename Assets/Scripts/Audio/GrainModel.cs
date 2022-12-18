@@ -44,19 +44,20 @@ public class GrainModel : MonoBehaviour
 
     private float opTime;
 
+    private SpringJoint springJoint;
+
     public void Initialize(GameObject grainPf, Vector3 spawnPos, string audioPath=null)
     {
         this.grainPf = grainPf;
         transform.position = spawnPos;
-        targetPosition = transform.position;
+        targetPosition = spawnPos;
         targetRotation = transform.rotation;
         modelGrains = new List<Grain>();
 
         if (audioPath != null)
             LoadGrains(audioPath, m_FrameSize, m_Hop);
 
-        StartCoroutine(PlayGrainsSequentially());
-
+        // StartCoroutine(PlayGrainsSequentially());
     }
 
     // Start is called before the first frame update
@@ -69,6 +70,7 @@ public class GrainModel : MonoBehaviour
     {
         if(!Vector3.Equals(transform.position, targetPosition))
         {
+            Debug.Log("Position not equal, moving grain model");
             transform.position = Vector3.MoveTowards(transform.position, targetPosition, Time.deltaTime * pos_speed);
         }
 
@@ -79,6 +81,7 @@ public class GrainModel : MonoBehaviour
 
         if(updateFeatures)
         {
+            Debug.Log("Updating Features!");
             updateFeatures = false;
             UpdateFeaturePositions(x_Feature, y_Feature, z_Feature, axisScale);
             UpdateFeatureScales(scale_Feature, scale_Scalar);
@@ -124,11 +127,12 @@ public class GrainModel : MonoBehaviour
 
         opTime = Time.realtimeSinceStartup;
 
+        int index = 0;
         foreach (GrainFeatures gf in m_AllGrainFeatures)
         {
+            index++;
             if (gf == null)
                 continue;
-            
             SpawnGrain(gf);
 
             if (Time.realtimeSinceStartup > opTime + 60.0f)

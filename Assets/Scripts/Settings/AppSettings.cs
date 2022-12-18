@@ -19,6 +19,7 @@ public class Setting {
     }
 }
 
+// User accessible settings that the player can change
 [CreateAssetMenu(fileName = "TSVR/AppSettings", menuName = "App Settings (Singleton)")]
 public class AppSettings : SingletonScriptableObject<AppSettings>
 {

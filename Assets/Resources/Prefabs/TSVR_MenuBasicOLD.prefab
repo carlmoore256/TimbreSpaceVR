@@ -12,7 +12,7 @@ GameObject:
   - component: {fileID: 1802993353325524698}
   - component: {fileID: 2786538778605732544}
   m_Layer: 0
-  m_Name: TSVR_MenuBasic
+  m_Name: TSVR_MenuBasicOLD
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
