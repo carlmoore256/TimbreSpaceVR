@@ -39,8 +39,8 @@ public class GrainSpawner : TsvrTool
         Debug.Log("Pushed main button");
         GameObject newModel = Instantiate(TsvrApplication.Config.grainModel, GameObject.Find("GrainParent").transform);
         GrainModel gm = newModel.AddComponent<GrainModel>();
+        gm.Initialize(new Vector3(0,0,1), "Assets/Resources/Audio/mgmt.wav");
         // selectedModel = gm;
-        gm.Initialize(TsvrApplication.Config.grainPrefab, new Vector3(0,0,1), "Assets/Resources/Audio/mgmt.wav");
 
     }
 

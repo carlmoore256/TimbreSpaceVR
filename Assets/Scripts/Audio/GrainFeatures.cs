@@ -2,35 +2,43 @@ using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 
+public enum AudioFeature {
+    Centriod,
+    Spread,
+    flatness,
+    Noiseness,
+    Rolloff,
+    Crest,
+    Entropy,
+    Decrease,
+    Energy,
+    RMS,
+    ZCR,
+    TimeEntropy,
+    MFCC_0,
+    MFCC_1,
+    MFCC_2,
+    MFCC_3,
+    MFCC_4,
+    MFCC_5,
+    MFCC_6,
+    MFCC_7,
+    Contrast_0,
+    Contrast_1,
+    Contrast_2,
+    Contrast_3,
+    GrainIndex
+}
+
 public class GrainFeatures
 {
-    // spectral features
-    public float[] audioSamples;
+    public float[] AudioSamples { get; protected set; }
+    public int SampleRate { get; protected set; }
     public float[] mfccs;
-    public float[] contrast;
-    public float centroid;
-    public float spread;
-    public float flatness;
-    public float noiseness;
-    public float rolloff;
-    public float crest;
-    public float entropy;
-    public float decrease;
-
-    // time-domain features
-    public float energy;
-    public float rms;
-    public float zcr;
-    public float timeEntropy;
-
-    // data features
-    public float grainIndex;
-    public int sampleRate;
-
-    public Dictionary<string, float> featureDict;
+    Dictionary<AudioFeature, float> features;
 
     public GrainFeatures(
-        float[] _audioSamples,
+        float[] audioSamples,
         float[] mfccs,
         float[] contrast,
         float centroid,
@@ -48,47 +56,101 @@ public class GrainFeatures
         float grainIndex,
         int sampleRate)
     {
-        this.audioSamples = _audioSamples;
-        this.mfccs = mfccs;
-        this.contrast = contrast;
-        this.centroid = centroid;
-        this.spread = spread;
-        this.flatness = flatness;
-        this.noiseness = noiseness;
-        this.rolloff = rolloff;
-        this.crest = crest;
-        this.entropy = entropy;
-        this.decrease = decrease;
-
-        this.energy = energy;
-        this.rms = rms;
-        this.zcr = zcr;
-        this.timeEntropy = timeEntropy;
-
-        this.grainIndex = grainIndex;
-        this.sampleRate = sampleRate;
-
-        featureDict = new Dictionary<string, float>
-        {
-            { "centriod", centroid },
-            { "spread", spread},
-            { "flatness", flatness },
-            { "noiseness", noiseness},
-            { "rolloff", rolloff},
-            { "crest", crest},
-            { "entropy", entropy},
-            { "decrease", decrease},
-            { "energy", energy},
-            { "rms", rms},
-            { "zcr", zcr},
-            { "timeEntropy", timeEntropy},
-            { "grainIndex", grainIndex}
+        this.AudioSamples = audioSamples;
+        this.SampleRate = sampleRate;
+        
+        features = new Dictionary<AudioFeature, float> {
+            { AudioFeature.Centriod, centroid },
+            { AudioFeature.Spread, spread},
+            { AudioFeature.flatness, flatness },
+            { AudioFeature.Noiseness, noiseness},
+            { AudioFeature.Rolloff, rolloff},
+            { AudioFeature.Crest, crest},
+            { AudioFeature.Entropy, entropy},
+            { AudioFeature.Decrease, decrease},
+            { AudioFeature.Energy, energy},
+            { AudioFeature.RMS, rms},
+            { AudioFeature.ZCR, zcr},
+            { AudioFeature.TimeEntropy, timeEntropy},
+            { AudioFeature.MFCC_0, mfccs[0]},
+            { AudioFeature.MFCC_1, mfccs[1]},
+            { AudioFeature.MFCC_2, mfccs[2]},
+            { AudioFeature.MFCC_3, mfccs[3]},
+            { AudioFeature.MFCC_4, mfccs[4]},
+            { AudioFeature.MFCC_5, mfccs[5]},
+            { AudioFeature.MFCC_6, mfccs[6]},
+            { AudioFeature.MFCC_7, mfccs[7]},
+            { AudioFeature.Contrast_0, contrast[0]},
+            { AudioFeature.Contrast_1, contrast[1]},
+            { AudioFeature.Contrast_2, contrast[2]},
+            { AudioFeature.Contrast_3, contrast[3]},
+            { AudioFeature.GrainIndex, grainIndex}
         };
+    }
 
-        for (int i = 0; i < mfccs.Length; i++)
-            featureDict.Add($"mfcc_{i}", mfccs[i]);
-
-        for (int i = 0; i < contrast.Length; i++)
-            featureDict.Add($"contrast_{i}", contrast[i]);
+    public float Get(AudioFeature feature) {
+        return features[feature];
     }
 }
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+// this.mfccs = mfccs;
+// this.contrast = contrast;
+// this.centroid = centroid;
+// this.spread = spread;
+// this.flatness = flatness;
+// this.noiseness = noiseness;
+// this.rolloff = rolloff;
+// this.crest = crest;
+// this.entropy = entropy;
+// this.decrease = decrease;
+// this.energy = energy;
+// this.rms = rms;
+// this.zcr = zcr;
+// this.timeEntropy = timeEntropy;
+// this.grainIndex = grainIndex;
+// for (int i = 0; i < mfccs.Length; i++)
+//     featureDict.Add($"mfcc_{i}", mfccs[i]);
+
+// for (int i = 0; i < contrast.Length; i++)
+//     featureDict.Add($"contrast_{i}", contrast[i]);
+    // public float[] contrast;
+    // public float centroid;
+    // public float spread;
+    // public float flatness;
+    // public float noiseness;
+    // public float rolloff;
+    // public float crest;
+    // public float entropy;
+    // public float decrease;
+
+    // time-domain features
+    // public float energy;
+    // public float rms;
+    // public float zcr;
+    // public float timeEntropy;
+
+    // data features
+    // public float grainIndex;

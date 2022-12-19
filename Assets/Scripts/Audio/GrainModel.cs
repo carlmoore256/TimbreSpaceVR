@@ -2,145 +2,222 @@ using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 using System.Threading;
+using System;
 
-public class GrainModel : MonoBehaviour
-{
+/// <summary>
+/// State manager for GrainModel parameters, invoking callbacks when parameters are changed
+/// </summary>
+public class GrainModelParameters {
+    private Action<AudioFeature[]> onFeaturePosUpdate;
+    private Action<AudioFeature[]> onFeatureColUpdate;
+    private Action<AudioFeature> onFeatureSclUpdate;
+    private Action<int, int> onWindowUpdate; // window size, hop size
+
+    private int _windowSize = 4096;
+    private int _hopSize = 512;
+    public int WindowSize { get => _windowSize; set { 
+        _windowSize=value;
+        onWindowUpdate(value, _hopSize); 
+    } }
+    
+    public int HopSize { get => _hopSize; set { 
+        _hopSize=value;
+        onWindowUpdate(_windowSize, value); 
+    } }
+
+    private AudioFeature _XFeature  = AudioFeature.MFCC_0;
+    private AudioFeature _YFeature = AudioFeature.MFCC_1;
+    private AudioFeature _ZFeature = AudioFeature.MFCC_2;
+    private AudioFeature _RFeature = AudioFeature.MFCC_3;
+    private AudioFeature _GFeature = AudioFeature.MFCC_4;
+    private AudioFeature _BFeature = AudioFeature.MFCC_5;
+    private AudioFeature _ScaleFeature = AudioFeature.RMS;
+
+    public AudioFeature[] PositionFeatures { get => new AudioFeature[3] { _XFeature, _YFeature, _ZFeature }; }
+    public AudioFeature[] ColorFeatures { get => new AudioFeature[3] { _RFeature, _GFeature, _BFeature }; }
+
+    public AudioFeature XFeature { get => _XFeature; set {
+        _XFeature = value;
+        // AudioFeature[] features = new AudioFeature[3] { value, _YFeature, _ZFeature };
+        onFeaturePosUpdate(PositionFeatures);
+    } }
+
+    public AudioFeature YFeature { get => _YFeature; set {
+        _YFeature = value;
+        onFeaturePosUpdate(PositionFeatures);
+    } }
+
+    public AudioFeature ZFeature { get => _ZFeature; set {
+        _ZFeature = value;
+        onFeaturePosUpdate(PositionFeatures);
+    } }
+
+    public AudioFeature RFeature { get => _RFeature; set {
+        _RFeature = value;
+        onFeatureColUpdate(ColorFeatures);
+    } }
+
+    public AudioFeature GFeature { get => _GFeature; set {
+        _GFeature = value;
+        onFeatureColUpdate(ColorFeatures);
+    } }
+
+    public AudioFeature BFeature { get => _BFeature; set {
+        _BFeature = value;
+        onFeatureColUpdate(ColorFeatures);
+    } }
+
+    public AudioFeature ScaleFeature { get => _ScaleFeature; set {
+        _ScaleFeature = value;
+        onFeatureSclUpdate(value);
+    } }
+
+    public GrainModelParameters(
+            Action<AudioFeature[]> onFeaturePosUpdate, 
+            Action<AudioFeature[]> onFeatureColUpdate,
+            Action<AudioFeature> onFeatureSclUpdate,
+            Action<int, int> onWindowUpdate)
+    { 
+        this.onFeaturePosUpdate = onFeaturePosUpdate;
+        this.onFeatureColUpdate = onFeatureColUpdate;
+        this.onFeatureSclUpdate = onFeatureSclUpdate;
+        this.onWindowUpdate = onWindowUpdate;
+    }
+
+    /** Set window size by the number of hops per window */
+    public void SetWindowByHops(int hopCount) {
+        HopSize = (int)(WindowSize /(float)hopCount);
+    }
+}
+
+
+// ideas - consider making an object pool for GrainModel, to reduce CPU load
+// when loading a new audio file => https://learn.unity.com/tutorial/introduction-to-object-pooling#5ff8d015edbc2a002063971d
+
+/// <summary>
+/// Manager and container for a collection of playable grains
+/// </summary>
+public class GrainModel : MonoBehaviour {
+    private float lerpSpeed = 15f;
+    private float grainScale = 2f;
+    private float seqPlayRate = 1;
+    private bool useHSV = false;
 
     private Vector3 targetPosition;
     private Quaternion targetRotation;
 
-    private float pos_speed = 15f;
-    private float rot_speed = 35f;
+    public GrainModelParameters parameters;
+    public Vector3 posAxisScale = Vector3.one;
 
-    public int m_FrameSize = 4096;
-    public int m_Hop = 512;
-
-    // grain position feature representations
-    public string x_Feature = "mfcc_0";
-    public string y_Feature = "mfcc_1";
-    public string z_Feature = "mfcc_2";
-    public Vector3 axisScale = Vector3.one;
-    // grain scale feature representations
-    public string scale_Feature = "rms";
-    public float scale_Scalar = 2f;
-    // grain color feature representations
-    public string r_Feature = "mfcc_3";
-    public string g_Feature = "mfcc_4";
-    public string b_Feature = "mfcc_5";
-    public bool hsv_Feature = false;
-
-    public float seqPlayRate = 1;
-
-    private List<Grain> modelGrains;
-
-    public GameObject grainPf;
-
+    private List<Grain> grains;
     Thread T_procAudio = null;
     Thread T_micAudio = null;
-
-    public bool updateFeatures;
-
     GrainFeatures[] m_AllGrainFeatures;
 
-    private float opTime;
 
-    private SpringJoint springJoint;
-
-    public void Initialize(GameObject grainPf, Vector3 spawnPos, string audioPath=null)
+    void OnEnable() {
+        grains = new List<Grain>();
+        // Initialize parameter callbacks which will update the grains when changed
+        this.parameters = new GrainModelParameters(
+            (AudioFeature[] features) => {
+                Debug.Log("[GrainModel] Display Parameters changed " + features.ToString());
+                foreach(Grain grain in grains)
+                    grain.UpdatePosition(features[0], features[1], features[2], posAxisScale);
+            }, 
+            (AudioFeature[] features) => {
+                Debug.Log("[GrainModel] Display Parameters changed " + features.ToString());
+                foreach(Grain grain in grains)
+                    grain.UpdateColor(features[0], features[1], features[2], useHSV);
+            },
+            (AudioFeature sclFeature) => {
+                Debug.Log("[GrainModel] Display Parameters changed " + sclFeature.ToString());
+                foreach(Grain grain in grains)
+                    grain.UpdateScale(sclFeature, grainScale);
+            },
+            (int windowSize, int hopSize) => {
+                Debug.Log("[GrainModel] Window Parameter Changed - Window Size: "
+                        + windowSize + " Hop Size: " + hopSize);
+                // Here we need to recalculate all grains
+            }
+        );
+    }
+    
+    public void Initialize(Vector3 spawnPos, string audioPath=null)
     {
-        this.grainPf = grainPf;
         transform.position = spawnPos;
         targetPosition = spawnPos;
         targetRotation = transform.rotation;
-        modelGrains = new List<Grain>();
-
-        if (audioPath != null)
-            LoadGrains(audioPath, m_FrameSize, m_Hop);
-
+        
+        // if (audioPath != null)
+        //     LoadGrains(audioPath, m_FrameSize, m_Hop);
         // StartCoroutine(PlayGrainsSequentially());
     }
 
-    // Start is called before the first frame update
-    void Start()
-    {
-    }
-
-    // Update is called once per frame
     void Update()
     {
         if(!Vector3.Equals(transform.position, targetPosition))
         {
-            Debug.Log("Position not equal, moving grain model");
-            transform.position = Vector3.MoveTowards(transform.position, targetPosition, Time.deltaTime * pos_speed);
+            transform.position = Vector3.MoveTowards(transform.position, targetPosition, Time.deltaTime * lerpSpeed);
+            float distance = Vector3.Distance(transform.position, targetPosition);
+            Debug.Log("Moving grain model towards target position | distance: " + distance);
+            if (distance < 0.1f) transform.position = targetPosition;
         }
 
         if(!Quaternion.Equals(transform.rotation, targetRotation))
         {
-            transform.rotation = Quaternion.RotateTowards(transform.rotation, targetRotation, Time.deltaTime * rot_speed);
+            transform.rotation = Quaternion.RotateTowards(transform.rotation, targetRotation, Time.deltaTime * lerpSpeed);
+            float angle = Quaternion.Angle(transform.rotation, targetRotation);
+            Debug.Log("Rotating grain model towards target rotation | angle: " + angle + " degrees");
+            if (angle < 0.1f) transform.rotation = targetRotation;
         }
 
-        if(updateFeatures)
-        {
-            Debug.Log("Updating Features!");
-            updateFeatures = false;
-            UpdateFeaturePositions(x_Feature, y_Feature, z_Feature, axisScale);
-            UpdateFeatureScales(scale_Feature, scale_Scalar);
-            UpdateFeatureColors(r_Feature, g_Feature, b_Feature, hsv_Feature);
-        }
+        // add check for framerate, apportion proper number of updates per frame
+        // based on average delta time
+        foreach(Grain grain in grains)
+            grain.Update();
     }
 
     IEnumerator PlayGrainsSequentially()
     {
-        while(true)
-        {
-            int listLen = modelGrains.Count;
-            for (int i = 0; i < listLen; i++)
-            {
-                Grain grain = modelGrains[i];
+        while(true) {
+            foreach(Grain grain in grains) {
                 grain.PlayGrain();
                 print($"playing grain {grain}");
                 yield return new WaitForSeconds(seqPlayRate);
             }
             yield return new WaitForSeconds(seqPlayRate);
         }
-
     }
 
     // threaded audio processing and coroutines to spawn grains
     void LoadGrains(string audioPath, int frameSize, int hop)
     {
-        // asynchronously load grains
+        // asynchronously load grains | Consider using Unity Job System for improved performance
         T_procAudio = new Thread(() => ProcessAudioFeatures(audioPath, frameSize, hop));
         T_procAudio.Start();
-
         StartCoroutine(SpawnGrainsAsync());
         //SpawnGrainsFromFeatures(GrainFeatures[] grainFeatures) // << make this a coroutine which waits for new grainFeatures
     }
 
-    //// asynchronously spawn grains
+    /// <summary>
+    /// Asynchronously spawn grains
+    /// </summary>
     IEnumerator SpawnGrainsAsync()
     {
         while (m_AllGrainFeatures == null)
-        {
             yield return new WaitForEndOfFrame();
-        }
-
-        opTime = Time.realtimeSinceStartup;
-
         int index = 0;
+        float opTime = Time.realtimeSinceStartup;
         foreach (GrainFeatures gf in m_AllGrainFeatures)
         {
             index++;
             if (gf == null)
                 continue;
             SpawnGrain(gf);
-
-            if (Time.realtimeSinceStartup > opTime + 60.0f)
-            {
+            if (Time.realtimeSinceStartup > opTime + 60.0f) {
                 yield return null;
                 opTime = Time.realtimeSinceStartup;
-            } else
-            {
+            } else {
                 yield return new WaitForSeconds(0.001f);
             }
         }
@@ -161,19 +238,30 @@ public class GrainModel : MonoBehaviour
         print($"Completed audio feature analysis for {audioPath}");
     }
 
-    void SpawnGrain(GrainFeatures gf)
+    void SpawnGrain(GrainFeatures features)
     {
-        GameObject grainObject = Instantiate(grainPf, transform);
-        //Grain grain = grainObject.AddComponent<Grain>();
-        Grain grain = grainObject.GetComponent<Grain>();
-        grain.Initialize(
-            new Vector3(gf.featureDict[x_Feature], gf.featureDict[y_Feature], gf.featureDict[z_Feature]),
-            new Vector3(gf.featureDict[scale_Feature], gf.featureDict[scale_Feature], gf.featureDict[scale_Feature]),
-            gf,
-            $"grain_{modelGrains.Count}"
-        );
+        Grain grain = Instantiate(TsvrApplication.Config.Grain, transform) as Grain;
+        grains.Add(grain);
 
-        modelGrains.Add(grain);
+        // GameObject grainObject = Instantiate(TsvrApplication.Config.grainPrefab, transform);
+        // what do we gain from a scriptable object? 
+        // - no update function: we can manually control updates of each grain from this controller
+        //   - this possibly gives us greater performance control (tbd)
+        //   - each grain object's prefab will also have performance optimizing
+        //     aspects like LODs
+
+        // What do we lose from a scriptable object?
+        // - Unity automatic updates per object, possibly optimizing performance
+        //   - see if there is a performance difference between the two approaches
+        
+        //Grain grain = grainObject.AddComponent<Grain>();
+        // Grain grain = grainObject.GetComponent<Grain>();
+        // grain.Initialize(
+        //     new Vector3(gf.features[x_Feature], gf.features[y_Feature], gf.features[z_Feature]),
+        //     new Vector3(gf.features[scale_Feature], gf.features[scale_Feature], gf.features[scale_Feature]),
+        //     gf,
+        //     $"grain_{grains.Count}"
+        // );
     }
 
     void StartAudioInput()
@@ -198,22 +286,27 @@ public class GrainModel : MonoBehaviour
         }
     }
 
+    // void OnFeatureUpdate(AudioFeature feature) {
+    //     foreach(Grain grain in grains)
+    //         grain.UpdatePosition(x_F, y_F, z_F, ax_scale);
+    // }
+
     // change the positions of all grains to new feature ordering
-    void UpdateFeaturePositions(string x_F, string y_F, string z_F, Vector3 ax_scale)
-    {
-        foreach(Grain grain in modelGrains)
-            grain.UpdatePosition(x_F, y_F, z_F, ax_scale);
-    }
+    // void UpdateFeaturePositions(string x_F, string y_F, string z_F, Vector3 ax_scale)
+    // {
+    //     foreach(Grain grain in grains)
+    //         grain.UpdatePosition(parameters.XFeature, y_F, z_F, ax_scale);
+    // }
 
-    void UpdateFeatureScales(string sc_F, float scale)
-    {
-        foreach (Grain grain in modelGrains)
-            grain.UpdateScale(sc_F, sc_F, sc_F, scale);
-    }
+    // void UpdateFeatureScales(AudioFeature feature, float scale)
+    // {
+    //     foreach (Grain grain in grains)
+    //         grain.UpdateScale(sc_F, sc_F, sc_F, scale);
+    // }
 
-    void UpdateFeatureColors(string r_F, string g_F, string b_F, bool hsv=false)
-    {
-        foreach (Grain grain in modelGrains)
-            grain.UpdateColor(r_F, g_F, b_F, hsv);
-    }
+    // void UpdateFeatureColors(string r_F, string g_F, string b_F, bool hsv=false)
+    // {
+    //     foreach (Grain grain in grains)
+    //         grain.UpdateColor(r_F, g_F, b_F, hsv);
+    // }
 }

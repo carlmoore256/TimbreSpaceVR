@@ -32,7 +32,7 @@ public class RuntimeMgr : MonoBehaviour
         GameObject newModel = Instantiate(modelPf, GameObject.Find("--SCENE--").transform);
         GrainModel gm = newModel.AddComponent<GrainModel>();
         selectedModel = gm;
-        gm.Initialize(grainPf, spawnPos, audioPath);
+        gm.Initialize(spawnPos, audioPath);
 
     }
     void Start()
