@@ -18,6 +18,8 @@ MonoBehaviour:
   wandMinDist: 0.2
   wandMaxRadius: 5
   wandMinRadius: 0.1
-  wandLineSegments: 50
+  wandLineSegments: 20
   wandLineElasticity: 1
-  particleTolerance: 0.1
+  particleTolerance: 0.01
+  targetFramerate: 60
+  enableElasticWand: 0

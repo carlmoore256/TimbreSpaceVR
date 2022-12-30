@@ -3,9 +3,9 @@ using System.Collections.Generic;
 using UnityEngine;
 
 public enum AudioFeature {
-    Centriod,
+    Centroid,
     Spread,
-    flatness,
+    Flatness,
     Noiseness,
     Rolloff,
     Crest,
@@ -27,8 +27,125 @@ public enum AudioFeature {
     Contrast_1,
     Contrast_2,
     Contrast_3,
-    GrainIndex
+    Contrast_4,
+    Contrast_5,
+    GrainIndex,
 }
+
+
+
+
+
+
+
+
+
+
+// public struct FeatureKeyVectorPair
+// {
+//     public FeatureKey[] Keys;
+//     public float[] Vectors;
+// }
+
+// this can be a wrapper around the vectors returned by the feature extractor
+// public class GrainAudioFeatures
+// {
+//     public List<float[]> Vectors { get; protected set; }
+
+//     // pretty wonky, but allows for audioFeatureExtractor to manage the memory, so this avoids copying
+//     public List<FeatureKeyVectorPair> FeatureKeyVectorPairs { get; protected set; }
+//     public double StartTime { get; protected set; }
+//     public double EndTime { get; protected set; }
+
+//     // add start and end points
+//     public GrainAudioFeatures(float[] vectors, FeatureKey[] featureKeys, double startTime, double endTime) {
+//         FeatureKeyVectorPairs = new List<FeatureKeyVectorPair>();
+//         FeatureKeyVectorPairs.Add(new FeatureKeyVectorPair { Keys = featureKeys, Vectors = vectors });
+//         StartTime = startTime;
+//         EndTime = endTime;
+//     }
+
+//     public void Add(float[] vectors, FeatureKey[] featureKeys) {
+//         FeatureKeyVectorPairs.Add(new FeatureKeyVectorPair { Keys = featureKeys, Vectors = vectors });
+//     }
+
+//     public float Get(AudioFeature feature) {
+//         foreach (var pair in FeatureKeyVectorPairs) {
+//             for (int i = 0; i < pair.Keys.Length; i++) {
+//                 if (pair.Keys[i].feature == feature) {
+//                     return pair.Vectors[i];
+//                 }
+//             }
+//         }
+//         return 0;
+//     }
+// }
+
+
+
+public class GrainAudioFeatures {
+    private AudioFeatureExtractor featureExtractor;
+    public int GrainIndex { get; protected set; }
+    public WindowTime WindowTime { get; protected set; }
+
+    public GrainAudioFeatures(AudioFeatureExtractor featureExtractor, int grainIndex) {
+        this.featureExtractor = featureExtractor;
+        GrainIndex = grainIndex;
+        WindowTime = featureExtractor.WindowTimes[grainIndex];
+    }
+
+    public float Get(AudioFeature feature) {
+        if (featureExtractor.FeatureValues.ContainsKey(feature)) {
+            // Debug.Log($"featureExtractor.FeatureValues[feature].Length: {featureExtractor.FeatureValues[feature].Length}, GrainIndex: {GrainIndex}");
+            return featureExtractor.FeatureValues[feature][GrainIndex];
+        } else {
+            return 0;
+        }
+    }
+}
+
+
+
+
+
+// future of GrainFeatures:
+// It could simply be an interface to an AudioFeatureExtractor,
+// which implements Get(AudioFeature feature) by finding where
+// in the extractor features the desired vectors are
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+// grain features needs to be changed - it shouldnt contain audio samples,
+// only start and end positions, and the features
+// or even a reference to the audio features float[]
 
 public class GrainFeatures
 {
@@ -60,9 +177,9 @@ public class GrainFeatures
         this.SampleRate = sampleRate;
         
         features = new Dictionary<AudioFeature, float> {
-            { AudioFeature.Centriod, centroid },
+            { AudioFeature.Centroid, centroid },
             { AudioFeature.Spread, spread},
-            { AudioFeature.flatness, flatness },
+            { AudioFeature.Flatness, flatness },
             { AudioFeature.Noiseness, noiseness},
             { AudioFeature.Rolloff, rolloff},
             { AudioFeature.Crest, crest},

@@ -6,9 +6,10 @@ using UnityEngine.XR.Interaction.Toolkit;
 // ============================-M-E-N-U-===================================
 // ============================---------===================================
 
-[CreateAssetMenu(fileName = "TSVR_Tool_Menu", menuName = "TSVR/Tools/Menu")]
 public class Menu : TsvrTool
 {
+    public new TsvrToolType ToolType = TsvrToolType.Menu;
+
     public Menu() {}
     public Menu(ActionBasedController controller) {
         Controller = controller;
@@ -32,7 +33,6 @@ public class Menu : TsvrTool
 
 
     void OnEnable() {
-        ToolType = TsvrToolType.Menu;
         SubscribeActions();
     }
 

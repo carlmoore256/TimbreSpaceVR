@@ -2,14 +2,13 @@ using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 
+#if true
 public class RuntimeMgr : MonoBehaviour
 {
     AudioFeatures audioFeatures;
-
     public string audioFile = "Assets/Resources/Audio/sax.wav";
     public int frameSize = 4096;
     public int hop = 4096;
-
     public GameObject grainPf;
     public GameObject modelPf;
 
@@ -29,10 +28,10 @@ public class RuntimeMgr : MonoBehaviour
     void SpawnGrainModel(Vector3 spawnPos, string audioPath=null)
     {
         // how objects will be spawned from now on
-        GameObject newModel = Instantiate(modelPf, GameObject.Find("--SCENE--").transform);
-        GrainModel gm = newModel.AddComponent<GrainModel>();
-        selectedModel = gm;
-        gm.Initialize(spawnPos, audioPath);
+        // GameObject newModel = Instantiate(modelPf, GameObject.Find("--SCENE--").transform);
+        // GrainModel gm = newModel.AddComponent<GrainModel>();
+        // selectedModel = gm;
+        // gm.Initialize(spawnPos, audioPath);
 
     }
     void Start()
@@ -75,3 +74,4 @@ public class RuntimeMgr : MonoBehaviour
         }
     }
 }
+#endif

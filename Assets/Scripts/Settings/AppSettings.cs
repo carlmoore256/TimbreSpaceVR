@@ -33,6 +33,9 @@ public class AppSettings : SingletonScriptableObject<AppSettings>
     public float wandLineElasticity = 1f;
     public float particleTolerance = 0.01f;
 
+    public int targetFramerate = 60;
+    public bool enableElasticWand = false;
+
     // eventually combine the public values with these settings
     public Setting WandDistIncrement { get => new Setting ("Wand: Distance Multiplier", 10f, typeof(float), 10f); }
     public Setting WandSizeIncrement { get => new Setting ("Wand: Size Multiplier", 5f, typeof(float), 5f); }

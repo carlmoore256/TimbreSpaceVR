@@ -8,16 +8,14 @@ using UnityEngine.XR.Interaction.Toolkit.Inputs;
 using UnityEngine.UI;
 
 public abstract class TsvrTool : MonoBehaviour {
+    [HideInInspector]
     public Animation animations;
-
     public TsvrToolType ToolType { get; protected set; }
-    // public ControllerHand Hand { get; protected set; }
-    // ActionBasedController Controller { get; } // maybe remove this
     public ToolController ToolController { get; set; }
-    // GameObject Prefab { get; }
     public ControllerActions ControllerActions { get; set; }
 
     void Awake() {
+        animations = GetComponent<Animation>();
         ToolController = transform.parent.GetComponent<ToolController>();
         ControllerActions = transform.parent.GetComponent<ControllerActions>();
     }

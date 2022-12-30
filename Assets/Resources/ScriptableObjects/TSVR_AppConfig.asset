@@ -13,9 +13,11 @@ MonoBehaviour:
   m_Name: TSVR_AppConfig
   m_EditorClassIdentifier: 
   wandPlay: {fileID: 2377529979667022799, guid: d6e01afd3fefd184eb8b858f3cea3243, type: 3}
-  wandDelete: {fileID: 2377529979667022799, guid: bc398f00a5a6c7746b3b935ca10e42e1, type: 3}
+  wandEdit: {fileID: 2377529979667022799, guid: bc398f00a5a6c7746b3b935ca10e42e1, type: 3}
   wandConstellation: {fileID: 2377529979667022799, guid: cc951d0ff15f97c4dbc370163669e597, type: 3}
   menuTool: {fileID: 3165432181441587983, guid: 5d27698c9826f9041ab61818336e2257, type: 3}
   grainSpawner: {fileID: 5707957123579365033, guid: 8231ca3d5e692b24499678fe2a370a8e, type: 3}
+  locomotionTool: {fileID: 2485565454305222284, guid: 5616c554b8e0899429647a2893c23a52, type: 3}
   grainModel: {fileID: 3360398663443515609, guid: fe5f9dfca8e93294fb097ed51e0e3089, type: 3}
   grainPrefab: {fileID: 3015697369275448574, guid: 24a760a34952f6042b4ab393ddac78f6, type: 3}
+  lineObjectPrefab: {fileID: 7434248885355533583, guid: 84f0a959edeb4ac49a74d2a33e663ee1, type: 3}

@@ -19,21 +19,20 @@ public enum ControllerHand {
 public class ToolController : MonoBehaviour
 {
     public GameObject CurrentTool { get; protected set;  }
+    
+    [HideInInspector]
     public ControllerActions controllerActions;
+    public TsvrToolType initialTool = TsvrToolType.Menu;
 
     // easy way to enumerate all tool types
     private TsvrToolType[] toolTypes = (TsvrToolType[])Enum.GetValues(typeof(TsvrToolType));
-    public int toolIndex = 0;
-
-    void Start() {
-        // controllerActions = GetComponent<ControllerActions>();
-        // ChangeTool(toolTypes[toolIndex]);
-    }
+    private int toolIndex = 0;
     
     // ==================================================================
     // maybe eventually change this so that it asks controller actions to do this
     void OnEnable() {
         controllerActions = GetComponent<ControllerActions>();
+        while(toolTypes[toolIndex] != initialTool) toolIndex++;
         ChangeTool(toolTypes[toolIndex]);
         controllerActions.cycleTool.action.started += CycleTool;
     }
@@ -59,39 +58,20 @@ public class ToolController : MonoBehaviour
             return;
         };
 
-        if (TsvrApplication.Config.GetToolPrefab(tool) == null) {
+        // maybe cache this in a dict within this controller at runtime
+        GameObject toolPrefab = TsvrApplication.Config.GetToolPrefab(tool); 
+
+        if (toolPrefab == null) {
             Debug.Log("Tool not found!");
+            return;
+        }
+        if (toolPrefab.GetComponent<TsvrTool>() == null) {
+            Debug.Log("Tool prefab does not have a TsvrTool component!");
             return;
         }
         if (CurrentTool != null)
             Destroy(CurrentTool);
-        CurrentTool = Instantiate(TsvrApplication.Config.GetToolPrefab(tool), transform);
-        /*
-        switch(tool) {
-            case TsvrToolType.PlayWand:
-                Destroy(CurrentTool);
-                CurrentTool = Instantiate(TsvrApplication.Config.wandPlay, transform);
-                // CurrentTool = Instantiate(Resources.Load("Prefabs/Tools/PlayWand"), transform) as GameObject;
-                // CurrentTool = new Wand(xrInputActions);
-                break;
-            case TsvrToolType.DeleteWand:
-                Destroy(CurrentTool);
-                CurrentTool = Instantiate(TsvrApplication.Config.wandDelete, transform);
-                break;
-            case TsvrToolType.Menu:
-                Destroy(CurrentTool);
-                CurrentTool = Instantiate(TsvrApplication.Config.menuTool, transform);
-                break;
-            case TsvrToolType.Teleport:
-                Debug.Log("Tool not implemented yet!");
-                break;
-            case TsvrToolType.Grab:
-                Debug.Log("Tool not implemented yet!");
-                break;
-            default:
-                Debug.Log("Tool not found!");
-                break;
-        }*/
+        CurrentTool = Instantiate(toolPrefab, transform);
     }
 
     void Update()

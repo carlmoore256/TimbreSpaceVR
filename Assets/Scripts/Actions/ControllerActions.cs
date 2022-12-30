@@ -3,6 +3,12 @@ using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.XR.Interaction.Toolkit;
 using UnityEngine.InputSystem;
+using System;
+
+class Command {
+    public virtual void Execute() {}
+}
+
 
 // possible control schemes:
 // - Controller actions (this script) handles all control events, and does not pass
@@ -31,6 +37,19 @@ public class ControllerActions : MonoBehaviour
     public InputActionReference rotationAction;
     public ControllerHand Hand { get; protected set; }
 
+    public Vector2Int JoystickDpad { get; protected set; }
+
+    public Action<bool> OnGrab;
+    public Action<InputAction.CallbackContext> OnGrabValue;
+    public Action<InputAction.CallbackContext> OnTrigger;
+    public Action<float> OnTriggerValue;
+    public Action<InputAction.CallbackContext> OnUiSelect;
+    public Action<InputAction.CallbackContext> OnToolOptionButton;
+    public Action<InputAction.CallbackContext> OnTwistLock;
+    public Action<InputAction.CallbackContext> OnTwistLockCombo;
+    public Action<InputAction.CallbackContext> OnCycleTool;
+    public Action<InputAction.CallbackContext> OnToolAxis2D;
+    public Action<InputAction.CallbackContext> OnRotationAction;
     
     private void OnEnable() {
         if (transform.name.Contains("Left")) {
@@ -40,13 +59,23 @@ public class ControllerActions : MonoBehaviour
         }
         // twistLockAction.action.Enable();
         // twistLockModifiedAction.action.Enable();
-
         trigger.action.Enable();
         triggerValue.action.Enable();
+
+
+        // wrap the action in a delegate
+        // triggerValue.action.started += (ctx) => { 
+        //     Debug.Log("Poop!");
+        //     OnTriggerValue?.Invoke(ctx.ReadValue<float>()); 
+        // };
+        // triggerValue.action.performed += (ctx) => { OnTriggerValue?.Invoke(ctx.ReadValue<float>()); };
+        // triggerValue.action.canceled += (ctx) => { OnTriggerValue?.Invoke(ctx.ReadValue<float>()); };
+
+
+        // OnTriggerValue += (value) => { Debug.Log("OnTriggerValue: " + value); };
     }
 
     private void OnDisable() {
-        
         trigger.action.Disable();
         triggerValue.action.Disable();
         // twistLockAction.action.Disable();
@@ -69,6 +98,9 @@ public class ControllerActions : MonoBehaviour
         // trigger.action.canceled += ActionCanceled;
     }
 
+    public void JoystickDirectionAction(InputAction.CallbackContext ctx) {
+        Debug.Log("JoystickDirectionAction: " + ctx.action.GetBindingDisplayString() + "Action Performed!");
+    }
 
     void ActionStarted(InputAction.CallbackContext ctx) {
         Debug.Log("=> " + ctx.action.GetBindingDisplayString() + "Action Started!");
@@ -81,6 +113,8 @@ public class ControllerActions : MonoBehaviour
     void ActionCanceled(InputAction.CallbackContext ctx) {
         Debug.Log("=> " + ctx.action.GetBindingDisplayString() + " Action Canceled!");
     }
+
+
 
     // public ControllerActions(ActionBasedController xrInputActions) {
     //     this.xrInputActions = xrInputActions;

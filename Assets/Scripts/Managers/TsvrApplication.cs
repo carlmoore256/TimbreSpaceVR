@@ -6,10 +6,6 @@ using UnityEngine.InputSystem;
 [CreateAssetMenu(fileName = "TSVR_AppManager", menuName = "TSVR/Application (Singleton)")]
 public class TsvrApplication : SingletonScriptableObject<TsvrApplication>
 {
-    // [SerializeField]
-    // private PlayerProperties _playerProperties;
-    // public static PlayerProperties PlayerProperties => Instance._playerProperties;
-
     [SerializeField]
     private AudioManager _audioManager;
     public static AudioManager AudioManager => Instance._audioManager; 
@@ -41,5 +37,7 @@ public class TsvrApplication : SingletonScriptableObject<TsvrApplication>
         if (Instance._settings == null) {
             Instance._settings = Resources.Load<AppSettings>("ScriptableObjects/TSVR_AppSettings");
         }
+
+        // Debug.Log(Application.persistentDataPath);
     }
 }

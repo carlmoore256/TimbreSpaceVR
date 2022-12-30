@@ -34,11 +34,14 @@ using UnityEngine.UI;
 
 public enum TsvrToolType {
     PlayWand,
-    DeleteWand,
+    EditWand,
     ConstellationWand,
+    MeasureWand,
+    PaintWand,
+    SelectWand,
     Menu,
     GrainSpawner,
-    Teleport,
+    Locomotion,
     Grab,
     VolumeSlector,
     Sequencer,
