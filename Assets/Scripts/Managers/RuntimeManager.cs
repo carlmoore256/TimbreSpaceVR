@@ -9,6 +9,7 @@ public class RuntimeManager : MonoBehaviour
     public ScriptableObject masterManager;
     public ToolController LeftHandTool { get; set; }
     public ToolController RightHandTool { get; set; }
+    // public ManagedCoroutines ManagedCoroutines { get; protected set; }
     
     void Start()
     {
@@ -18,8 +19,6 @@ public class RuntimeManager : MonoBehaviour
         // leftHandTool = new HandTool(TsvrApplication.PlayerProperties.LeftHand.GetComponent<ActionBasedController>(), TsvrToolType.Wand);
         // rightHandTool = new HandTool(TsvrApplication.PlayerProperties.RightHand.GetComponent<ActionBasedController>(), TsvrToolType.Wand);
     }
-    
-    // void InitializeHands() {}
 }
 
 

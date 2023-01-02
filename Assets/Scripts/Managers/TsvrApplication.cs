@@ -23,6 +23,11 @@ public class TsvrApplication : SingletonScriptableObject<TsvrApplication>
     private InputActionAsset _inputActions;
     public static InputActionAsset InputActions => Instance._inputActions;
 
+
+    // [SerializeField]
+    // private CoroutineManager _coroutineManager;
+    // public static CoroutineManager CoroutineManager => Instance._coroutineManager;
+
     // [SerializeField]
     // private GameObject _DefaultXRRig;
     // public static GameObject DefaultXRRig => Instance._DefaultXRRig;

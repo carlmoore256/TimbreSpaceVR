@@ -29,21 +29,37 @@ public struct FeatureKey {
     }
 }
 
-public struct FeatureValues {
+public class FeatureValues {
     public float[] values;
+    public float min;
+    public float max;
     public FeatureKey key;
+    public int Length { get { return values.Length; }}
     public FeatureValues(float[] values, FeatureKey key) {
         this.values = values;
         this.key = key;
+        this.min = values.Min();
+        this.max = values.Max();
+    }
+
+    public float GetNormalized(int index, float rangeLow = 0, float rangeHigh = 1) {
+        return (((values[index] - min) / (max - min)) * (rangeHigh - rangeLow)) + rangeLow;
+    }
+
+    public float this[int index] {
+        get { return values[index]; }
+        set { values[index] = value; }
     }
 }
 
 public struct WindowTime {
     public double startTime;
     public double endTime;
+    public double duration;
     public WindowTime(double startTime, double endTime) {
         this.startTime = startTime;
         this.endTime = endTime;
+        this.duration = endTime - startTime;
     }
 }
 
@@ -64,7 +80,8 @@ public class AudioFeatureExtractor
     // and insertions might happen out of order
     // public Dictionary<int, GrainAudioFeatures> grainAudioFeatures;
 
-    public Dictionary<AudioFeature, float[]> FeatureValues { get; protected set; }
+    // public Dictionary<AudioFeature, float[]> FeatureValues { get; protected set; }
+    public Dictionary<AudioFeature, FeatureValues> FeatureValues { get; protected set; }
 
     public List<WindowTime> WindowTimes { get; protected set; }
 
@@ -111,7 +128,7 @@ public class AudioFeatureExtractor
             computedFeatures.Add(key.feature, false);
         }
 
-        FeatureValues = new Dictionary<AudioFeature, float[]>();
+        FeatureValues = new Dictionary<AudioFeature, FeatureValues>();
         foreach (FeatureKey key in featureKeys) {
             FeatureValues.Add(key.feature, null);
         }
@@ -181,15 +198,20 @@ public class AudioFeatureExtractor
         }
 
         var names = extractor.FeatureDescriptions;
-        // Debug.Log($"DOING MULTI FEATURE COMPUTATION | Num Vectors: {vectors.Count} | Num Names: {names.Count}");
         for(int featureIdx = 0; featureIdx < names.Count; featureIdx++) {
             var fk = Array.Find(featureKeys, k => k.alias == names[featureIdx]);
-            // Debug.Log($"ADDING NAME {names[featureIdx]} | FeatureKey Alias: {fk.alias} | FeatureKey Feature: {fk.feature} | Num Vectors: {vectors.Count}");
             // transpose values
             float[] _featureValues = new float[vectors.Count];
             for (int j = 0; j < vectors.Count; j++)
                 _featureValues[j] = vectors[j][featureIdx];
-            FeatureValues[fk.feature] = _featureValues;
+    
+            // float _min = _featureValues.Min();
+            // float _max = _featureValues.Max();
+            // // normalize FeatureValues to -1 to 1
+            // for(int i = 0; i < _featureValues.Length; i++)
+            //     _featureValues[i] = ((_featureValues[i] - _min) / (_max - _min)) * 2 - 1;
+
+            FeatureValues[fk.feature] = new FeatureValues(_featureValues, fk);
         }
     }
 
@@ -215,6 +237,8 @@ public class AudioFeatureExtractor
         var vectors = mfccExtractor.ParallelComputeFrom(signal);
         FeaturePostProcessing.NormalizeMean(vectors);
         var names = mfccExtractor.FeatureDescriptions;
+
+
         // FeatureKey[] _featureKeys = new FeatureKey[names.Count]; // We have to do this to ensure order is correct
         
         if (WindowTimes == null) { // REMOVE THIS!
@@ -225,13 +249,20 @@ public class AudioFeatureExtractor
         }
 
         for(int featureIdx = 0; featureIdx < names.Count; featureIdx++) {
+    
             var fk = Array.Find(featureKeys, k => k.alias == names[featureIdx]);
 
             // transpose values
             float[] _featureValues = new float[vectors.Count];
             for (int j = 0; j < vectors.Count; j++)
                 _featureValues[j] = vectors[j][featureIdx];
-            FeatureValues[fk.feature] = _featureValues;
+
+            // float _min = _featureValues.Min();
+            // float _max = _featureValues.Max();
+            // // normalize FeatureValues to -1 to 1
+            // for(int i = 0; i < _featureValues.Length; i++)
+            //     _featureValues[i] = ((_featureValues[i] - _min) / (_max - _min)) * 2 - 1;
+            FeatureValues[fk.feature] = new FeatureValues(_featureValues, fk);;
         }
     }
 

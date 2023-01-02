@@ -33,87 +33,41 @@ public enum AudioFeature {
 }
 
 
-
-
-
-
-
-
-
-
-// public struct FeatureKeyVectorPair
-// {
-//     public FeatureKey[] Keys;
-//     public float[] Vectors;
-// }
-
-// this can be a wrapper around the vectors returned by the feature extractor
-// public class GrainAudioFeatures
-// {
-//     public List<float[]> Vectors { get; protected set; }
-
-//     // pretty wonky, but allows for audioFeatureExtractor to manage the memory, so this avoids copying
-//     public List<FeatureKeyVectorPair> FeatureKeyVectorPairs { get; protected set; }
-//     public double StartTime { get; protected set; }
-//     public double EndTime { get; protected set; }
-
-//     // add start and end points
-//     public GrainAudioFeatures(float[] vectors, FeatureKey[] featureKeys, double startTime, double endTime) {
-//         FeatureKeyVectorPairs = new List<FeatureKeyVectorPair>();
-//         FeatureKeyVectorPairs.Add(new FeatureKeyVectorPair { Keys = featureKeys, Vectors = vectors });
-//         StartTime = startTime;
-//         EndTime = endTime;
-//     }
-
-//     public void Add(float[] vectors, FeatureKey[] featureKeys) {
-//         FeatureKeyVectorPairs.Add(new FeatureKeyVectorPair { Keys = featureKeys, Vectors = vectors });
-//     }
-
-//     public float Get(AudioFeature feature) {
-//         foreach (var pair in FeatureKeyVectorPairs) {
-//             for (int i = 0; i < pair.Keys.Length; i++) {
-//                 if (pair.Keys[i].feature == feature) {
-//                     return pair.Vectors[i];
-//                 }
-//             }
-//         }
-//         return 0;
-//     }
-// }
-
-
-
+/// <summary>
+/// Wrapper class for a grain's audio features
+/// </summary>
 public class GrainAudioFeatures {
     private AudioFeatureExtractor featureExtractor;
-    public int GrainIndex { get; protected set; }
     public WindowTime WindowTime { get; protected set; }
+    public int GrainIndex { get; protected set; }
 
     public GrainAudioFeatures(AudioFeatureExtractor featureExtractor, int grainIndex) {
         this.featureExtractor = featureExtractor;
-        GrainIndex = grainIndex;
         WindowTime = featureExtractor.WindowTimes[grainIndex];
+        GrainIndex = grainIndex;
     }
 
-    public float Get(AudioFeature feature) {
+    public float Get(AudioFeature feature, bool normalize = true, bool positive = false) {
         if (featureExtractor.FeatureValues.ContainsKey(feature)) {
-            // Debug.Log($"featureExtractor.FeatureValues[feature].Length: {featureExtractor.FeatureValues[feature].Length}, GrainIndex: {GrainIndex}");
-            return featureExtractor.FeatureValues[feature][GrainIndex];
+            if (normalize) {
+                if (positive) {
+                    return (featureExtractor.FeatureValues[feature].GetNormalized(GrainIndex, 0f, 1f));
+                } else {
+                    return (featureExtractor.FeatureValues[feature].GetNormalized(GrainIndex, -1f, 1f));
+                }
+            } else {
+                if (positive) {
+                    float min = featureExtractor.FeatureValues[feature].min;
+                    return featureExtractor.FeatureValues[feature][GrainIndex] + min;
+                } else {
+                    return featureExtractor.FeatureValues[feature][GrainIndex];
+                }
+            } 
         } else {
             return 0;
         }
     }
 }
-
-
-
-
-
-// future of GrainFeatures:
-// It could simply be an interface to an AudioFeatureExtractor,
-// which implements Get(AudioFeature feature) by finding where
-// in the extractor features the desired vectors are
-
-
 
 
 
@@ -231,6 +185,48 @@ public class GrainFeatures
 
 
 
+
+
+
+// public struct FeatureKeyVectorPair
+// {
+//     public FeatureKey[] Keys;
+//     public float[] Vectors;
+// }
+
+// this can be a wrapper around the vectors returned by the feature extractor
+// public class GrainAudioFeatures
+// {
+//     public List<float[]> Vectors { get; protected set; }
+
+//     // pretty wonky, but allows for audioFeatureExtractor to manage the memory, so this avoids copying
+//     public List<FeatureKeyVectorPair> FeatureKeyVectorPairs { get; protected set; }
+//     public double StartTime { get; protected set; }
+//     public double EndTime { get; protected set; }
+
+//     // add start and end points
+//     public GrainAudioFeatures(float[] vectors, FeatureKey[] featureKeys, double startTime, double endTime) {
+//         FeatureKeyVectorPairs = new List<FeatureKeyVectorPair>();
+//         FeatureKeyVectorPairs.Add(new FeatureKeyVectorPair { Keys = featureKeys, Vectors = vectors });
+//         StartTime = startTime;
+//         EndTime = endTime;
+//     }
+
+//     public void Add(float[] vectors, FeatureKey[] featureKeys) {
+//         FeatureKeyVectorPairs.Add(new FeatureKeyVectorPair { Keys = featureKeys, Vectors = vectors });
+//     }
+
+//     public float Get(AudioFeature feature) {
+//         foreach (var pair in FeatureKeyVectorPairs) {
+//             for (int i = 0; i < pair.Keys.Length; i++) {
+//                 if (pair.Keys[i].feature == feature) {
+//                     return pair.Vectors[i];
+//                 }
+//             }
+//         }
+//         return 0;
+//     }
+// }
 
 
 // this.mfccs = mfccs;

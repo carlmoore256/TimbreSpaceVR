@@ -3,14 +3,17 @@ using System.Collections.Generic;
 using UnityEngine;
 using System;
 using System.IO;
-
+using UnityEngine.Audio;
 
 [CreateAssetMenu(fileName = "TSVR/AudioManager", menuName = "Audio Manager (Singleton)")]
-public class AudioManager : SingletonScriptableObject<AudioManager>
+public class AudioManager : ScriptableObject
 {
+    public AudioMixer grainModelAudioMixer;
     public int SampleRate => AudioSettings.GetConfiguration().sampleRate;
     public static string[] MicrophoneDevices => UnityEngine.Microphone.devices;
+    
 
+    private void OnEnable() {  }
 
     private static AudioSource _microphone;
     public static AudioSource Microphone {
@@ -46,6 +49,11 @@ public class AudioManager : SingletonScriptableObject<AudioManager>
         DirectoryInfo dir = new DirectoryInfo(filePath);
         FileInfo[] info = dir.GetFiles("*.*");
         return info;
+    }
+
+    // eventually make into a flexible dictionary that can patch
+    public void ConnectGrainModelAudioSource(AudioSource source) {
+        source.outputAudioMixerGroup = grainModelAudioMixer.FindMatchingGroups("Dry")[0];
     }
 }
 

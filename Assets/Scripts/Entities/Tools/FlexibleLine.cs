@@ -32,7 +32,7 @@ public class FlexibleLine : ScriptableObject
     void OnEnable() {
         lineObject = new GameObject("Wand_Line");
         _lineRenderer = lineObject.AddComponent<LineRenderer>();
-        var numSegments = TsvrApplication.Settings.wandLineSegments;
+        var numSegments = TsvrApplication.Settings.WandLineSegments;
         _lineRenderer.positionCount = numSegments;
         _lineRenderer.startWidth = lineWidthStart;
         _lineRenderer.endWidth = lineWidthEnd;

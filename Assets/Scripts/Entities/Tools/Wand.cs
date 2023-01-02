@@ -62,9 +62,9 @@ public class Wand : TsvrTool {
 
         lineObject = Instantiate(TsvrApplication.Config.lineObjectPrefab);
         wandLine = lineObject.GetComponent<LineRenderer>();
-        numLineSegments = TsvrApplication.Settings.wandLineSegments;
-        wandLineElasticity = TsvrApplication.Settings.wandLineElasticity;
-        isElasticWand = TsvrApplication.Settings.enableElasticWand;
+        numLineSegments = TsvrApplication.Settings.WandLineSegments;
+        wandLineElasticity = TsvrApplication.Settings.WandLineElasticity;
+        isElasticWand = TsvrApplication.Settings.EnableElasticWand;
 
         wandLine.positionCount = numLineSegments;
         linePositions = new Vector3[numLineSegments];
@@ -102,7 +102,7 @@ public class Wand : TsvrTool {
         // changes the distance of the wand
         wandDistanceTwistAction = new TwistLockAction(
             -180f, 180f, 
-            TsvrApplication.Settings.wandMinDist, TsvrApplication.Settings.wandMaxDist,
+            TsvrApplication.Settings.WandMinDist, TsvrApplication.Settings.WandMaxDist,
             1f,
             TsvrApplication.Settings.wandDistIncrement,// <- eventually set these from global parameters
             ControllerActions.twistLock.action,
@@ -113,7 +113,7 @@ public class Wand : TsvrTool {
         // changes the size of the wand
         wandSizeTwistAction = new TwistLockAction(
             -180f, 180f,
-            TsvrApplication.Settings.wandMinRadius, TsvrApplication.Settings.wandMaxRadius,
+            TsvrApplication.Settings.WandMinRadius, TsvrApplication.Settings.WandMaxRadius,
             0.5f,
             TsvrApplication.Settings.wandDistIncrement,
             ControllerActions.toolOptionButton.action, // <- eventually set this from global parameters
@@ -202,17 +202,17 @@ public class Wand : TsvrTool {
         newPos += (wandBase.up * value);
         wandTipAnchor.position = newPos;
         distanceIndicator.fillAmount = (
-            value - TsvrApplication.Settings.wandMinDist) / 
-            (TsvrApplication.Settings.wandMaxDist - TsvrApplication.Settings.wandMinDist
+            value - TsvrApplication.Settings.WandMinDist) / 
+            (TsvrApplication.Settings.WandMaxDist - TsvrApplication.Settings.WandMinDist
         );
     }
 
     private void ChangeWandSize(float value) {
         Vector3 newScale = new Vector3(value, value, value);
-        if (newScale.magnitude > TsvrApplication.Settings.wandMaxRadius) {
-            newScale = newScale.normalized * TsvrApplication.Settings.wandMaxRadius;
-        } else if (newScale.magnitude < TsvrApplication.Settings.wandMinRadius) {
-            newScale = newScale.normalized * TsvrApplication.Settings.wandMinRadius;
+        if (newScale.magnitude > TsvrApplication.Settings.WandMaxRadius) {
+            newScale = newScale.normalized * TsvrApplication.Settings.WandMaxRadius;
+        } else if (newScale.magnitude < TsvrApplication.Settings.WandMinRadius) {
+            newScale = newScale.normalized * TsvrApplication.Settings.WandMinRadius;
         }
 
         // Reduce the max size of the wand when it's close to the tool
@@ -225,8 +225,8 @@ public class Wand : TsvrTool {
         wandTip.transform.localScale = newScale;
         wandLine.endWidth = (value * 0.5f);
         radiusIndicator.fillAmount = (
-            value - TsvrApplication.Settings.wandMinRadius) / 
-            (TsvrApplication.Settings.wandMaxRadius - TsvrApplication.Settings.wandMinRadius
+            value - TsvrApplication.Settings.WandMinRadius) / 
+            (TsvrApplication.Settings.WandMaxRadius - TsvrApplication.Settings.WandMinRadius
         );
     }
 }

@@ -14,7 +14,7 @@ GameObject:
   - component: {fileID: 6258752223789737984}
   - component: {fileID: 6270518072951209813}
   - component: {fileID: 3690253048212660372}
-  m_Layer: 0
+  m_Layer: 7
   m_Name: Grain
   m_TagString: grain
   m_Icon: {fileID: 0}
@@ -198,6 +198,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: eaf46f6c05ae15e44ae6c064577315fb, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
+  material: {fileID: 2100000, guid: b7a9ee75640d5814b915821cdc86b7a1, type: 2}
 --- !u!1001 &1912873428004886997
 PrefabInstance:
   m_ObjectHideFlags: 0
@@ -262,13 +263,33 @@ PrefabInstance:
       propertyPath: m_LocalEulerAnglesHint.z
       value: 0
       objectReference: {fileID: 0}
+    - target: {fileID: -6351565476521172743, guid: 7b6d54a7c0d86a64f9f37ae26893d342, type: 3}
+      propertyPath: m_Layer
+      value: 7
+      objectReference: {fileID: 0}
+    - target: {fileID: -6082092090470840308, guid: 7b6d54a7c0d86a64f9f37ae26893d342, type: 3}
+      propertyPath: m_Layer
+      value: 7
+      objectReference: {fileID: 0}
+    - target: {fileID: -145157301803753676, guid: 7b6d54a7c0d86a64f9f37ae26893d342, type: 3}
+      propertyPath: m_Layer
+      value: 7
+      objectReference: {fileID: 0}
     - target: {fileID: 919132149155446097, guid: 7b6d54a7c0d86a64f9f37ae26893d342, type: 3}
       propertyPath: m_Name
       value: LOD
       objectReference: {fileID: 0}
     - target: {fileID: 919132149155446097, guid: 7b6d54a7c0d86a64f9f37ae26893d342, type: 3}
+      propertyPath: m_Layer
+      value: 7
+      objectReference: {fileID: 0}
+    - target: {fileID: 919132149155446097, guid: 7b6d54a7c0d86a64f9f37ae26893d342, type: 3}
       propertyPath: m_IsActive
       value: 1
+      objectReference: {fileID: 0}
+    - target: {fileID: 1311223398896529677, guid: 7b6d54a7c0d86a64f9f37ae26893d342, type: 3}
+      propertyPath: m_Layer
+      value: 7
       objectReference: {fileID: 0}
     - target: {fileID: 4742473837712756890, guid: 7b6d54a7c0d86a64f9f37ae26893d342, type: 3}
       propertyPath: m_Size

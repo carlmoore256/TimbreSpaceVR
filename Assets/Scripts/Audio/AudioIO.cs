@@ -4,6 +4,7 @@ using NWaves.Signals;
 using NWaves.Audio;
 
 public class AudioIO {
+
     public static DiscreteSignal ReadMonoAudioFile(string path) {
         DiscreteSignal signalMono;
         Debug.Log("Reading audio file: " + path);
