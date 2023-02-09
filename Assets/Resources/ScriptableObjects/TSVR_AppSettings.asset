@@ -12,14 +12,51 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 98e4bebaa01a2244c8140c3584149f55, type: 3}
   m_Name: TSVR_AppSettings
   m_EditorClassIdentifier: 
-  wandDistIncrement: 5
-  wandSizeIncrement: 5
-  wandMaxDist: 10
-  wandMinDist: 0.2
-  wandMaxRadius: 5
-  wandMinRadius: 0.1
-  wandLineSegments: 20
-  wandLineElasticity: 1
-  particleTolerance: 0.01
-  targetFramerate: 60
-  enableElasticWand: 0
+  _wandDistIncrement: 0.05
+  _wandSizeIncrement: 0.1
+  _wandMaxDist: 10
+  _wandMinDist: 0.1
+  _wandMaxRadius: 5
+  _wandMinRadius: 0.01
+  _wandLineSegments: 10
+  _wandLineElasticity: 0.5
+  _wandLineFriction: 0.5
+  _particleTolerance: 0.1
+  _enableElasticWand: 0
+  _grainPlayTimeout: 0.1
+  _enableDebug: 1
+  _grainUseHSV: 0
+  WandDistIncrement:
+    value: 1
+  WandSizeIncrement:
+    value: 3
+  WandMaxDist:
+    value: 30
+  WandMinDist:
+    value: 0.01
+  WandMaxRadius:
+    value: 3
+  WandMinRadius:
+    value: 0.01
+  WandLineSegments:
+    value: 10
+  WandLineElasticity:
+    value: 1
+  EnableElasticWand:
+    value: 0
+  InterfaceSounds:
+    value: 1
+  InterfaceSoundsGain:
+    value: 0.3
+  ParticleTolerance:
+    value: 0.01
+  GrainPlayTimeout:
+    value: 0.009999999776482582
+  GrainMaxRadius:
+    value: 0.01
+  GrainMinRadius:
+    value: 0.005
+  GrainUseHSV:
+    value: 0
+  EnableDebug:
+    value: 1

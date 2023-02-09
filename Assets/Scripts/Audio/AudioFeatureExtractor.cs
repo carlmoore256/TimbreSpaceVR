@@ -73,9 +73,6 @@ public class AudioFeatureExtractor
     private int hopSize;
     private static FeatureKey[] featureKeys;
 
-    // store whether or not each feature has been computed
-    public Dictionary<AudioFeature, bool> computedFeatures;
-
     // using a dictionary because operations may possibly happen async,
     // and insertions might happen out of order
     // public Dictionary<int, GrainAudioFeatures> grainAudioFeatures;
@@ -122,12 +119,6 @@ public class AudioFeatureExtractor
             new FeatureKey("mfcc6", FeatureExtractorType.MFCC, AudioFeature.MFCC_6),
         };
 
-        // iterate over feature keys to fill computed features entries with null arrays
-        computedFeatures = new Dictionary<AudioFeature, bool>();
-        foreach (FeatureKey key in featureKeys) {
-            computedFeatures.Add(key.feature, false);
-        }
-
         FeatureValues = new Dictionary<AudioFeature, FeatureValues>();
         foreach (FeatureKey key in featureKeys) {
             FeatureValues.Add(key.feature, null);
@@ -159,11 +150,7 @@ public class AudioFeatureExtractor
             return;
         }
         // remove any existing computed features
-        List<FeatureKey> keysToRemove = new List<FeatureKey>();
-        foreach(FeatureKey key in keys) {
-            if (computedFeatures[key.feature])
-                keysToRemove.Add(key);
-        }
+        var keysToRemove = keys.FindAll(k => FeatureValues[k.feature] != null);
         foreach(FeatureKey key in keysToRemove)
             keys.Remove(key);
         if (keys.Count == 0)
@@ -217,13 +204,11 @@ public class AudioFeatureExtractor
 
     private void ComputeMfccFeatures(DiscreteSignal signal, List<FeatureKey> keys) {
         // make sure feature isn't already computed
-        List<FeatureKey> keysToRemove = new List<FeatureKey>();
-        foreach(FeatureKey key in keys) {
-            if (computedFeatures[key.feature])
-                keysToRemove.Add(key);
-        }
+        var keysToRemove = keys.FindAll(k => FeatureValues[k.feature] != null);
         foreach(FeatureKey key in keysToRemove)
             keys.Remove(key);
+        if (keys.Count == 0)
+            return;
         // only run mfcc extraction once per instance of AudioFeatures
         var mfccOpts = new MfccOptions {
             SamplingRate = signal.SamplingRate,
@@ -237,10 +222,7 @@ public class AudioFeatureExtractor
         var vectors = mfccExtractor.ParallelComputeFrom(signal);
         FeaturePostProcessing.NormalizeMean(vectors);
         var names = mfccExtractor.FeatureDescriptions;
-
-
-        // FeatureKey[] _featureKeys = new FeatureKey[names.Count]; // We have to do this to ensure order is correct
-        
+        // FeatureKey[] _featureKeys = new FeatureKey[names.Count]; // We have to do this to ensure order is correct        
         if (WindowTimes == null) { // REMOVE THIS!
             WindowTimes = new List<WindowTime>();
             mfccExtractor.TimeMarkers(vectors.Count).ForEach((double start) => {
@@ -249,14 +231,11 @@ public class AudioFeatureExtractor
         }
 
         for(int featureIdx = 0; featureIdx < names.Count; featureIdx++) {
-    
             var fk = Array.Find(featureKeys, k => k.alias == names[featureIdx]);
-
             // transpose values
             float[] _featureValues = new float[vectors.Count];
             for (int j = 0; j < vectors.Count; j++)
                 _featureValues[j] = vectors[j][featureIdx];
-
             // float _min = _featureValues.Min();
             // float _max = _featureValues.Max();
             // // normalize FeatureValues to -1 to 1
@@ -267,7 +246,7 @@ public class AudioFeatureExtractor
     }
 
 
-    public void ExtractFeatures(DiscreteSignal signal, AudioFeature[] features, Action<GrainAudioFeatures> callback) {
+    public void ExtractFeatures(DiscreteSignal signal, AudioFeature[] features, Action onComplete) {
         // get FeatureKeys for requested features
         List<FeatureKey> requestedFeatures = new List<FeatureKey>();
 
@@ -282,10 +261,7 @@ public class AudioFeatureExtractor
         ComputeFeatures(signal, requestedFeatures, FeatureExtractorType.MFCC);
 
         // ==== run callback once processing has ended ===========================
-        for(int i = 0; i < FeatureValues[features[0]].Length; i++) {
-            GrainAudioFeatures gf = new GrainAudioFeatures(this, i);
-            callback.Invoke(gf);
-        }
+        onComplete?.Invoke();
     }
 }
 

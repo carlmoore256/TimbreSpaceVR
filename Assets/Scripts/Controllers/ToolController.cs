@@ -71,7 +71,7 @@ public class ToolController : MonoBehaviour
         }
         if (CurrentTool != null)
             Destroy(CurrentTool);
-        CurrentTool = Instantiate(toolPrefab, transform);
+            CurrentTool = Instantiate(toolPrefab, transform);
     }
 
     void Update()

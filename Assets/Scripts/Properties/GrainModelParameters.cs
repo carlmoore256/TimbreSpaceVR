@@ -10,7 +10,7 @@ public class GrainModelParameters {
     private Action<int, int> onWindowUpdate; // window size, hop size
 
     private int _windowSize = 8192;
-    private int _hopSize = 4096;
+    private int _hopSize = 8192;
     public int WindowSize { get => _windowSize; set { 
         _windowSize=value;
         onWindowUpdate(value, _hopSize); 
@@ -68,9 +68,7 @@ public class GrainModelParameters {
         onFeatureSclUpdate(value);
     } }
 
-    public float ScaleMin { get; set; } = 0.0001f;
-    public float ScaleMax { get; set; } = 1f;
-    public float ScaleExponent { get; set; } = 1f;
+    public float ScaleMult { get; set;} = 0.005f;
 
     public GrainModelParameters(
             Action<AudioFeature[]> onFeaturePosUpdate, 

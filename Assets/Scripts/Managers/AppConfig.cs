@@ -17,7 +17,8 @@ public class AppConfig : SingletonScriptableObject<AudioManager>
     [Header("Models")]
     public GameObject grainModel;
     public GameObject grainPrefab;
-    public GameObject lineObjectPrefab;
+    public GameObject flexibleLinePrefab;
+    public GameObject xrDebugConsolePrefab;
 
     
     public GameObject GetToolPrefab(TsvrToolType toolType) {

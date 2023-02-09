@@ -1,6 +1,7 @@
 {
   "dependencies": {
     "com.unity.ai.navigation": "1.1.1",
+    "com.unity.audio.dspgraph": "0.1.0-preview.22",
     "com.unity.collab-proxy": "1.17.7",
     "com.unity.collections": "1.2.4",
     "com.unity.ide.rider": "3.0.16",

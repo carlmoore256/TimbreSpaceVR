@@ -4,10 +4,11 @@ using UnityEngine;
 using UnityEngine.InputSystem;
 using System.Threading.Tasks;
 using NWaves.Signals;
+using System;
 
 public class GrainSpawner : TsvrTool
 {   
-    public new TsvrToolType ToolType = TsvrToolType.GrainSpawner;
+    public override TsvrToolType ToolType { get => TsvrToolType.GrainSpawner; }
     public FileListUI fileListUI;
 
     // public InputActionMap ToolActions;
@@ -19,14 +20,17 @@ public class GrainSpawner : TsvrTool
     private DiscreteSignal audioBuffer;
     private bool isSpawnReady = false;
 
-    private float modelScale = 1f;
-    private float modelDist = 0.5f;
+    private float modelScale = 0.5f;
+    private float modelDist = 1.5f;
+
+    private GrainModel newGrainModel;
 
     public void OnEnable() {
 
         // var files = TsvrApplication.AudioManager.GetDefaultAudioFiles();
-        fileListUI.SetDirectory(TsvrApplication.AudioManager.GetDefaultAudioFilePath(), "wav");
-        
+        // fileListUI.SetDirectory(TsvrApplication.AudioManager.GetDefaultAudioFilePath(), "wav");
+        fileListUI.SetToBuiltinFiles();
+
         if (animations != null) {
             Debug.Log("Playing equip animation");
             animations.Play("GrainSpawnerEquip");
@@ -34,9 +38,13 @@ public class GrainSpawner : TsvrTool
 
         SubscribeActions();
         // StartCoroutine(DebugSpawnDelayed());
+        newGrainModel = Instantiate(TsvrApplication.Config.grainModel, GameObject.Find("GrainParent").transform).GetComponent<GrainModel>();
     }
 
     public void OnDisable() {
+        if (newGrainModel.State == GrainModelState.Unplaced && newGrainModel != null)
+            Destroy(newGrainModel.gameObject);
+
         UnsubscribeActions();
         if (animations != null) {
             Debug.Log("Playing unequip animation");
@@ -45,14 +53,15 @@ public class GrainSpawner : TsvrTool
     }
 
     void SubscribeActions() {
+        Debug.Log("About to create twist lock action");
         twistLockModelScale = new TwistLockAction(
             -180f, 180f, 
-            1f, 10f,
+            0.3f, 5f,
             modelScale,
-            TsvrApplication.Settings.wandDistIncrement,// <- eventually set these from global parameters
+            TsvrApplication.Settings.WandDistIncrement.value,// <- eventually set these from global parameters
             ControllerActions.twistLock.action,
             ControllerActions.rotationAction.action,
-            ChangeModelScale,
+            (scale) => modelScale = scale,
             ControllerActions.Hand == ControllerHand.Left
         );
 
@@ -82,16 +91,18 @@ public class GrainSpawner : TsvrTool
         // m_ControllerActions.UnsubscribeAction(m_ToolController.m_ControllerActions.grainSpawnerAction, OnGrainSpawnerAction);
     }
 
-    void Execute(InputAction.CallbackContext ctx) {
-        switch(ctx.action.name) {
-            case "GrainSpawnerAction":
-                Debug.Log("Grain spawner action");
-                break;
-            default:
-                Debug.Log("Unknown action");
-                break;
+    void Update() {
+        
+        if (newGrainModel.State == GrainModelState.Unplaced) {
+            newGrainModel.coroutineManager.MoveTo(
+                ToolController.transform.position + ToolController.transform.forward * modelDist, 
+                0.5f
+            );
+            newGrainModel.coroutineManager.ScaleTo(
+                new Vector3(modelScale, modelScale, modelScale),
+                0.5f
+            );
         }
-        Debug.Log("Joystick select" + ctx.ReadValue<Vector2>());
     }
 
     void CycleSelection(InputAction.CallbackContext ctx) {
@@ -107,8 +118,6 @@ public class GrainSpawner : TsvrTool
     }
 
     void ChangeModelScale(float scale) {
-        // modelScale = scale * 0.01f;
-        // modelScale = Mathf.Clamp(modelScale, 0.01f, 0.5f);
         modelScale = scale;
         Debug.Log("Model scale: " + modelScale);
     }
@@ -121,27 +130,41 @@ public class GrainSpawner : TsvrTool
 
     async void SpawnSelectedFile(InputAction.CallbackContext ctx) {
         animations.Play("GrainSpawnerButton");
-        GameObject newModel = Instantiate(
-            TsvrApplication.Config.grainModel, 
-            GameObject.Find("GrainParent").transform);
-        GrainModel grainModel = newModel.GetComponent<GrainModel>();
-        grainModel.Initialize(new Vector3(0,1,1), modelScale);
 
-        Task<DiscreteSignal> loadAudio = Task.Run(() => {
-            return AudioIO.ReadMonoAudioFile(fileListUI.CurrentlySelectedFile.FullName);
-        });
+        newGrainModel.ChangeState(GrainModelState.Placed);
 
-        await loadAudio.ContinueWith(t => {
-            Debug.Log($"Loaded Audio | Num Samples: {t.Result.Length}.");
-            audioBuffer = t.Result;
-            isSpawnReady = true;
-        });
-        StartCoroutine(SpawnAfterAudioLoad(grainModel));
-        // selectedModel = gm;
+        Debug.Log("Spawn selected file " + fileListUI.CurrentlySelectedFile.Name);
+        if (fileListUI.isBrowsingBuiltInFiles) {
+            AudioIO.LoadAudioFromAssets("Audio/" + fileListUI.CurrentlySelectedFile.Name, (signal) => {
+                Debug.Log($"Loaded Audio | Num Samples: {signal.Length}.");
+                newGrainModel.SetAudioBuffer(signal);
+            });
+            // AudioIO.LoadAddressableAudioClip("Audio/" + fileListUI.CurrentlySelectedFile.Name, (signal) => {
+            //     Debug.Log($"Loaded Audio | Num Samples: {signal.Length}.");
+            //     newGrainModel.SetAudioBuffer(signal);
+            // });
+        } else {
+            Task<DiscreteSignal> loadAudio = Task.Run(() => {
+                return AudioIO.ReadMonoAudioFile(fileListUI.CurrentlySelectedFile.FullName);
+            });
+
+            await loadAudio.ContinueWith(t => {
+                Debug.Log($"Loaded Audio | Num Samples: {t.Result.Length}.");
+                audioBuffer = t.Result;
+                isSpawnReady = true;
+            });
+
+            StartCoroutine(SetGrainModelBuffer(newGrainModel, () => {
+                newGrainModel = Instantiate(TsvrApplication.Config.grainModel, GameObject.Find("GrainParent").transform).GetComponent<GrainModel>();
+            }));
+        }
+
+        // newGrainModel = Instantiate(TsvrApplication.Config.grainModel, GameObject.Find("GrainParent").transform).GetComponent<GrainModel>();
     }
 
-    IEnumerator SpawnAfterAudioLoad(GrainModel model) {
+    IEnumerator SetGrainModelBuffer(GrainModel model, Action onComplete = null) {
         yield return new WaitUntil(() => isSpawnReady);
         model.SetAudioBuffer(audioBuffer);
+        onComplete?.Invoke();
     }
 }

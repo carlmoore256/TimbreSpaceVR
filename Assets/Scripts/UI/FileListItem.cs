@@ -12,9 +12,17 @@ public class FileListItem : MonoBehaviour
     public bool Selected { get; private set; }
     public FileInfo file;
     // private Image background;
+    private Color originalColor;
 
     void Start() {
         // background = GetComponent<Image>();
+        originalColor = GetComponent<Image>().color;
+    }
+
+    public void SetFile(AddressableResourceInfo file) {
+        this.file = new FileInfo(file.key);
+        filepath.text = file.title;
+        size.text = (file.bytes * 0.000001f).ToString("F2") + " MB";
     }
 
     public void SetFile(FileInfo file) {
@@ -29,7 +37,12 @@ public class FileListItem : MonoBehaviour
     }
 
     public void Deselect() {
-        GetComponent<Image>().color = Color.white;
+        GetComponent<Image>().color = originalColor;
         Selected = false;
+    }
+
+    public void SetHeight(float height) {
+        RectTransform rect = GetComponent<RectTransform>();
+        rect.sizeDelta = new Vector2(rect.sizeDelta.x, height);
     }
 }

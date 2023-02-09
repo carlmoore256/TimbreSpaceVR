@@ -1,11 +1,17 @@
 using System.Collections;
 using System.Collections.Generic;
-using UnityEngine;
 using System.Threading;
 using System.Collections.Concurrent;
 using System;
 using NWaves.Signals;
 using System.Threading.Tasks;
+using UnityEngine;
+
+
+public enum GrainModelState {
+    Unplaced,
+    Placed
+}
 
 
 // ideas - consider making an object pool for GrainModel, to reduce CPU load
@@ -15,116 +21,93 @@ using System.Threading.Tasks;
 /// Manager and container for a collection of playable grains
 /// </summary>
 public class GrainModel : MonoBehaviour {
-    public float ModelScale { get => transform.localScale.x; set => targetScale = Vector3.one * value; }
+    // public float ModelScale { get => transform.localScale.x; set => TargetScale = Vector3.one * value; }
     public DiscreteSignal AudioBuffer { get; protected set; }
     public List<Grain> Grains { get; protected set; }
+    public GrainModelState State { get; set; } = GrainModelState.Unplaced;
+    public GrainModelParameters Parameters { get; protected set; }
 
+    public Color colorProcessing = new Color(222, 92, 0, 0.6f);
+    public Color colorPlaced = new Color(255, 255, 255, 0.0f);
+    public Color colorUnplaced = new Color(255, 255, 255, 1f);
 
-    private float lerpSpeed = 15f;
     private float grainScale = 2f;
     
     // eventually this will be in its own constellation class
-    public float seqPlayRate = 1f;
+    public float seqPlayRate = 0.1f;
     private bool useHSV = false;
 
-    private Vector3 targetPosition;
-    private Vector3 targetScale;
-    private Quaternion targetRotation;
-
-    private GrainModelParameters parameters;
     private Vector3 posAxisScale = Vector3.one;
 
-    Thread T_procAudio = null;
+    Thread T_FeatureExtractor = null;
     ConcurrentQueue<GrainFeatures> grainFeaturesQueue = new ConcurrentQueue<GrainFeatures>();
     ConcurrentQueue<GrainAudioFeatures> grainAudioFeaturesQueue = new ConcurrentQueue<GrainAudioFeatures>();
 
     private GrainModelPlayback grainModelPlayback;
     public GameObject boundingBox;
 
-    private CoroutineManager coroutineManager;
+    public TransformCoroutineManager coroutineManager;
 
-    /// <summary>
-    /// Main initialization for newly spawned GrainModel
-    /// </summary>
-    public void Initialize(Vector3 spawnPos, float modelScale=0.3f)
-    {
-        transform.position = spawnPos;
-        targetPosition = spawnPos;
-        targetRotation = transform.rotation;
-        ModelScale = modelScale;
-    }
+    AudioFeatureExtractor featureExtractor;
 
     /// ===== MonoBehaviours ===========================================================
 
     void OnEnable() {
+
         grainModelPlayback = gameObject.AddComponent<GrainModelPlayback>();
-        coroutineManager = new CoroutineManager(this);
+        coroutineManager = new TransformCoroutineManager(this, () => {
+            Debug.Log("Sending Spring Toggle broadcast message -> OFF");
+            BroadcastMessage("ToggleSpring", false, SendMessageOptions.DontRequireReceiver);
+        }, () => {
+            Debug.Log("Sending Spring Toggle broadcast message -> ON");
+            BroadcastMessage("ToggleSpring", true, SendMessageOptions.DontRequireReceiver);
+        });
 
         Grains = new List<Grain>();
         // Initialize parameter callbacks which will update the grains when changed
-        this.parameters = new GrainModelParameters(
-            (AudioFeature[] features) => {
-                Debug.Log("[GrainModel] Display Parameters changed " + features.ToString());
-                foreach(Grain grain in Grains)
-                    grain.UpdatePosition(features[0], features[1], features[2], posAxisScale);
+        this.Parameters = new GrainModelParameters(
+            (AudioFeature[] posFeatures) => {
+                if (this.AudioBuffer == null) return;
+                if (TsvrApplication.Settings.DebugLogging)
+                TsvrApplication.DebugLogger.Log("Position Parameters changed " + posFeatures[0].ToString() + " " + posFeatures[1].ToString() + " " + posFeatures[2].ToString(), "[GrainModel]");
+                featureExtractor.ExtractFeatures(this.AudioBuffer, posFeatures, () => { // make sure we compute any features that need to be computed
+                    foreach(Grain grain in Grains)
+                        grain.UpdatePosition(posFeatures[0], posFeatures[1], posFeatures[2], posAxisScale);
+                });
             }, 
-            (AudioFeature[] features) => {
-                Debug.Log("[GrainModel] Display Parameters changed " + features.ToString());
-                foreach(Grain grain in Grains)
-                    grain.UpdateColor(features[0], features[1], features[2], useHSV);
+            (AudioFeature[] colFeatures) => {
+                if (this.AudioBuffer == null) return;
+                TsvrApplication.DebugLogger.Log("Color Parameters changed " + colFeatures[0].ToString() + " " + colFeatures[1].ToString() + " " + colFeatures[2].ToString(), "[GrainModel]");
+                featureExtractor.ExtractFeatures(this.AudioBuffer, colFeatures, () => {
+                    foreach(Grain grain in Grains)
+                        grain.UpdateColor(colFeatures[0], colFeatures[1], colFeatures[2], useHSV);
+                });
             },
             (AudioFeature sclFeature) => {
-                Debug.Log("[GrainModel] Display Parameters changed " + sclFeature.ToString());
-                foreach(Grain grain in Grains)
-                    grain.UpdateScale(sclFeature, grainScale);
+                if (this.AudioBuffer == null) return;
+                TsvrApplication.DebugLogger.Log("Scale Parameters changed " + sclFeature.ToString(), "[GrainModel]");
+                featureExtractor.ExtractFeatures(this.AudioBuffer, new AudioFeature[] {sclFeature}, () => {
+                    foreach(Grain grain in Grains)
+                        grain.UpdateScale(sclFeature, grainScale);
+                });
             },
             (int windowSize, int hopSize) => {
-                Debug.Log("[GrainModel] Window Parameter Changed - Window Size: "
-                        + windowSize + " Hop Size: " + hopSize);
+                TsvrApplication.DebugLogger.Log("Window Parameters changed " + windowSize.ToString() + " | Hop Size: " + hopSize.ToString(), "[GrainModel]");
                 // Here we need to recalculate all grains
                 ClearGrains(); // <- instead, consider using pool, and returning to pool
             }
         );
-        // boundingBox.transform.localScale = Vector3.one * ModelScale;
-        coroutineManager.TimedAction("bbox-scale",
-            (progress) => {
-                boundingBox.transform.localScale = Vector3.one * ModelScale * progress * 2f;
-            }, 0.5f
-        );
+
+        featureExtractor = new AudioFeatureExtractor(this.Parameters.WindowSize, this.Parameters.HopSize);
+
+        ChangeState(GrainModelState.Unplaced);
     }
 
     void OnDisable() {
-        T_procAudio?.Abort();
+        grainModelPlayback.StopAllCoroutines();
+        grainModelPlayback = null;
+        T_FeatureExtractor?.Abort();
     }
-
-    void Update()
-    {
-        if(!Vector3.Equals(transform.position, targetPosition))
-        {
-            transform.position = Vector3.MoveTowards(transform.position, targetPosition, Time.deltaTime * lerpSpeed);
-            float distance = Vector3.Distance(transform.position, targetPosition);
-            Debug.Log("Moving grain model towards target position | distance: " + distance);
-            if (distance < 0.1f) transform.position = targetPosition;
-        }
-
-        if(!Quaternion.Equals(transform.rotation, targetRotation))
-        {
-            transform.rotation = Quaternion.RotateTowards(transform.rotation, targetRotation, Time.deltaTime * lerpSpeed);
-            float angle = Quaternion.Angle(transform.rotation, targetRotation);
-            Debug.Log("Rotating grain model towards target rotation | angle: " + angle + " degrees");
-            if (angle < 0.1f) transform.rotation = targetRotation;
-        }
-
-        if (!Vector3.Equals(transform.localScale, targetScale))
-        {
-            transform.localScale = Vector3.MoveTowards(transform.localScale, targetScale, Time.deltaTime * lerpSpeed);
-            float distance = Vector3.Distance(transform.localScale, targetScale);
-            Debug.Log("Scaling grain model towards target scale | distance: " + distance);
-            if (distance < 0.1f) transform.localScale = targetScale;
-        }
-
-    }
-    
 
     // DEGUGGING - remove me!
     public void PlaySequentially() {
@@ -138,53 +121,44 @@ public class GrainModel : MonoBehaviour {
             if (Grains.Count == 0) {
                 yield return null; 
             } else {
-                print($"playing grain {seqIndex}");
                 Grains[seqIndex].PlayGrain();
                 seqIndex = (seqIndex + 1) % Grains.Count;
+                // for (int i = 0; i < 10; i++) {
+                //     // print($"playing grain {seqIndex}");
+                // }
                 yield return new WaitForSeconds(seqPlayRate);
             }
         }
     }
 
+    /// <summary>
+    /// Set the grain model's audio samples and trigger audio analysis and grain spawning routines
+    /// </summary>
     public void SetAudioBuffer(DiscreteSignal audioBuffer) {
         this.AudioBuffer = audioBuffer;
+        Debug.Log("=> Setting audio buffer for " + gameObject.name + " with " + audioBuffer.Length + " samples");
         grainModelPlayback.SetAudioBuffer(audioBuffer);
         ClearGrains();
-        T_procAudio = new Thread(() => {
-            AudioFeatureExtractor extractor = new AudioFeatureExtractor(this.parameters.WindowSize, this.parameters.HopSize);
-            extractor.ExtractFeatures(
+        T_FeatureExtractor = new Thread(() => {
+            var selectedFeatures = this.Parameters.CurrentlySelected();
+            featureExtractor.ExtractFeatures(
                 audioBuffer, 
-                this.parameters.CurrentlySelected(), 
-                (GrainAudioFeatures gf) => { grainAudioFeaturesQueue.Enqueue(gf); }                
+                selectedFeatures, 
+                () => {
+                    for(int i = 0; i < featureExtractor.FeatureValues[selectedFeatures[0]].Length; i++) {
+                        grainAudioFeaturesQueue.Enqueue(new GrainAudioFeatures(featureExtractor, i));
+                    }
+                }
             );
             print($"Completed audio feature analysis");
         });
-        T_procAudio.Start();
+        T_FeatureExtractor.Start();
         StartCoroutine(SpawnGrainsFromQueue());
     }
 
-    ///<summary> 
-    /// threaded audio processing and coroutines to spawn grains
+    /// <summary>
+    /// Remove all grains from the model
     /// </summary>
-    void LoadGrainsFromAudioFile(string audioPath, int windowSize, int hop)
-    {
-        Debug.Log("Spawning grains from audio file: " + audioPath + " | window size: " + windowSize + " | hop size: " + hop);
-
-        T_procAudio = new Thread(() => {
-            Debug.Log($"Starting audio feature analysis for {audioPath}");
-            AudioBuffer = AudioIO.ReadMonoAudioFile(audioPath);
-            AudioFeatureExtractor extractor = new AudioFeatureExtractor(windowSize, hop);
-            extractor.ExtractFeatures(
-                AudioBuffer, 
-                this.parameters.CurrentlySelected(), 
-                (GrainAudioFeatures gf) => { grainAudioFeaturesQueue.Enqueue(gf); }                
-            );
-            print($"Completed audio feature analysis for {audioPath}");
-        });
-        T_procAudio.Start();
-        StartCoroutine(SpawnGrainsFromQueue());
-    }
-
     void ClearGrains() {
          // consider using pool, and returning to pool
         foreach(Grain grain in Grains)
@@ -192,10 +166,14 @@ public class GrainModel : MonoBehaviour {
         Grains.Clear();
     }
 
-    // watch for grains to enter queue
+    /// <summary>
+    /// Watch a thread safe queue and wait for new grains to enter, spawning them as they are enqued
+    /// </summary>
     IEnumerator SpawnGrainsFromQueue(int batchSize = 16) {
         while (grainAudioFeaturesQueue.Count == 0)
             yield return null;
+       
+        Debug.Log($"Spawning grains, total count: {grainAudioFeaturesQueue.Count}");
         while (grainAudioFeaturesQueue.Count > 0) {
             for (int i = 0; i < batchSize; i++) {
                 if (grainAudioFeaturesQueue.TryDequeue(out GrainAudioFeatures gf)) {
@@ -208,23 +186,47 @@ public class GrainModel : MonoBehaviour {
         }
     }
 
-    //moves grain model to a location, and rotates to look at a point
-    public void MoveLookAt(Vector3 lookAtPos, Vector3 _targetPosition)
-    {
-        targetRotation = Quaternion.LookRotation(lookAtPos);
-        targetPosition = _targetPosition;
-    }
-
-    void SpawnGrain(GrainAudioFeatures features)
+    /// <summary>
+    /// Spawn a single grain object into the model given a GrainAudioFeatures object
+    /// </summary>
+    public void SpawnGrain(GrainAudioFeatures features)
     {
         GameObject grainObject = Instantiate(TsvrApplication.Config.grainPrefab, transform);
         Grain grain = grainObject.GetComponent<Grain>();
-        // Debug.Log("Spawning Grain with RMS feature: " + features.Get(AudioFeature.RMS).ToString());
-        grain.Initialize(features, parameters, grainModelPlayback.RegisterPlaybackEvent);
+        grain.Initialize(features, Parameters, grainModelPlayback.RegisterPlaybackEvent);
         Grains.Add(grain);
     }
 
-    // IEnumerator 
+
+    public void ChangeState(GrainModelState state) {
+        State = state;
+        switch (state) {
+            case GrainModelState.Unplaced:
+                SetBBoxColor(colorUnplaced, 2f);
+                break;
+            case GrainModelState.Placed:
+                coroutineManager.Freeze();
+                SetBBoxColor(colorPlaced, 3f);
+                break;
+        }
+    }
+
+
+    public void SetBBoxColor(Color color, float duration = 1f, float delay = 0f) {
+        Color currentColor = boundingBox.GetComponent<Renderer>().material.color;
+        if (Color.Equals(currentColor, color)) return;
+        coroutineManager.TimedAction("bbox-opacity", 
+            (progress) => {
+                Color currentColor = boundingBox.GetComponent<Renderer>().material.color;
+                boundingBox.GetComponent<Renderer>().material.color = Color.Lerp(currentColor, color, progress);
+            },
+            onComplete : () => {
+                boundingBox.GetComponent<Renderer>().material.color = color;
+            },
+            duration : duration,
+            delay : delay
+        );
+    }
 }
 
 

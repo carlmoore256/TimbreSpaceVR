@@ -2,8 +2,64 @@ using UnityEngine;
 using System.IO;
 using NWaves.Signals;
 using NWaves.Audio;
+using UnityEngine.Networking;
+using System;
+// using UnityEngine.AddressableAssets;
 
 public class AudioIO {
+
+    public static DiscreteSignal AudioClipToDiscreteSignal(AudioClip clip) {
+        float[] samples = new float[clip.samples * clip.channels];
+        clip.GetData(samples, 0);
+        return new DiscreteSignal(clip.frequency, samples);
+    }
+
+    public static void LoadAudioFromAssets(string path, Action<DiscreteSignal> callback) {
+        var handler = Resources.LoadAsync<AudioClip>(path);
+
+        handler.completed += (op) => {
+            AudioClip clip = handler.asset as AudioClip;
+            if (clip == null) {
+                Debug.LogError("Failed to load audio file: " + path);
+                return;
+            }
+            callback(AudioClipToDiscreteSignal(clip));
+        };
+        // callback(AudioClipToDiscreteSignal(clip));
+    }
+
+    // public static async void LoadAddressableAudioClip(string path, Action<DiscreteSignal> callback) {
+    //     var resourceRequest = Addressables.LoadAssetAsync<AudioClip>(path);
+    //     resourceRequest.Completed += (op) => {
+    //         if (resourceRequest.Status == UnityEngine.ResourceManagement.AsyncOperations.AsyncOperationStatus.Succeeded) {
+    //             AudioClip clip = resourceRequest.Result;
+    //             callback(AudioClipToDiscreteSignal(clip));
+    //         }
+    //     };
+    //     await resourceRequest.Task;
+    // }
+
+    public static DiscreteSignal OpenFileWebRequest(string path, bool mono = true) {
+        UnityWebRequest webRequest = UnityWebRequest.Get(path);
+        webRequest.SendWebRequest();
+        while (!webRequest.isDone)
+            Debug.Log("Downloading...");
+
+        DiscreteSignal signal;
+        
+        using (MemoryStream stream = new MemoryStream(webRequest.downloadHandler.data)) {
+            var waveFile = new WaveFile(stream);
+            if (waveFile.Signals.Count == 0) {
+                Debug.LogError("Invalid number of channels for audio file: " + path);
+                return null;
+            }
+            if (mono) {
+                signal = waveFile[Channels.Average];
+                return signal;
+            }
+        }
+        return null;
+    }
 
     public static DiscreteSignal ReadMonoAudioFile(string path) {
         DiscreteSignal signalMono;

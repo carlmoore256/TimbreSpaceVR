@@ -75,3 +75,12 @@ crashlytics-build.properties
 /Assets/ProfilerRuns/*
 .DS_Store
 .vscode/
+
+/Assets/Resources/Audio/*
+/Assets/Resources_moved
+/Assets/Resources_moved.meta
+/Assets/Resources/SamplePacks/*
+/Assets/Resources/Data
+Assets/Resources/Data.meta
+
+/Assets/Samples

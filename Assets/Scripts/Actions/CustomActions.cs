@@ -2,8 +2,9 @@ using UnityEngine;
 using UnityEngine.XR.Interaction.Toolkit;
 using UnityEngine.InputSystem;
 using UnityEngine.Events;
+using System;
 
-public class TwistLockAction : MonoBehaviour {
+public class TwistLockAction {
     float minAngle;
     float maxAngle;
 
@@ -20,9 +21,10 @@ public class TwistLockAction : MonoBehaviour {
     InputAction.CallbackContext rotationCallback;
     ActionBasedController controller;
     ControllerActions controllerActions;
-    UnityEvent<float> listener;
+    // UnityEvent<float> listener;
+    Action<float> callback;
     float modulationValue = 0f;
-    bool active = false;
+    bool isActive = false;
     bool reverse = false;
 
     // InputAction.CallbackContext scalarCallback; <- implement this later
@@ -34,7 +36,7 @@ public class TwistLockAction : MonoBehaviour {
         float incrementAmount,
         InputAction toggleAction,
         InputAction rotationAction,
-        UnityAction<float> callback = null,
+        Action<float> callback,
         bool reverse = false)
     {
         this.initialRotation = Quaternion.identity;
@@ -49,49 +51,52 @@ public class TwistLockAction : MonoBehaviour {
         this.lockedValue = initValue;
         this.reverse = reverse;
 
+        this.callback = callback;
+
         toggleAction.started += Started;
         toggleAction.canceled += Canceled;
         toggleAction.performed += Modulate;
 
-        listener = new UnityEvent<float>();
-        listener.AddListener(callback);
+        // listener = new UnityEvent<float>();
+        // listener.AddListener(callback);
 
-        if (listener != null) rotationAction.performed += ListenForRotation;
+        rotationAction.performed += ListenForRotation;
     }
 
     void ListenForRotation(InputAction.CallbackContext ctx) {
-        if (listener == null) return;
-        if (active) {
+        // if (callback == null) return;
+        if (isActive) {
             float currentAngle = AngleFrom(ctx.ReadValue<Quaternion>());
             currentValue = lockedValue + (currentAngle * incrementAmount);
             currentValue = Mathf.Clamp(currentValue, minValue, maxValue);
-            listener.Invoke(currentValue);
+            callback.Invoke(currentValue);
         }
     }
 
     public void Started(InputAction.CallbackContext ctx)
     {
-        Debug.Log("TwistLockAction started!");
+        // Debug.Log("TwistLockAction started!");
         initialRotation = rotationAction.ReadValue<Quaternion>();
-        active = true;
+        isActive = true;
     }
 
     public void Canceled(InputAction.CallbackContext ctx)
     {
-        Debug.Log("TwistLockAction canceled!");
+        // Debug.Log("TwistLockAction canceled!");
         lockedValue = currentValue; // store the locked value 
-        active = false;
+        isActive = false;
     }
 
     // TODO: Implement this if we want to apply extra pressure to the button to modify an action
     public void Modulate(InputAction.CallbackContext ctx)
     {
+        // Debug.Log("Modulate action called!");
         if (ctx.ReadValue<float>() < 0.01f) {
-            Debug.Log("TwistLockAction value too low, deactivating");
+            // Debug.Log("TwistLockAction value too low, deactivating");
             Canceled(ctx);
         } else {
             modulationValue = ctx.ReadValue<float>();
-            Debug.Log("TwistLockAction value: " + modulationValue);
+            // Debug.Log("TwistLockAction value: " + modulationValue);
         }
     }
 
@@ -110,7 +115,8 @@ public class TwistLockAction : MonoBehaviour {
         this.toggleAction.started -= Started;
         this.toggleAction.canceled -= Canceled;
         this.toggleAction.performed -= Modulate;
-        if (listener != null) rotationAction.performed -= ListenForRotation;
+        // if (listener != null) 
+        rotationAction.performed -= ListenForRotation;
     }
 
     // functions for haptics and maybe sound

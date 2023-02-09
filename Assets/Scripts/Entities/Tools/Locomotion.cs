@@ -7,7 +7,7 @@ using UnityEngine.InputSystem;
 // press the main action button to activate free flying mode
 public class Locomotion : TsvrTool
 {
-    public new TsvrToolType ToolType = TsvrToolType.Locomotion;
+    public override TsvrToolType ToolType { get => TsvrToolType.Locomotion; }
 
     public Transform moveableJoystick;
     public Transform antennaTip;

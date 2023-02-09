@@ -8,7 +8,7 @@ using UnityEngine.XR.Interaction.Toolkit;
 
 public class Menu : TsvrTool
 {
-    public new TsvrToolType ToolType = TsvrToolType.Menu;
+    public override TsvrToolType ToolType { get => TsvrToolType.Menu; }
 
     public Menu() {}
     public Menu(ActionBasedController controller) {

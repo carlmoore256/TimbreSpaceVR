@@ -16,3 +16,4 @@ MonoBehaviour:
   _settings: {fileID: 11400000, guid: 99de5b75ce7baba46bbf51bd3c616c28, type: 2}
   _config: {fileID: 11400000, guid: 11b91bbe2825f63439e12ac9145aa127, type: 2}
   _inputActions: {fileID: -944628639613478452, guid: 69622e516e87ac947868d5226c5d1f8d, type: 3}
+  _debugLogger: {fileID: 11400000, guid: 03ec08bd07b6ca642ae10dbe88d3f829, type: 2}

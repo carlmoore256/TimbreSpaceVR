@@ -68,9 +68,9 @@ public class RuntimeMgr : MonoBehaviour
         if (lookAtGrain && selectedModel != null)
         {
             lookAtGrain = false;
-            selectedModel.MoveLookAt(
-                Camera.main.transform.position,
-                Camera.main.transform.position + lookAtPos);
+            // selectedModel.MoveLookAt(
+            //     Camera.main.transform.position,
+            //     Camera.main.transform.position + lookAtPos);
         }
     }
 }

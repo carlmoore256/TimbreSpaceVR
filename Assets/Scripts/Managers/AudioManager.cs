@@ -9,11 +9,19 @@ using UnityEngine.Audio;
 public class AudioManager : ScriptableObject
 {
     public AudioMixer grainModelAudioMixer;
-    public int SampleRate => AudioSettings.GetConfiguration().sampleRate;
+
+    private int _sampleRate;
+    public int SampleRate => _sampleRate;
     public static string[] MicrophoneDevices => UnityEngine.Microphone.devices;
+
+    private static AudioManager _instance;
+    public static AudioManager Instance { get { return _instance; } }
     
 
-    private void OnEnable() {  }
+    private void OnEnable() { 
+        _instance = this;
+        _sampleRate = AudioSettings.GetConfiguration().sampleRate;
+    }
 
     private static AudioSource _microphone;
     public static AudioSource Microphone {
