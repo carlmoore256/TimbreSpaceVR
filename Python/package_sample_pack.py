@@ -23,11 +23,15 @@ def get_audio_info(file):
 def get_sample_info(file):
     print(f'Getting info for {file}...')
     file_bytes = os.stat(file).st_size
+    audio_info = get_audio_info(file)
     return {
         "file": os.path.basename(file),
         "title": os.path.basename(file).split(".")[0].replace("_", " ").replace("-", " ").title(),
         "bytes": file_bytes,
-        "info" : get_audio_info(file)
+        "duration": audio_info["duration"],
+        "channels": audio_info["channels"],
+        "maxDBFS": audio_info["maxDBFS"],
+        # "info" : get_audio_info(file)
     }
 
 
@@ -45,13 +49,14 @@ def update_sample_pack_info():
     packs = glob.glob(SAMPLE_PACKS_PATH + "/*")
     packs = [p for p in packs if os.path.isdir(p)]
     packs = [load_json(os.path.join(p, "pack.json")) for p in packs]
-    packs = sorted(packs, key=lambda k: k['title'])
-    info = [{
-        "title": p["title"],
-        "id": p["id"],
-        "creator": p["creator"],
-        "numSamples": len(p["samples"]),
-    } for p in packs]
+    packs = sorted(packs, key=lambda k: k['metadata']['title'])
+    info = [p['metadata'] for p in packs]
+    # info = [{
+    #     "title": p["title"],
+    #     "id": p["id"],
+    #     "creator": p["creator"],
+    #     "numSamples": len(p["samples"]),
+    # } for p in packs]
     save_json(info, SAMPLE_PACKS_INFO)
     print(f"Updated sample pack info: {SAMPLE_PACKS_INFO}")
 
@@ -61,17 +66,20 @@ def create_sample_pack(path, title=None, creator=DEFAULT_CREATOR, description=""
         title = os.path.basename(path).replace("_", " ").replace("-", " ").title()
     files = glob.glob(path + "/*.wav")
     samples = [get_sample_info(f) for f in files]
-    samples = [s for s in samples if s["bytes"] > 0 and s["info"]["duration"] > 0 and s["info"]["maxDBFS"] > -60]
+    samples = [s for s in samples if s["bytes"] > 0 and s["duration"] > 0 and s["maxDBFS"] > -60]
     print(f'Sample Pack: {title} | Found {len(samples)} samples in {path}')
     samples = sorted(samples, key=lambda k: k['title'])
-    pack_info = {
-        "title": title,
-        "id": title.replace(" ", "-").lower(),
-        "creator": creator,
-        "created": datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S"),
+    pack = {
+        "metadata" : {
+            "title": title,
+            "id": title.replace(" ", "-").lower(),
+            "creator": creator,
+            "date": datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S"),
+            "numSamples": len(samples),
+        },
         "samples": samples,
     }
-    outdir = os.path.join(SAMPLE_PACKS_PATH, pack_info["id"])
+    outdir = os.path.join(SAMPLE_PACKS_PATH, pack["metadata"]["id"])
     if os.path.exists(outdir) and not overwrite:
         print("Sample pack already exists. Use --overwrite to overwrite.")
         return
@@ -83,9 +91,12 @@ def create_sample_pack(path, title=None, creator=DEFAULT_CREATOR, description=""
     for sample in samples:
         src = os.path.join(path, sample["file"])
         dst = os.path.join(outdir, sample["file"])
-        print(f"Copying {src} => {dst}")
-        shutil.copyfile(src, dst)
-    save_json(pack_info, os.path.join(outdir, "pack.json"))
+        if os.path.exists(dst):
+            print(f"File {dst} already exists, continuing")
+        else:
+            print(f"Copying {src} => {dst}")
+            shutil.copyfile(src, dst)
+    save_json(pack, os.path.join(outdir, "pack.json"))
     update_sample_pack_info()
 
 

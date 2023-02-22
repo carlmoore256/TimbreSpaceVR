@@ -168,6 +168,67 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   masterManager: {fileID: 11400000, guid: 6ff26babf2693cc428b062ad747367ba, type: 2}
+--- !u!1001 &294184481
+PrefabInstance:
+  m_ObjectHideFlags: 0
+  serializedVersion: 2
+  m_Modification:
+    serializedVersion: 3
+    m_TransformParent: {fileID: 0}
+    m_Modifications:
+    - target: {fileID: 6768700354464914481, guid: fe23510c161267e4fba2b4ae814d01dd, type: 3}
+      propertyPath: m_RootOrder
+      value: 4
+      objectReference: {fileID: 0}
+    - target: {fileID: 6768700354464914481, guid: fe23510c161267e4fba2b4ae814d01dd, type: 3}
+      propertyPath: m_LocalPosition.x
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 6768700354464914481, guid: fe23510c161267e4fba2b4ae814d01dd, type: 3}
+      propertyPath: m_LocalPosition.y
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 6768700354464914481, guid: fe23510c161267e4fba2b4ae814d01dd, type: 3}
+      propertyPath: m_LocalPosition.z
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 6768700354464914481, guid: fe23510c161267e4fba2b4ae814d01dd, type: 3}
+      propertyPath: m_LocalRotation.w
+      value: 1
+      objectReference: {fileID: 0}
+    - target: {fileID: 6768700354464914481, guid: fe23510c161267e4fba2b4ae814d01dd, type: 3}
+      propertyPath: m_LocalRotation.x
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 6768700354464914481, guid: fe23510c161267e4fba2b4ae814d01dd, type: 3}
+      propertyPath: m_LocalRotation.y
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 6768700354464914481, guid: fe23510c161267e4fba2b4ae814d01dd, type: 3}
+      propertyPath: m_LocalRotation.z
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 6768700354464914481, guid: fe23510c161267e4fba2b4ae814d01dd, type: 3}
+      propertyPath: m_LocalEulerAnglesHint.x
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 6768700354464914481, guid: fe23510c161267e4fba2b4ae814d01dd, type: 3}
+      propertyPath: m_LocalEulerAnglesHint.y
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 6768700354464914481, guid: fe23510c161267e4fba2b4ae814d01dd, type: 3}
+      propertyPath: m_LocalEulerAnglesHint.z
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 6768700354465267729, guid: fe23510c161267e4fba2b4ae814d01dd, type: 3}
+      propertyPath: m_Name
+      value: TSVR_CameraRig
+      objectReference: {fileID: 0}
+    m_RemovedComponents: []
+    m_RemovedGameObjects: []
+    m_AddedGameObjects: []
+    m_AddedComponents: []
+  m_SourcePrefab: {fileID: 100100000, guid: fe23510c161267e4fba2b4ae814d01dd, type: 3}
 --- !u!114 &294742015
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -185,12 +246,12 @@ MonoBehaviour:
   trigger: {fileID: -5982496924579745919, guid: 69622e516e87ac947868d5226c5d1f8d, type: 3}
   triggerValue: {fileID: -4289430672226363583, guid: 69622e516e87ac947868d5226c5d1f8d, type: 3}
   uiSelect: {fileID: -6395602842196007441, guid: 69622e516e87ac947868d5226c5d1f8d, type: 3}
-  toolOptionButton: {fileID: -2802697259921070467, guid: 69622e516e87ac947868d5226c5d1f8d, type: 3}
+  toolOption: {fileID: 0}
+  toolCycle: {fileID: 0}
   twistLock: {fileID: 8135890386558409659, guid: 69622e516e87ac947868d5226c5d1f8d, type: 3}
   twistLockCombo: {fileID: 2352404234843634435, guid: 69622e516e87ac947868d5226c5d1f8d, type: 3}
   cycleTool: {fileID: -8285485279277431392, guid: 69622e516e87ac947868d5226c5d1f8d, type: 3}
   toolAxis2D: {fileID: 3554160475385253167, guid: 69622e516e87ac947868d5226c5d1f8d, type: 3}
-  rotationAction: {fileID: 8248158260566104461, guid: 69622e516e87ac947868d5226c5d1f8d, type: 3}
 --- !u!1 &323903396 stripped
 GameObject:
   m_CorrespondingSourceObject: {fileID: 2661409041641398641, guid: c19a2d64274b96e46aa2fae15534447c, type: 3}
@@ -248,7 +309,7 @@ Transform:
   m_ConstrainProportionsScale: 0
   m_Children: []
   m_Father: {fileID: 0}
-  m_RootOrder: 7
+  m_RootOrder: 8
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!82 &495631272
 AudioSource:
@@ -378,7 +439,7 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 1456155113860667390, guid: c19a2d64274b96e46aa2fae15534447c, type: 3}
       propertyPath: m_RootOrder
-      value: 5
+      value: 6
       objectReference: {fileID: 0}
     - target: {fileID: 1456155113860667390, guid: c19a2d64274b96e46aa2fae15534447c, type: 3}
       propertyPath: m_LocalPosition.x
@@ -535,12 +596,12 @@ MonoBehaviour:
   trigger: {fileID: 6229152407991357739, guid: 69622e516e87ac947868d5226c5d1f8d, type: 3}
   triggerValue: {fileID: -381425089236197406, guid: 69622e516e87ac947868d5226c5d1f8d, type: 3}
   uiSelect: {fileID: 9211074043744001999, guid: 69622e516e87ac947868d5226c5d1f8d, type: 3}
-  toolOptionButton: {fileID: -9140387785508975718, guid: 69622e516e87ac947868d5226c5d1f8d, type: 3}
+  toolOption: {fileID: 0}
+  toolCycle: {fileID: 0}
   twistLock: {fileID: -902207275808123316, guid: 69622e516e87ac947868d5226c5d1f8d, type: 3}
   twistLockCombo: {fileID: -7434197819030375116, guid: 69622e516e87ac947868d5226c5d1f8d, type: 3}
   cycleTool: {fileID: -6755291536297457856, guid: 69622e516e87ac947868d5226c5d1f8d, type: 3}
   toolAxis2D: {fileID: -8309100444357138472, guid: 69622e516e87ac947868d5226c5d1f8d, type: 3}
-  rotationAction: {fileID: 5101698808175986029, guid: 69622e516e87ac947868d5226c5d1f8d, type: 3}
 --- !u!114 &1015040797
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -681,7 +742,7 @@ PrefabInstance:
     m_Modifications:
     - target: {fileID: 464561725659107041, guid: 617b7960b7a266744959cd27fdd8091a, type: 3}
       propertyPath: m_RootOrder
-      value: 6
+      value: 7
       objectReference: {fileID: 0}
     - target: {fileID: 464561725659107041, guid: 617b7960b7a266744959cd27fdd8091a, type: 3}
       propertyPath: m_LocalScale.x
@@ -844,7 +905,7 @@ PrefabInstance:
     m_Modifications:
     - target: {fileID: 6353488165138264482, guid: 82ac23fa60bfa074ab269a61a69977bc, type: 3}
       propertyPath: m_RootOrder
-      value: 8
+      value: 9
       objectReference: {fileID: 0}
     - target: {fileID: 6353488165138264482, guid: 82ac23fa60bfa074ab269a61a69977bc, type: 3}
       propertyPath: m_LocalPosition.x
@@ -915,9 +976,13 @@ PrefabInstance:
       propertyPath: m_Name
       value: CameraRig
       objectReference: {fileID: 0}
+    - target: {fileID: 100004, guid: 126d619cf4daa52469682f85c1378b4a, type: 3}
+      propertyPath: m_IsActive
+      value: 0
+      objectReference: {fileID: 0}
     - target: {fileID: 400004, guid: 126d619cf4daa52469682f85c1378b4a, type: 3}
       propertyPath: m_RootOrder
-      value: 4
+      value: 5
       objectReference: {fileID: 0}
     - target: {fileID: 400004, guid: 126d619cf4daa52469682f85c1378b4a, type: 3}
       propertyPath: m_LocalPosition.x

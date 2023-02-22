@@ -13,11 +13,13 @@ MonoBehaviour:
   m_Name: TSVR_AppConfig
   m_EditorClassIdentifier: 
   wandPlay: {fileID: 2377529979667022799, guid: 6b8592ae1e407204a93d2d000e13e79f, type: 3}
-  wandEdit: {fileID: 2377529979667022799, guid: b8adcf2546a7f744db7e8f1e9c1c2527, type: 3}
-  wandConstellation: {fileID: 2377529979667022799, guid: 4270df5ef9230064cb6887338a57931d, type: 3}
+  wandEdit: {fileID: 0}
+  wandConstellation: {fileID: 0}
   menuTool: {fileID: 3165432181441587983, guid: 5d27698c9826f9041ab61818336e2257, type: 3}
   grainSpawner: {fileID: 5707957123579365033, guid: 8231ca3d5e692b24499678fe2a370a8e, type: 3}
   locomotionTool: {fileID: 2485565454305222284, guid: 5616c554b8e0899429647a2893c23a52, type: 3}
+  samplePackBrowser: {fileID: 5707957123579365033, guid: a2b29cd12c410f74eb3dafcac3740fd6, type: 3}
   grainModel: {fileID: 3360398663443515609, guid: fe5f9dfca8e93294fb097ed51e0e3089, type: 3}
   grainPrefab: {fileID: 3015697369275448574, guid: 476fa4270a75fb74280bc997dfe0c7b5, type: 3}
   flexibleLinePrefab: {fileID: 7434248885355533583, guid: 84f0a959edeb4ac49a74d2a33e663ee1, type: 3}
+  xrDebugConsolePrefab: {fileID: 0}

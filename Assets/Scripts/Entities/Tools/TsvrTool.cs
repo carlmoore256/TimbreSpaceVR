@@ -33,11 +33,9 @@ public abstract class TsvrTool : MonoBehaviour {
     }
 
     public virtual void Equip() {
-
     }
 
     public virtual void Unequip() {
-
     }
 
     void OnDestroy() {

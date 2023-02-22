@@ -27,14 +27,6 @@ public class TsvrApplication : SingletonScriptableObject<TsvrApplication>
     private DebugLogger _debugLogger;
     public static DebugLogger DebugLogger => Instance._debugLogger;
 
-    // [SerializeField]
-    // private CoroutineManager _coroutineManager;
-    // public static CoroutineManager CoroutineManager => Instance._coroutineManager;
-
-    // [SerializeField]
-    // private GameObject _DefaultXRRig;
-    // public static GameObject DefaultXRRig => Instance._DefaultXRRig;
-
     [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.BeforeSceneLoad)]
     private static void FirstInitialize() {
         // anything that happens before awake here

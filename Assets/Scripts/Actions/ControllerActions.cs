@@ -32,7 +32,8 @@ public class ControllerActions : MonoBehaviour
     public InputActionReference trigger;
     public InputActionReference triggerValue;
     public InputActionReference uiSelect;
-    public InputActionReference toolOptionButton;
+    public InputActionReference toolOption;
+    public InputActionReference toolCycle;
     public InputActionReference twistLock;
     public InputActionReference twistLockCombo;
     public InputActionReference cycleTool;

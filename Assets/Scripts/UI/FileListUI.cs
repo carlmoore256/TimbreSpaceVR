@@ -14,6 +14,7 @@ public class AddressableResourceInfo {
 }
 
 
+
 public class FileListUI : MonoBehaviour
 {
     public GameObject fileItemPrefab;
@@ -29,6 +30,12 @@ public class FileListUI : MonoBehaviour
     public string FilePath { get; private set; }
     private int fileIndex = 0;
     private List<FileListItem> fileListItems = new List<FileListItem>();
+
+    // make a SamplePackBrowser class that inherits from a generic base called ItemList or something
+    public static SamplePackMetadata[] ListSamplePacks() {
+        TextAsset textAsset = Resources.Load<TextAsset>("SamplePacks/sample-packs");
+        return JsonHelper.FromJson<SamplePackMetadata>(JsonHelper.fixJson(textAsset.ToString()));
+    }
 
     public static AddressableResourceInfo[] ListBuiltinFiles() {
         TextAsset textAsset = Resources.Load<TextAsset>("Data/builtin-sounds");

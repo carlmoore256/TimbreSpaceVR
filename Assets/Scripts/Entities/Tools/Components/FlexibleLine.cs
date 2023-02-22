@@ -43,6 +43,11 @@ public class FlexibleLine : MonoBehaviour
         this.endTarget = endTarget;
     }
 
+    public void SetEndWidth(float size) {
+        settings.endWidth = size;
+        settings.ApplyToRenderer(lineRenderer);
+    }
+
     void OnEnable() {
         if (baseCurrent == null || endCurrent == null || endTarget == null) {
             Debug.LogError("FlexibleLine: baseCurrent, endAnchor, and endAnchorTarget must be set in inspector");

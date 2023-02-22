@@ -53,30 +53,29 @@ public class Wand : TsvrTool {
             (value) => {
                 // Debug.Log("Trigger value: " + value + " | Num colliders hit: " + WandTipCollider.CollisionQueueStats());
                 WandTipCollider.PlayCollidedGrains(value * value);
-            });
+        });
+
+        ControllerActions.toolAxis2D.action.performed += ChangeWandAxis2D;
+
+        TwistLockOptions distanceOptions = new TwistLockOptions(
+            minAngle: -180f, maxAngle: 180f, 
+            minValue: TsvrApplication.Settings.WandMinDist, maxValue: TsvrApplication.Settings.WandMaxDist,
+            initValue: 1f, incrementAmount: TsvrApplication.Settings.WandDistIncrement,
+            reverse: ControllerActions.Hand == ControllerHand.Right
+        );
+
+        TwistLockOptions sizeOptions = new TwistLockOptions(
+            minAngle: -180f, maxAngle: 180f, 
+            minValue: TsvrApplication.Settings.WandMinRadius, maxValue: TsvrApplication.Settings.WandMaxRadius,
+            initValue: 0.5f, incrementAmount: TsvrApplication.Settings.WandSizeIncrement,
+            reverse: ControllerActions.Hand == ControllerHand.Left
+        );
 
         // changes the distance of the wand
-        wandDistanceTwistAction = new TwistLockAction(
-            -180f, 180f, 
-            TsvrApplication.Settings.WandMinDist, TsvrApplication.Settings.WandMaxDist,
-            1f,
-            TsvrApplication.Settings.WandDistIncrement,// <- eventually set these from global parameters
-            ControllerActions.twistLock.action,
-            ControllerActions.rotationAction.action,
-            ChangeWandDistance,
-            ControllerActions.Hand == ControllerHand.Right
-        );
+        wandDistanceTwistAction = new TwistLockAction(distanceOptions, ControllerActions.twistLock.action, ControllerActions.rotationAction.action, ChangeWandDistance);
+
         // changes the size of the wand
-        wandSizeTwistAction = new TwistLockAction(
-            -180f, 180f,
-            TsvrApplication.Settings.WandMinRadius, TsvrApplication.Settings.WandMaxRadius,
-            0.5f,
-            TsvrApplication.Settings.WandSizeIncrement,
-            ControllerActions.toolOptionButton.action, // <- eventually set this from global parameters
-            ControllerActions.rotationAction.action,
-            ChangeWandSize,
-            ControllerActions.Hand == ControllerHand.Left
-        );
+        wandSizeTwistAction = new TwistLockAction(sizeOptions, ControllerActions.toolOption.action, ControllerActions.rotationAction.action, ChangeWandSize);
 
         if (animations != null) {
             TsvrApplication.DebugLogger.Log("Playing equip animation");
@@ -97,7 +96,57 @@ public class Wand : TsvrTool {
         wandSizeTwistAction.UnsubscribeActions();  
         // Destroy(wandLine);
         wandLine.enabled = false;
+        ControllerActions.toolAxis2D.action.performed -= ChangeWandAxis2D;
     }
+
+    protected virtual void WandUpdate() {}
+
+    protected virtual void ChangeWandAxis2D(InputAction.CallbackContext context) {
+        // change wand distance based on vector 2 y, and size based on vector 2 x
+        Vector2 value = context.ReadValue<Vector2>();
+        ChangeWandDistance(value.y);
+        ChangeWandSize(value.x);
+    }
+
+    protected virtual void ChangeWandDistance(float value) {
+        Vector3 newPos = wandBase.position;
+        newPos += (wandBase.up * value);
+        wandTipAnchor.position = newPos;
+        distanceIndicator.fillAmount = (
+            value - TsvrApplication.Settings.WandMinDist) / 
+            (TsvrApplication.Settings.WandMaxDist - TsvrApplication.Settings.WandMinDist
+        );
+    }
+
+
+    protected virtual void ChangeWandSize(float value) {
+        Vector3 newScale = new Vector3(value, value, value);
+        if (newScale.magnitude > TsvrApplication.Settings.WandMaxRadius) {
+            newScale = newScale.normalized * TsvrApplication.Settings.WandMaxRadius;
+        } else if (newScale.magnitude < TsvrApplication.Settings.WandMinRadius) {
+            newScale = newScale.normalized * TsvrApplication.Settings.WandMinRadius;
+        }
+
+        // Reduce the max size of the wand when it's close to the tool
+        // float proximityScalar = 1f;
+        // float outerDistance = Vector3.Distance(wandTip.position, wandBase.position);
+        // if (outerDistance - value < 0) {
+        //     proximityScalar *= 1/(outerDistance - value);
+        // }
+
+        wandTip.transform.localScale = newScale;
+        // wandLine.endWidth = (value * 0.5f);
+        // wandLine.
+        radiusIndicator.fillAmount = (
+            value - TsvrApplication.Settings.WandMinRadius) / 
+            (TsvrApplication.Settings.WandMaxRadius - TsvrApplication.Settings.WandMinRadius
+        );
+
+        wandLine.SetEndWidth(value * 0.5f);
+    }
+}
+
+
 
 
     // ============================================================
@@ -143,71 +192,34 @@ public class Wand : TsvrTool {
     // }
 
 
-    protected virtual void WandUpdate() {}
+// void Update() {
+//     wandLine.SetPositions(CalculateLinePositions());
+// }
 
-    // void Update() {
-    //     wandLine.SetPositions(CalculateLinePositions());
-    // }
-
-    // if (isTrigPressed) {
-    //     // currentGain = ControllerActions.triggerValue.action.ReadValue<float>();
-    //     // WandTipCollider.RunActionOnColliders(GrainPlayAction);
-    //     float gain = ControllerActions.triggerValue.action.ReadValue<float>();
-    //     WandTipCollider.PlayCollidedGrains(gain * gain);
-    // }
-    // void Update() {
-    //     if (isTrigPressed) {
-    //         // currentGain = ControllerActions.triggerValue.action.ReadValue<float>();
-    //         // WandTipCollider.RunActionOnColliders(GrainPlayAction);
-    //         float gain = ControllerActions.triggerValue.action.ReadValue<float>();
-    //         WandTipCollider.PlayCollidedGrains(gain * gain);
-    //     }
-    //     wandLine.SetPositions(CalculateLinePositions());
-    // }
+// if (isTrigPressed) {
+//     // currentGain = ControllerActions.triggerValue.action.ReadValue<float>();
+//     // WandTipCollider.RunActionOnColliders(GrainPlayAction);
+//     float gain = ControllerActions.triggerValue.action.ReadValue<float>();
+//     WandTipCollider.PlayCollidedGrains(gain * gain);
+// }
+// void Update() {
+//     if (isTrigPressed) {
+//         // currentGain = ControllerActions.triggerValue.action.ReadValue<float>();
+//         // WandTipCollider.RunActionOnColliders(GrainPlayAction);
+//         float gain = ControllerActions.triggerValue.action.ReadValue<float>();
+//         WandTipCollider.PlayCollidedGrains(gain * gain);
+//     }
+//     wandLine.SetPositions(CalculateLinePositions());
+// }
 
 
-    // private Vector3[] CalculateLinePositions() {
-    //     for (int i = 0; i < wandSettings.numSegments; i++) {
-    //         float t = (float)i / (float)(wandSettings.numSegments);
-    //         Vector3 tipTargetPosition = wandTip.position;
-    //         if (wandSettings.isElastic) // give the wand an elastic feel
-    //             tipTargetPosition = Vector3.Lerp(wandTip.position, wandTipTarget.position, t * wandSettings.elasticity);
-    //         linePositions[wandSettings.numSegments-i-1] = Vector3.Lerp(wandBase.position, tipTargetPosition, 1-t);
-    //     }
-    //     return linePositions;
-    // }
-
-    protected virtual void ChangeWandDistance(float value) {
-        Vector3 newPos = wandBase.position;
-        newPos += (wandBase.up * value);
-        wandTipAnchor.position = newPos;
-        distanceIndicator.fillAmount = (
-            value - TsvrApplication.Settings.WandMinDist) / 
-            (TsvrApplication.Settings.WandMaxDist - TsvrApplication.Settings.WandMinDist
-        );
-    }
-
-    protected virtual void ChangeWandSize(float value) {
-        Vector3 newScale = new Vector3(value, value, value);
-        if (newScale.magnitude > TsvrApplication.Settings.WandMaxRadius) {
-            newScale = newScale.normalized * TsvrApplication.Settings.WandMaxRadius;
-        } else if (newScale.magnitude < TsvrApplication.Settings.WandMinRadius) {
-            newScale = newScale.normalized * TsvrApplication.Settings.WandMinRadius;
-        }
-
-        // Reduce the max size of the wand when it's close to the tool
-        // float proximityScalar = 1f;
-        // float outerDistance = Vector3.Distance(wandTip.position, wandBase.position);
-        // if (outerDistance - value < 0) {
-        //     proximityScalar *= 1/(outerDistance - value);
-        // }
-
-        wandTip.transform.localScale = newScale;
-        // wandLine.endWidth = (value * 0.5f);
-        // wandLine.
-        radiusIndicator.fillAmount = (
-            value - TsvrApplication.Settings.WandMinRadius) / 
-            (TsvrApplication.Settings.WandMaxRadius - TsvrApplication.Settings.WandMinRadius
-        );
-    }
-}
+// private Vector3[] CalculateLinePositions() {
+//     for (int i = 0; i < wandSettings.numSegments; i++) {
+//         float t = (float)i / (float)(wandSettings.numSegments);
+//         Vector3 tipTargetPosition = wandTip.position;
+//         if (wandSettings.isElastic) // give the wand an elastic feel
+//             tipTargetPosition = Vector3.Lerp(wandTip.position, wandTipTarget.position, t * wandSettings.elasticity);
+//         linePositions[wandSettings.numSegments-i-1] = Vector3.Lerp(wandBase.position, tipTargetPosition, 1-t);
+//     }
+//     return linePositions;
+// }

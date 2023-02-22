@@ -51,6 +51,7 @@ public enum TsvrToolType {
     AudioMixer,
     Eraser,
     StatsDisplay,
+    SamplePackBrowser
 }
 
 public enum TsvrToolSound {

@@ -13,6 +13,7 @@ public class AppConfig : SingletonScriptableObject<AudioManager>
     public GameObject menuTool;
     public GameObject grainSpawner;
     public GameObject locomotionTool;
+    public GameObject samplePackBrowser;
 
     [Header("Models")]
     public GameObject grainModel;
@@ -35,6 +36,8 @@ public class AppConfig : SingletonScriptableObject<AudioManager>
                 return grainSpawner;
             case TsvrToolType.Locomotion:
                 return locomotionTool;
+            case TsvrToolType.SamplePackBrowser:
+                return samplePackBrowser;
             default:
                 return null;
         }

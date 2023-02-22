@@ -21,7 +21,7 @@ public class Locomotion : TsvrTool
 
     void OnEnable() {
         ControllerActions.toolAxis2D.action.performed += JoystickMove;
-        cameraRig = GameObject.Find("CameraRig").transform;
+        cameraRig = GameObject.Find("TSVR_CameraRig").transform;
         joystickOriginalRotation = moveableJoystick.localRotation;
     }
 

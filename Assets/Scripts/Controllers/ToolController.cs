@@ -43,7 +43,7 @@ public class ToolController : MonoBehaviour
 
     // ==================================================================
 
-    void CycleTool(InputAction.CallbackContext context) {
+    public void CycleTool(InputAction.CallbackContext context) {
         toolIndex++;
         while (TsvrApplication.Config.GetToolPrefab(toolTypes[toolIndex % toolTypes.Length]) == null) {
             toolIndex++;
@@ -51,7 +51,7 @@ public class ToolController : MonoBehaviour
         ChangeTool(toolTypes[toolIndex % toolTypes.Length]);
     }
 
-    void ChangeTool(TsvrToolType tool) {
+    public void ChangeTool(TsvrToolType tool) {
         Debug.Log("Changing tool to " + tool.ToString() + "!");
         if (CurrentTool != null && CurrentTool.GetComponent<TsvrTool>().ToolType == tool) {
             Debug.Log("You're already using that tool!");
@@ -59,8 +59,7 @@ public class ToolController : MonoBehaviour
         };
 
         // maybe cache this in a dict within this controller at runtime
-        GameObject toolPrefab = TsvrApplication.Config.GetToolPrefab(tool); 
-
+        GameObject toolPrefab = TsvrApplication.Config.GetToolPrefab(tool);
         if (toolPrefab == null) {
             Debug.Log("Tool not found!");
             return;

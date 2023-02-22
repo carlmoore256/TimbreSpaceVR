@@ -53,41 +53,30 @@ public class GrainSpawner : TsvrTool
     }
 
     void SubscribeActions() {
-        Debug.Log("About to create twist lock action");
-        twistLockModelScale = new TwistLockAction(
-            -180f, 180f, 
-            0.3f, 5f,
-            modelScale,
-            TsvrApplication.Settings.WandDistIncrement.value,// <- eventually set these from global parameters
-            ControllerActions.twistLock.action,
-            ControllerActions.rotationAction.action,
-            (scale) => modelScale = scale,
-            ControllerActions.Hand == ControllerHand.Left
+
+        var options = new TwistLockOptions(
+            minAngle: -180f, maxAngle: 180f,
+            minValue: 0.3f, maxValue: 5f,
+            initValue: modelScale, incrementAmount: TsvrApplication.Settings.WandDistIncrement,
+            reverse: ControllerActions.Hand == ControllerHand.Left
         );
 
-        // changes the size of the wand
-        // twistLockModelSize = new TwistLockAction(
-        //     -180f, 180f,
-        //     TsvrApplication.Settings.WandMinRadius, TsvrApplication.Settings.WandMaxRadius,
-        //     0.5f,
-        //     TsvrApplication.Settings.wandDistIncrement,
-        //     ControllerActions.toolOptionButton.action, // <- eventually set this from global parameters
-        //     ControllerActions.rotationAction.action,
-        //     ChangeModelScale,
-        //     ControllerActions.Hand == ControllerHand.Left
-        // );
-
-
+        twistLockModelScale = new TwistLockAction(
+            options,
+            ControllerActions.twistLock.action,
+            ControllerActions.rotationAction.action,
+            (scale) => modelScale = scale
+        );
 
         ControllerActions.toolAxis2D.action.started += CycleSelection;
-        ControllerActions.toolOptionButton.action.started += SpawnSelectedFile;
+        ControllerActions.toolOption.action.started += SpawnSelectedFile;
         // m_ControllerActions.SubscribeAction(m_ToolController.m_ControllerActions.grainSpawnerAction, OnGrainSpawnerAction);
     }
 
     void UnsubscribeActions() {
         twistLockModelScale.UnsubscribeActions();
         ControllerActions.toolAxis2D.action.started -= CycleSelection;
-        ControllerActions.toolOptionButton.action.started -= SpawnSelectedFile;
+        ControllerActions.toolOption.action.started -= SpawnSelectedFile;
         // m_ControllerActions.UnsubscribeAction(m_ToolController.m_ControllerActions.grainSpawnerAction, OnGrainSpawnerAction);
     }
 
@@ -168,3 +157,29 @@ public class GrainSpawner : TsvrTool
         onComplete?.Invoke();
     }
 }
+
+
+
+
+// twistLockModelScale = new TwistLockAction(
+//     -180f, 180f, 
+//     0.3f, 5f,
+//     modelScale,
+//     TsvrApplication.Settings.WandDistIncrement.value,// <- eventually set these from global parameters
+//     ControllerActions.twistLock.action,
+//     ControllerActions.toolOption.action,
+//     (scale) => modelScale = scale,
+//     ControllerActions.Hand == ControllerHand.Left
+// );
+
+// changes the size of the wand
+// twistLockModelSize = new TwistLockAction(
+//     -180f, 180f,
+//     TsvrApplication.Settings.WandMinRadius, TsvrApplication.Settings.WandMaxRadius,
+//     0.5f,
+//     TsvrApplication.Settings.wandDistIncrement,
+//     ControllerActions.toolOptionButton.action, // <- eventually set this from global parameters
+//     ControllerActions.rotationAction.action,
+//     ChangeModelScale,
+//     ControllerActions.Hand == ControllerHand.Left
+// );

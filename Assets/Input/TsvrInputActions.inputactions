@@ -280,6 +280,15 @@
                     "initialStateCheck": false
                 },
                 {
+                    "name": "PrimaryButton",
+                    "type": "Button",
+                    "id": "8c16392e-0f59-4849-9986-502dba99cb33",
+                    "expectedControlType": "Button",
+                    "processors": "",
+                    "interactions": "",
+                    "initialStateCheck": false
+                },
+                {
                     "name": "TwistLock",
                     "type": "Button",
                     "id": "68bf2897-7520-47fb-afe9-92b3fe562bc8",
@@ -622,6 +631,28 @@
                     "processors": "",
                     "groups": "KeyboardMouse",
                     "action": "ToolOptionButton",
+                    "isComposite": false,
+                    "isPartOfComposite": false
+                },
+                {
+                    "name": "",
+                    "id": "3c4fd454-0e8a-475a-9f54-0a51bd29f09a",
+                    "path": "<XRController>{LeftHand}/primaryButton",
+                    "interactions": "",
+                    "processors": "",
+                    "groups": "",
+                    "action": "PrimaryButton",
+                    "isComposite": false,
+                    "isPartOfComposite": false
+                },
+                {
+                    "name": "",
+                    "id": "935a63c6-6118-4eb6-85cc-3b4b43caa520",
+                    "path": "<Keyboard>/e",
+                    "interactions": "",
+                    "processors": "",
+                    "groups": "KeyboardMouse",
+                    "action": "PrimaryButton",
                     "isComposite": false,
                     "isPartOfComposite": false
                 }

@@ -2,6 +2,7 @@ using System.Collections;
 using UnityEngine;
 using System;
 
+#if true
 public class GrainNoLOD : MonoBehaviour
 {
     public Material material;
@@ -213,3 +214,5 @@ public class GrainNoLOD : MonoBehaviour
         sphereRenderer.material.color = targetColor;
     }
 }
+
+# endif
