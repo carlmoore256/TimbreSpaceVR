@@ -32,9 +32,9 @@ public class FileListUI : MonoBehaviour
     private List<FileListItem> fileListItems = new List<FileListItem>();
 
     // make a SamplePackBrowser class that inherits from a generic base called ItemList or something
-    public static SamplePackMetadata[] ListSamplePacks() {
+    public static TsvrSamplePackMetadata[] ListSamplePacks() {
         TextAsset textAsset = Resources.Load<TextAsset>("SamplePacks/sample-packs");
-        return JsonHelper.FromJson<SamplePackMetadata>(JsonHelper.fixJson(textAsset.ToString()));
+        return JsonHelper.FromJson<TsvrSamplePackMetadata>(JsonHelper.fixJson(textAsset.ToString()));
     }
 
     public static AddressableResourceInfo[] ListBuiltinFiles() {

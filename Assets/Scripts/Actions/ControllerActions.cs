@@ -21,7 +21,6 @@ public struct InputActionValuePair {
     public InputActionReference value;
 }
 
-
 /// <summary>
 // Access to controller input actions, per-hand
 /// </summary>
@@ -45,6 +44,8 @@ public class ControllerActions : MonoBehaviour
     public InputActionValuePair TriggerValue => new InputActionValuePair { button = trigger, value = triggerValue };
     public InputActionValuePair GrabValue => new InputActionValuePair { button = grab, value = grabValue };
 
+    // private Dictionary<Action<InputAction.CallbackContext>, (string id, Action<InputAction.CallbackContext> cb)> boundActions = new Dictionary<Action<InputAction.CallbackContext>, (string, Action<InputAction.CallbackContext>)>();
+
     private void OnEnable() {
         if (transform.name.Contains("Left") || transform.name.Contains("left")) {
             Hand = ControllerHand.Left;
@@ -65,34 +66,49 @@ public class ControllerActions : MonoBehaviour
         triggerValue.action.Disable();
     }
 
-    private void Start() {
-        // make a null condition
-        // twistLockModifiedAction.action.started += ActionStarted;
-        // twistLockModifiedAction.action.performed += ActionPerformed;
-        // twistLockModifiedAction.action.canceled += ActionCanceled;
-        // twistLock.action.started += ActionStarted;
-        // twistLock.action.performed += ActionPerformed;
-        // twistLock.action.canceled += ActionCanceled;
-        // trigger.action.started += ActionStarted;
-        // trigger.action.performed += ActionPerformed;
-        // trigger.action.canceled += ActionCanceled;
+    public void AddListener(InputActionReference inputAction, Action<InputAction.CallbackContext> callback)
+    {
+        inputAction.action.started += callback;
+        inputAction.action.performed += callback;
+        inputAction.action.canceled += callback;
     }
 
-    public void JoystickDirectionAction(InputAction.CallbackContext ctx) {
-        Debug.Log("JoystickDirectionAction: " + ctx.action.GetBindingDisplayString() + "Action Performed!");
+    public void AddListener(InputActionReference inputAction, Action<InputAction.CallbackContext> callback, InputActionPhase phase)
+    {
+        switch (phase) {
+            case InputActionPhase.Started:
+                inputAction.action.started += callback;
+                break;
+            case InputActionPhase.Performed:
+                inputAction.action.performed += callback;
+                break;
+            case InputActionPhase.Canceled:
+                inputAction.action.canceled += callback;
+                break;
+        }
     }
 
-    void ActionStarted(InputAction.CallbackContext ctx) {
-        Debug.Log("=> " + ctx.action.GetBindingDisplayString() + "Action Started!");
+    public void RemoveListener(InputActionReference inputAction, Action<InputAction.CallbackContext> callback)
+    {
+        inputAction.action.started -= callback;
+        inputAction.action.performed -= callback;
+        inputAction.action.canceled -= callback;
     }
 
-    void ActionPerformed(InputAction.CallbackContext ctx) {
-        Debug.Log("=> " + ctx.action.GetBindingDisplayString() + "Action Performed!");
+    public void RemoveListener(InputActionReference inputAction, Action<InputAction.CallbackContext> callback, InputActionPhase phase)
+    {
+        switch (phase) {
+            case InputActionPhase.Started:
+                inputAction.action.started -= callback;
+                break;
+            case InputActionPhase.Performed:
+                inputAction.action.performed -= callback;
+                break;
+            case InputActionPhase.Canceled:
+                inputAction.action.canceled -= callback;
+                break;
+        }
     }
-
-    void ActionCanceled(InputAction.CallbackContext ctx) {
-        Debug.Log("=> " + ctx.action.GetBindingDisplayString() + " Action Canceled!");
-    }    
 }
 
 /// <summary>

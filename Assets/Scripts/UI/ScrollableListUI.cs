@@ -19,21 +19,10 @@ public class ScrollableListUI : MonoBehaviour
     private int _selectedIndex = 0;
 
     void OnEnable() {
-        controllerActions = ObjectHelpers.RecurseParentsForComponent<ControllerActions>(gameObject);
-        if (controllerActions == null) {
-            Debug.LogError("ScrollableListUI: Could not find ControllerActions component in parent or parents.");
-            return;
-        }
-        controllerActions.toolAxis2D.action.performed += OnScrollStart;
-        controllerActions.uiSelect.action.performed += OnSubmit;
+        items = new List<SelectableListItem>();
     }
 
     void OnDisable() {
-        if (controllerActions != null) {
-            controllerActions.toolAxis2D.action.performed -= OnScrollStart;
-            controllerActions.uiSelect.action.performed -= OnSubmit;
-        }
-
         items.Clear();
     }
 
@@ -78,16 +67,22 @@ public class ScrollableListUI : MonoBehaviour
         subheader.text = subheaderText;
     }
 
-    private void OnScrollStart(InputAction.CallbackContext context) {
+    /// <summary>
+    /// Supply with a float value, neg to scroll up, pos to scroll down
+    /// <summary>
+    public void ScrollValue(float value) {
         if (items == null) return;
-        Vector2 scroll = context.ReadValue<Vector2>();
-        // float scrollScalar = 1/(float)items.Count;
-        // scrollScalar *= 0.3f;
-        // scroll.y = (scroll.y * (1+scrollScalar)) - scrollScalar;
-        float scrollValue = scrollbar.value + scroll.y * Time.deltaTime;
-        scrollbar.value = Mathf.Clamp01(scrollbar.value + scroll.y * Time.deltaTime);
+        // int index = items.Count - (int)(value * items.Count);
+        float scrollValue = scrollbar.value + value * Time.deltaTime;
+        scrollbar.value = Mathf.Clamp01(scrollbar.value + value * Time.deltaTime);
         int index = items.Count - (int)(scrollValue * items.Count);
         ScrollToItem(index);
+    }
+
+    public void OnSubmit() {
+        if (items == null) return;
+        if (items.Count == 0) return;
+        items[_selectedIndex].OnSubmit();
     }
 
     private void ScrollToItem(int index) {
@@ -103,10 +98,6 @@ public class ScrollableListUI : MonoBehaviour
         // scrollbar.value = scrollbarValue;
     }
 
-    private void OnSubmit(InputAction.CallbackContext context) {
-        if (items == null) return;
-        if (items.Count == 0) return;
-        items[_selectedIndex].OnSubmit();
-    }
+
 
 }

@@ -1,6 +1,7 @@
 using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
+using UnityEngine.InputSystem;
 
 public class SamplePackBrowser : TsvrTool
 {
@@ -13,24 +14,43 @@ public class SamplePackBrowser : TsvrTool
         DisplayAllSamplePacks(manifestResourcePath);
     }
 
+    void OnEnable() {
+        ControllerActions.AddListener(ControllerActions.toolAxis2D, OnAxis2D, InputActionPhase.Performed);
+        ControllerActions.AddListener(ControllerActions.uiSelect, OnSubmit, InputActionPhase.Performed);
+    }
+
+    void OnDisable() {
+        ControllerActions.RemoveListener(ControllerActions.toolAxis2D, OnAxis2D, InputActionPhase.Performed);
+        ControllerActions.RemoveListener(ControllerActions.uiSelect, OnSubmit, InputActionPhase.Performed);
+    }
+
+    void OnAxis2D(InputAction.CallbackContext context) {
+        Vector2 value = context.ReadValue<Vector2>();
+        scrollableListUI.ScrollValue(value.y);
+    }
+
+    void OnSubmit(InputAction.CallbackContext context) {
+        scrollableListUI.OnSubmit();
+    }
+
     void DisplayAllSamplePacks(string _manifestResourcePath) {
         scrollableListUI.ClearItems();
         scrollableListUI.SetHeader("Sample Packs", "Select a pack to view its contents");
-        SamplePackMetadata[] samplePacks = AppDataParser.GetInstalledSamplePacks(_manifestResourcePath);
-        foreach(SamplePackMetadata samplePack in samplePacks) {
+        TsvrSamplePackMetadata[] samplePacks = AppDataParser.GetInstalledSamplePacks(_manifestResourcePath);
+        foreach(TsvrSamplePackMetadata samplePack in samplePacks) {
 
             scrollableListUI.AddItem(samplePack, (item, content) => {
-                SamplePackMetadata samplePackMetadata = (SamplePackMetadata)item;
+                TsvrSamplePackMetadata samplePackMetadata = (TsvrSamplePackMetadata)item;
                 content.header.text = samplePackMetadata.title;
                 content.subheader.text = samplePackMetadata.creator;
             }, (item) => {
-                Debug.Log("Selected sample pack: " + ((SamplePackMetadata)item).title);
-                DisplaySamplePack((SamplePackMetadata)item);
+                Debug.Log("Selected sample pack: " + ((TsvrSamplePackMetadata)item).title);
+                DisplaySamplePack((TsvrSamplePackMetadata)item);
             });
         }
     }
     
-    void DisplaySamplePack(SamplePackMetadata metadata) {
+    void DisplaySamplePack(TsvrSamplePackMetadata metadata) {
         // get the samplePack item from resources
         TsvrSamplePack samplePack = AppDataParser.GetSamplePack(metadata.id);
         scrollableListUI.ClearItems();
@@ -47,6 +67,16 @@ public class SamplePackBrowser : TsvrTool
             }, (item) => {
                 TsvrSample tsvrSample = (TsvrSample)item;
                 Debug.Log("Selected sample: " + tsvrSample.title);
+                ToolController.ChangeTool(TsvrToolType.ModelMultitool, (tool) => {
+                    ModelMultitool modelMultitool = (ModelMultitool)tool;
+                    Vector3 modelPosition = transform.position + transform.forward * 0.5f;
+                    Quaternion modelRotation = Quaternion.LookRotation(transform.forward, transform.up);
+                    // make model rotation only on horizontal axis
+                    modelRotation = Quaternion.Euler(0, modelRotation.eulerAngles.y, 0);
+                    GrainModel newModel = GrainModel.SpawnFromSample(metadata, tsvrSample, modelPosition, modelRotation);
+                    modelMultitool.SetCurrentModel(newModel);
+                });
+
             });
         }
     }

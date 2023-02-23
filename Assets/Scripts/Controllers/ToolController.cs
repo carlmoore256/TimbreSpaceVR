@@ -31,46 +31,69 @@ public class ToolController : MonoBehaviour
     // ==================================================================
     // maybe eventually change this so that it asks controller actions to do this
     void OnEnable() {
+        ChangeTool(initialTool);
         controllerActions = GetComponent<ControllerActions>();
-        while(toolTypes[toolIndex] != initialTool) toolIndex++;
-        ChangeTool(toolTypes[toolIndex]);
-        controllerActions.cycleTool.action.started += CycleTool;
+        controllerActions.AddListener(controllerActions.cycleTool, CycleTool, InputActionPhase.Started);
+        // while(toolTypes[toolIndex] != initialTool) toolIndex++;
+        // var toolPrefab = TsvrApplication.Config.GetToolPrefab(initialTool);
+        // if (toolPrefab == null) {
+        //     Debug.Log("Tool not found!");
+        //     return;
+        // }
+        // ChangeTool(toolPrefab);
+        // ChangeTool(toolTypes[toolIndex]);
     }
 
     void OnDisable() {
-        controllerActions.cycleTool.action.started -= CycleTool;
+        controllerActions.RemoveListener(controllerActions.cycleTool, CycleTool, InputActionPhase.Started);
     }
 
     // ==================================================================
 
     public void CycleTool(InputAction.CallbackContext context) {
         toolIndex++;
-        while (TsvrApplication.Config.GetToolPrefab(toolTypes[toolIndex % toolTypes.Length]) == null) {
-            toolIndex++;
-        }
-        ChangeTool(toolTypes[toolIndex % toolTypes.Length]);
+        ChangeTool(TsvrApplication.Config.toolPrefabs[toolIndex % TsvrApplication.Config.toolPrefabs.Count]);
+        // ChangeTool(toolTypes[toolIndex % TsvrApplication.Config.toolPrefabs.Count]);
+        // while (TsvrApplication.Config.GetToolPrefab(toolTypes[toolIndex % TsvrApplication.Config.toolPrefabs.Count]) == null) {
+        //     toolIndex++;
+        // }
     }
 
-    public void ChangeTool(TsvrToolType tool) {
+    /// <summary>
+    /// Change the current tool held by the hand. Provide an optional callback that takes in the tool being
+    /// switched to, if there is any startup behavior like opening the model multitool with an existing model
+    /// </summary>
+    public void ChangeTool(TsvrToolType tool, Action<TsvrTool> onToolChanged = null) {
         Debug.Log("Changing tool to " + tool.ToString() + "!");
+
         if (CurrentTool != null && CurrentTool.GetComponent<TsvrTool>().ToolType == tool) {
             Debug.Log("You're already using that tool!");
             return;
         };
 
-        // maybe cache this in a dict within this controller at runtime
         GameObject toolPrefab = TsvrApplication.Config.GetToolPrefab(tool);
         if (toolPrefab == null) {
             Debug.Log("Tool not found!");
             return;
         }
-        if (toolPrefab.GetComponent<TsvrTool>() == null) {
-            Debug.Log("Tool prefab does not have a TsvrTool component!");
-            return;
-        }
-        if (CurrentTool != null)
+        if (CurrentTool != null) {
             Destroy(CurrentTool);
-            CurrentTool = Instantiate(toolPrefab, transform);
+        }
+        CurrentTool = Instantiate(toolPrefab, transform);
+        onToolChanged?.Invoke(CurrentTool.GetComponent<TsvrTool>());
+    }
+
+    public void ChangeTool(GameObject toolPrefab, Action<TsvrTool> onToolChanged = null) {
+        Debug.Log("Changing tool to " + toolPrefab.name + "!");
+        if (CurrentTool != null && CurrentTool.GetComponent<TsvrTool>().ToolType == toolPrefab.GetComponent<TsvrTool>().ToolType) {
+            Debug.Log("You're already using that tool!");
+            return;
+        };
+        if (CurrentTool != null) {
+            Destroy(CurrentTool);
+        }
+        CurrentTool = Instantiate(toolPrefab, transform);
+        onToolChanged?.Invoke(CurrentTool.GetComponent<TsvrTool>());
     }
 
     void Update()

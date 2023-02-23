@@ -142,6 +142,10 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 6cd3d1529c124e043842f514190d9a35, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
+  colorProcessing: {r: 222, g: 92, b: 0, a: 0.6}
+  colorPlayable: {r: 255, g: 255, b: 255, a: 0}
+  colorPositioning: {r: 255, g: 255, b: 255, a: 1}
+  colorInspecting: {r: 255, g: 255, b: 255, a: 1}
   seqPlayRate: 0.1
   boundingBox: {fileID: 8143741633814947547}
 --- !u!1 &8143741633814947547
@@ -155,7 +159,8 @@ GameObject:
   - component: {fileID: 684406390249938675}
   - component: {fileID: 1045483995585633938}
   - component: {fileID: 7876463794139542538}
-  m_Layer: 0
+  - component: {fileID: 401147060950973867}
+  m_Layer: 9
   m_Name: BoundingBox
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -227,3 +232,24 @@ MeshRenderer:
   m_SortingLayer: 0
   m_SortingOrder: 0
   m_AdditionalVertexStreams: {fileID: 0}
+--- !u!65 &401147060950973867
+BoxCollider:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 8143741633814947547}
+  m_Material: {fileID: 0}
+  m_IncludeLayers:
+    serializedVersion: 2
+    m_Bits: 0
+  m_ExcludeLayers:
+    serializedVersion: 2
+    m_Bits: 0
+  m_LayerOverridePriority: 0
+  m_IsTrigger: 0
+  m_ProvidesContacts: 0
+  m_Enabled: 1
+  serializedVersion: 3
+  m_Size: {x: 1, y: 1, z: 1}
+  m_Center: {x: 0, y: 0, z: 0}

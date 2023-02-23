@@ -10,7 +10,7 @@ public class TsvrSample {
 
 
 [System.Serializable]
-public class SamplePackMetadata {
+public class TsvrSamplePackMetadata {
     public string title;
     public string id;
     public string creator;
@@ -21,6 +21,6 @@ public class SamplePackMetadata {
 
 [System.Serializable]
 public class TsvrSamplePack {
-    public SamplePackMetadata metadata;
+    public TsvrSamplePackMetadata metadata;
     public TsvrSample[] samples;
 }

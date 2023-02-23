@@ -5,9 +5,9 @@ using UnityEngine;
 // load resources from json, parse and fill a menu
 public static class AppDataParser {
 
-    public static SamplePackMetadata[] GetInstalledSamplePacks(string path) {
+    public static TsvrSamplePackMetadata[] GetInstalledSamplePacks(string path) {
         TextAsset textAsset = Resources.Load<TextAsset>(path);
-        SamplePackMetadata[] samplePacks = JsonHelper.FromJson<SamplePackMetadata>(JsonHelper.fixJson(textAsset.ToString()));
+        TsvrSamplePackMetadata[] samplePacks = JsonHelper.FromJson<TsvrSamplePackMetadata>(JsonHelper.fixJson(textAsset.ToString()));
         return samplePacks;
     }
 
@@ -18,14 +18,14 @@ public static class AppDataParser {
         return samplePack;
     }
 
-    public static TsvrSamplePack GetSamplePack(SamplePackMetadata metadata) {
+    public static TsvrSamplePack GetSamplePack(TsvrSamplePackMetadata metadata) {
         return GetSamplePack(metadata.id);
     }
 
     public static void ParseSamplePacks(string path, MonoBehaviour targetMenu) {
         var samplePacks = GetInstalledSamplePacks(path);
 
-        foreach(SamplePackMetadata metadata in samplePacks) {
+        foreach(TsvrSamplePackMetadata metadata in samplePacks) {
             string resourceDir = "SamplePacks/" + metadata.id;
             try {
                 TextAsset samplePackTextAsset = Resources.Load<TextAsset>(resourceDir + "/pack");

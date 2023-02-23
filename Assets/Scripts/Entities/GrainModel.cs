@@ -10,7 +10,9 @@ using UnityEngine;
 
 public enum GrainModelState {
     Unplaced,
-    Placed
+    Placed,
+    Positioning,
+    Playable
 }
 
 
@@ -28,27 +30,25 @@ public class GrainModel : MonoBehaviour {
     public GrainModelParameters Parameters { get; protected set; }
 
     public Color colorProcessing = new Color(222, 92, 0, 0.6f);
-    public Color colorPlaced = new Color(255, 255, 255, 0.0f);
-    public Color colorUnplaced = new Color(255, 255, 255, 1f);
+    public Color colorPlayable = new Color(255, 255, 255, 0.0f);
+    public Color colorPositioning = new Color(255, 255, 255, 1f);
+    public Color colorInspecting = new Color(255, 255, 255, 1f);
 
     private float grainScale = 2f;
     
     // eventually this will be in its own constellation class
     public float seqPlayRate = 0.1f;
     private bool useHSV = false;
-
     private Vector3 posAxisScale = Vector3.one;
-
     Thread T_FeatureExtractor = null;
-    ConcurrentQueue<GrainFeatures> grainFeaturesQueue = new ConcurrentQueue<GrainFeatures>();
-    ConcurrentQueue<GrainAudioFeatures> grainAudioFeaturesQueue = new ConcurrentQueue<GrainAudioFeatures>();
+    // private ConcurrentQueue<GrainFeatures> grainFeaturesQueue = new ConcurrentQueue<GrainFeatures>();
+    private ConcurrentQueue<GrainAudioFeatures> grainAudioFeaturesQueue = new ConcurrentQueue<GrainAudioFeatures>();
 
     private GrainModelPlayback grainModelPlayback;
     public GameObject boundingBox;
 
     public TransformCoroutineManager coroutineManager;
-
-    AudioFeatureExtractor featureExtractor;
+    private AudioFeatureExtractor featureExtractor;
 
     /// ===== MonoBehaviours ===========================================================
 
@@ -197,18 +197,34 @@ public class GrainModel : MonoBehaviour {
         Grains.Add(grain);
     }
 
+    public void Inspect() {
+        boundingBox.GetComponent<Renderer>().material.color = colorInspecting;
+        coroutineManager.TimedAction("inspect-timeout", null, Time.deltaTime * 2f, null, () => {
+            SetBBoxColor(colorPlayable, 0.2f);
+        });
+    }
 
-    public void ChangeState(GrainModelState state) {
-        State = state;
-        switch (state) {
-            case GrainModelState.Unplaced:
-                SetBBoxColor(colorUnplaced, 2f);
+    // eventually make this private
+    public void ChangeState(GrainModelState newState) {
+        var currentState = State;
+
+        switch (newState) {
+            case GrainModelState.Positioning:
+                SetBBoxColor(colorPositioning, 0.3f);
                 break;
-            case GrainModelState.Placed:
+            case GrainModelState.Playable:
                 coroutineManager.Freeze();
-                SetBBoxColor(colorPlaced, 3f);
+                SetBBoxColor(colorPlayable, 0.3f, 1f);
                 break;
+            // case GrainModelState.Unplaced:
+            //     SetBBoxColor(colorUnplaced, 2f);
+            //     break;
+            // case GrainModelState.Placed:
+            //     coroutineManager.Freeze();
+            //     SetBBoxColor(colorPlaced, 3f);
+            //     break;
         }
+        State = newState;
     }
 
 
@@ -226,6 +242,18 @@ public class GrainModel : MonoBehaviour {
             duration : duration,
             delay : delay
         );
+    }
+
+    public static GrainModel SpawnFromSample(TsvrSamplePackMetadata pack, TsvrSample sample, Vector3 position, Quaternion rotation) {
+        GameObject grainModelObject = Instantiate(TsvrApplication.Config.grainModel, GameObject.Find("GrainParent").transform);
+        grainModelObject.transform.position = position;
+        grainModelObject.transform.rotation = rotation;
+        GrainModel grainModel = grainModelObject.GetComponent<GrainModel>();
+        var sampleFileName = sample.file.Replace(".wav", "");
+        AudioIO.LoadAudioFromAssets($"SamplePacks/{pack.id}/{sampleFileName}", (signal) => {
+            grainModel.SetAudioBuffer(signal);
+        });
+        return grainModel;
     }
 }
 
