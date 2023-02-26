@@ -68,7 +68,7 @@ public class GrainModelParameters {
         onFeatureSclUpdate(value);
     } }
 
-    public float ScaleMult { get; set;} = 0.005f;
+    public float ScaleMult { get; set;} = 0.015f;
 
     public GrainModelParameters(
             Action<AudioFeature[]> onFeaturePosUpdate, 

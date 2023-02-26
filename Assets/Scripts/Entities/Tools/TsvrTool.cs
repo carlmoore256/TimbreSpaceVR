@@ -23,13 +23,13 @@ public abstract class TsvrTool : MonoBehaviour {
     public abstract TsvrToolType ToolType { get; }
     public ToolController ToolController { get; set; }
     public ControllerActions ControllerActions { get; set; }
-    protected Dictionary<InputActionValuePair, InputActionValueHandler> inputActionHandlers;
+    // protected Dictionary<InputActionValuePair, InputActionValueHandler> inputActionHandlers;
     
     void Awake() {
         animations = GetComponent<Animation>();
         ToolController = transform.parent.GetComponent<ToolController>();
         ControllerActions = transform.parent.GetComponent<ControllerActions>();
-        inputActionHandlers = new Dictionary<InputActionValuePair, InputActionValueHandler>();
+        // inputActionHandlers = new Dictionary<InputActionValuePair, InputActionValueHandler>();
     }
 
     public virtual void Equip() {
@@ -39,9 +39,10 @@ public abstract class TsvrTool : MonoBehaviour {
     }
 
     void OnDestroy() {
-        foreach(var handler in inputActionHandlers) {
-            handler.Value.Disable();
-        }
+        // foreach(var handler in inputActionHandlers) {
+        //     // if (handler.Value == null) continue;
+        //     handler.Value?.Disable();
+        // }
     }
 
     protected IEnumerator AnimationListener(string name, Action onComplete) {

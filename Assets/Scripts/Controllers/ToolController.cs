@@ -50,13 +50,8 @@ public class ToolController : MonoBehaviour
 
     // ==================================================================
 
-    public void CycleTool(InputAction.CallbackContext context) {
-        toolIndex++;
-        ChangeTool(TsvrApplication.Config.toolPrefabs[toolIndex % TsvrApplication.Config.toolPrefabs.Count]);
-        // ChangeTool(toolTypes[toolIndex % TsvrApplication.Config.toolPrefabs.Count]);
-        // while (TsvrApplication.Config.GetToolPrefab(toolTypes[toolIndex % TsvrApplication.Config.toolPrefabs.Count]) == null) {
-        //     toolIndex++;
-        // }
+    public void CycleTool(InputAction.CallbackContext context) {        
+        ChangeTool(TsvrApplication.Config.toolPrefabs[(toolIndex + 1) % TsvrApplication.Config.toolPrefabs.Count]);
     }
 
     /// <summary>
@@ -80,6 +75,7 @@ public class ToolController : MonoBehaviour
             Destroy(CurrentTool);
         }
         CurrentTool = Instantiate(toolPrefab, transform);
+        toolIndex = TsvrApplication.Config.toolPrefabs.FindIndex(tool => tool.GetComponent<TsvrTool>().ToolType == CurrentTool.GetComponent<TsvrTool>().ToolType);
         onToolChanged?.Invoke(CurrentTool.GetComponent<TsvrTool>());
     }
 
@@ -93,6 +89,7 @@ public class ToolController : MonoBehaviour
             Destroy(CurrentTool);
         }
         CurrentTool = Instantiate(toolPrefab, transform);
+        toolIndex = TsvrApplication.Config.toolPrefabs.FindIndex(tool => tool.GetComponent<TsvrTool>().ToolType == CurrentTool.GetComponent<TsvrTool>().ToolType);
         onToolChanged?.Invoke(CurrentTool.GetComponent<TsvrTool>());
     }
 

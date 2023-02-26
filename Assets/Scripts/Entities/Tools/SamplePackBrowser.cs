@@ -66,15 +66,14 @@ public class SamplePackBrowser : TsvrTool
                 content.subheader.text = $"{sampleMetadata.duration} Seconds | {stereo}";
             }, (item) => {
                 TsvrSample tsvrSample = (TsvrSample)item;
-                Debug.Log("Selected sample: " + tsvrSample.title);
-                ToolController.ChangeTool(TsvrToolType.ModelMultitool, (tool) => {
-                    ModelMultitool modelMultitool = (ModelMultitool)tool;
-                    Vector3 modelPosition = transform.position + transform.forward * 0.5f;
+                ToolController.ChangeTool(TsvrToolType.ModelInspector, (tool) => {
+                    ModelInspector modelMultitool = (ModelInspector)tool;
+                    Vector3 modelPosition = transform.position + transform.forward * 1.5f;
                     Quaternion modelRotation = Quaternion.LookRotation(transform.forward, transform.up);
                     // make model rotation only on horizontal axis
                     modelRotation = Quaternion.Euler(0, modelRotation.eulerAngles.y, 0);
                     GrainModel newModel = GrainModel.SpawnFromSample(metadata, tsvrSample, modelPosition, modelRotation);
-                    modelMultitool.SetCurrentModel(newModel);
+                    modelMultitool.SetSelectedModel(newModel);
                 });
 
             });

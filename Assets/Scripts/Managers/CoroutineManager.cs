@@ -3,7 +3,6 @@ using System.Collections.Generic;
 using UnityEngine;
 using System;
 
-
 public struct TargetTransform {
     public Vector3 targetPosition;
     public Quaternion targetRotation;

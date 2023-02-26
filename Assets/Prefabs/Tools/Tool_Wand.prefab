@@ -538,9 +538,9 @@ GameObject:
   - component: {fileID: 2377529978121583862}
   - component: {fileID: 6117479173831665314}
   - component: {fileID: 2463461106111642862}
-  m_Layer: 0
+  m_Layer: 6
   m_Name: Tip
-  m_TagString: Untagged
+  m_TagString: wandTip
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0

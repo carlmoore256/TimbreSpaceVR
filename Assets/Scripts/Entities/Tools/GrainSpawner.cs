@@ -54,19 +54,19 @@ public class GrainSpawner : TsvrTool
 
     void SubscribeActions() {
 
-        var options = new TwistLockOptions(
-            minAngle: -180f, maxAngle: 180f,
-            minValue: 0.3f, maxValue: 5f,
-            initValue: modelScale, incrementAmount: TsvrApplication.Settings.WandDistIncrement,
-            reverse: ControllerActions.Hand == ControllerHand.Left
-        );
+        // var options = new TwistLockOptions(
+        //     minAngle: -180f, maxAngle: 180f,
+        //     minValue: 0.3f, maxValue: 5f,
+        //     initValue: modelScale, incrementAmount: TsvrApplication.Settings.WandDistIncrement,
+        //     reverse: ControllerActions.Hand == ControllerHand.Left
+        // );
 
-        twistLockModelScale = new TwistLockAction(
-            options,
-            ControllerActions.twistLock.action,
-            ControllerActions.rotationAction.action,
-            (scale) => modelScale = scale
-        );
+        // twistLockModelScale = new TwistLockAction(
+        //     options,
+        //     ControllerActions.twistLock.action,
+        //     ControllerActions.rotationAction.action,
+        //     (scale) => modelScale = scale
+        // );
 
         ControllerActions.toolAxis2D.action.started += CycleSelection;
         ControllerActions.toolOption.action.started += SpawnSelectedFile;

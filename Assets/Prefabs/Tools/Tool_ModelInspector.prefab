@@ -25,7 +25,7 @@ Transform:
   m_GameObject: {fileID: 468203480763611418}
   m_LocalRotation: {x: -0, y: -0.7071068, z: -0, w: 0.7071068}
   m_LocalPosition: {x: 0, y: 0, z: 0}
-  m_LocalScale: {x: 22.61, y: 22.61, z: 22.61}
+  m_LocalScale: {x: 16.75, y: 16.75, z: 16.75}
   m_ConstrainProportionsScale: 1
   m_Children:
   - {fileID: 2524577513316299391}
@@ -211,7 +211,7 @@ GameObject:
   - component: {fileID: 5477786919475955307}
   - component: {fileID: 473720003267592689}
   m_Layer: 0
-  m_Name: Tool_ModelMultitool
+  m_Name: Tool_ModelInspector
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
@@ -269,7 +269,11 @@ MonoBehaviour:
   lineStart: {fileID: 2284742988884924156}
   grainLayerMask:
     serializedVersion: 2
-    m_Bits: 0
+    m_Bits: 512
+  lineInspectColor: {r: 0.17928976, g: 0.36096662, b: 0.745283, a: 1}
+  lineUnassignedColor: {r: 1, g: 0.8179058, b: 0.23921567, a: 1}
+  lineUnassignedHoverColor: {r: 0.16523807, g: 0.8396226, b: 0.11485406, a: 1}
+  linePositioningColor: {r: 0.9056604, g: 0.0640798, b: 0.06407974, a: 1}
 --- !u!1 &8783658619464338623
 GameObject:
   m_ObjectHideFlags: 0

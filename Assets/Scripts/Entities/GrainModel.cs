@@ -15,7 +15,6 @@ public enum GrainModelState {
     Playable
 }
 
-
 // ideas - consider making an object pool for GrainModel, to reduce CPU load
 // when loading a new audio file => https://learn.unity.com/tutorial/introduction-to-object-pooling#5ff8d015edbc2a002063971d
 
@@ -24,6 +23,8 @@ public enum GrainModelState {
 /// </summary>
 public class GrainModel : MonoBehaviour {
     // public float ModelScale { get => transform.localScale.x; set => TargetScale = Vector3.one * value; }
+    public bool HasBeenPlaced { get; protected set; } = false;
+
     public DiscreteSignal AudioBuffer { get; protected set; }
     public List<Grain> Grains { get; protected set; }
     public GrainModelState State { get; set; } = GrainModelState.Unplaced;
@@ -41,7 +42,6 @@ public class GrainModel : MonoBehaviour {
     private bool useHSV = false;
     private Vector3 posAxisScale = Vector3.one;
     Thread T_FeatureExtractor = null;
-    // private ConcurrentQueue<GrainFeatures> grainFeaturesQueue = new ConcurrentQueue<GrainFeatures>();
     private ConcurrentQueue<GrainAudioFeatures> grainAudioFeaturesQueue = new ConcurrentQueue<GrainAudioFeatures>();
 
     private GrainModelPlayback grainModelPlayback;
@@ -50,17 +50,21 @@ public class GrainModel : MonoBehaviour {
     public TransformCoroutineManager coroutineManager;
     private AudioFeatureExtractor featureExtractor;
 
+
     /// ===== MonoBehaviours ===========================================================
 
-    void OnEnable() {
+    private void OnEnable() {
 
         grainModelPlayback = gameObject.AddComponent<GrainModelPlayback>();
         coroutineManager = new TransformCoroutineManager(this, () => {
             Debug.Log("Sending Spring Toggle broadcast message -> OFF");
-            BroadcastMessage("ToggleSpring", false, SendMessageOptions.DontRequireReceiver);
+            BroadcastMessage("ToggleReposition", true, SendMessageOptions.DontRequireReceiver);
+            // BroadcastMessage("ToggleSpring", false, SendMessageOptions.DontRequireReceiver);
         }, () => {
             Debug.Log("Sending Spring Toggle broadcast message -> ON");
-            BroadcastMessage("ToggleSpring", true, SendMessageOptions.DontRequireReceiver);
+            if (HasBeenPlaced)
+                BroadcastMessage("ToggleReposition", false, SendMessageOptions.DontRequireReceiver);
+                // BroadcastMessage("ToggleSpring", true, SendMessageOptions.DontRequireReceiver);
         });
 
         Grains = new List<Grain>();
@@ -103,7 +107,7 @@ public class GrainModel : MonoBehaviour {
         ChangeState(GrainModelState.Unplaced);
     }
 
-    void OnDisable() {
+    private void OnDisable() {
         grainModelPlayback.StopAllCoroutines();
         grainModelPlayback = null;
         T_FeatureExtractor?.Abort();
@@ -114,7 +118,7 @@ public class GrainModel : MonoBehaviour {
         StartCoroutine(PlayGrainsSequentially());
     }
 
-    IEnumerator PlayGrainsSequentially()
+    private IEnumerator PlayGrainsSequentially()
     {
         int seqIndex = 0;
         while(true) {
@@ -123,9 +127,6 @@ public class GrainModel : MonoBehaviour {
             } else {
                 Grains[seqIndex].PlayGrain();
                 seqIndex = (seqIndex + 1) % Grains.Count;
-                // for (int i = 0; i < 10; i++) {
-                //     // print($"playing grain {seqIndex}");
-                // }
                 yield return new WaitForSeconds(seqPlayRate);
             }
         }
@@ -159,7 +160,7 @@ public class GrainModel : MonoBehaviour {
     /// <summary>
     /// Remove all grains from the model
     /// </summary>
-    void ClearGrains() {
+    private void ClearGrains() {
          // consider using pool, and returning to pool
         foreach(Grain grain in Grains)
             Destroy(grain.gameObject);
@@ -169,7 +170,7 @@ public class GrainModel : MonoBehaviour {
     /// <summary>
     /// Watch a thread safe queue and wait for new grains to enter, spawning them as they are enqued
     /// </summary>
-    IEnumerator SpawnGrainsFromQueue(int batchSize = 16) {
+    private IEnumerator SpawnGrainsFromQueue(int batchSize = 16) {
         while (grainAudioFeaturesQueue.Count == 0)
             yield return null;
        
@@ -189,11 +190,12 @@ public class GrainModel : MonoBehaviour {
     /// <summary>
     /// Spawn a single grain object into the model given a GrainAudioFeatures object
     /// </summary>
-    public void SpawnGrain(GrainAudioFeatures features)
+    private void SpawnGrain(GrainAudioFeatures features)
     {
         GameObject grainObject = Instantiate(TsvrApplication.Config.grainPrefab, transform);
         Grain grain = grainObject.GetComponent<Grain>();
         grain.Initialize(features, Parameters, grainModelPlayback.RegisterPlaybackEvent);
+        grain.TriggerPlayAnimation(); // make a nice animation when grain appears
         Grains.Add(grain);
     }
 
@@ -202,6 +204,22 @@ public class GrainModel : MonoBehaviour {
         coroutineManager.TimedAction("inspect-timeout", null, Time.deltaTime * 2f, null, () => {
             SetBBoxColor(colorPlayable, 0.2f);
         });
+    }
+
+    public void Place() {
+        ChangeState(GrainModelState.Playable);
+        HasBeenPlaced = true;
+        BroadcastMessage("ToggleReposition", false, SendMessageOptions.DontRequireReceiver);
+    }
+
+    public void Reposition(Vector3 position, Quaternion rotation, Vector3 scale, float duration = 0.5f) {
+        coroutineManager.MoveTo(position, duration);
+        coroutineManager.RotateTo(rotation, duration);
+        coroutineManager.ScaleTo(scale, duration);
+    }
+
+    public void Reposition(Vector3 position, float duration = 0.5f) {
+        coroutineManager.MoveTo(position, duration);
     }
 
     // eventually make this private
@@ -244,60 +262,54 @@ public class GrainModel : MonoBehaviour {
         );
     }
 
+    /// <summary>
+    /// Spawn a grain model from a TsvrSamplePack sample. Sample packs are installed in resources
+    /// </summary>
     public static GrainModel SpawnFromSample(TsvrSamplePackMetadata pack, TsvrSample sample, Vector3 position, Quaternion rotation) {
-        GameObject grainModelObject = Instantiate(TsvrApplication.Config.grainModel, GameObject.Find("GrainParent").transform);
+        GameObject grainModelObject = Instantiate(Resources.Load<GameObject>("Prefabs/GrainModel"), GameObject.Find("GrainParent").transform);
         grainModelObject.transform.position = position;
         grainModelObject.transform.rotation = rotation;
         GrainModel grainModel = grainModelObject.GetComponent<GrainModel>();
         var sampleFileName = sample.file.Replace(".wav", "");
         AudioIO.LoadAudioFromAssets($"SamplePacks/{pack.id}/{sampleFileName}", (signal) => {
+            int sigLen = signal.Length;
+            // signal = AudioUtils.FilterSignalRMS(signal, TsvrApplication.Settings.AudioDbThreshold, TsvrApplication.Settings.AudioDbThresholdWindow);
+            signal = AudioUtils.StripSilence(signal, -30, 1024);
+            // Debug.Log($"Filtered out {sigLen - signal.Length} samples below threshold of {TsvrApplication.Settings.AudioDbThreshold}dB");
+            Debug.Log($"Filtered out {sigLen - signal.Length} samples below threshold of {-30}dB");
             grainModel.SetAudioBuffer(signal);
         });
         return grainModel;
     }
+
+    /// <summary>
+    /// Spawn a grain model directly from a wav or mp3 file
+    /// </summary>
+    public static GrainModel SpawnFromFile(string filePath, Vector3 position, Quaternion rotation) {
+        // GameObject grainModelObject = Instantiate(TsvrApplication.Config.grainModel, GameObject.Find("GrainParent").transform);
+        GameObject grainModelObject = Instantiate(Resources.Load<GameObject>("Prefabs/GrainModel"), GameObject.Find("GrainParent").transform);
+        grainModelObject.transform.position = position;
+        grainModelObject.transform.rotation = rotation;
+        GrainModel grainModel = grainModelObject.GetComponent<GrainModel>();
+        // AudioIO.LoadAudioFromAssets(filePath, (signal) => {
+        //     grainModel.SetAudioBuffer(signal);
+        // });
+        return grainModel;
+    }
+
+
+    /// <summary>
+    /// Spawn a grain model from a directory containing audio files. The size of the grains will be optimized for grain count
+    /// </summary>
+    public static GrainModel SpawnFromFolder(string folderPath, Vector3 position, Quaternion rotation) {
+        // GameObject grainModelObject = Instantiate(TsvrApplication.Config.grainModel, GameObject.Find("GrainParent").transform);
+        GameObject grainModelObject = Instantiate(Resources.Load<GameObject>("Prefabs/GrainModel"), GameObject.Find("GrainParent").transform);
+        grainModelObject.transform.position = position;
+        grainModelObject.transform.rotation = rotation;
+        GrainModel grainModel = grainModelObject.GetComponent<GrainModel>();
+        // AudioIO.LoadAudioFromAssets(filePath, (signal) => {
+        //     grainModel.SetAudioBuffer(signal);
+        // });
+        return grainModel;
+    }
 }
-
-
-
-
-// add check for framerate, apportion proper number of updates per frame
-// based on average delta time
-// this way, each grain model is responsible for updating its own grains
-// in a way that doesn't affect performance
-// int grainsUpdated = 0;
-
-// while (grainsUpdated < grains.Count && 1.0/Time.deltaTime >= TsvrApplication.Settings.targetFramerate) {
-//     grains[updateIdx].UpdateAppearance();
-//     grainsUpdated++;
-//     updateIdx++;
-//     updateIdx %= grains.Count;
-// }
-
-// // condition where nothing has been updated
-// if (grainsUpdated < 64)
-//     Debug.Log("[!] GrainsUpdated: " + grainsUpdated +  " | frame rate: " + 1.0/Time.deltaTime + " is under target (" + TsvrApplication.Settings.targetFramerate + ")");
-
-
-// void OnFeatureUpdate(AudioFeature feature) {
-//     foreach(Grain grain in grains)
-//         grain.UpdatePosition(x_F, y_F, z_F, ax_scale);
-// }
-
-// change the positions of all grains to new feature ordering
-// void UpdateFeaturePositions(string x_F, string y_F, string z_F, Vector3 ax_scale)
-// {
-//     foreach(Grain grain in grains)
-//         grain.UpdatePosition(parameters.XFeature, y_F, z_F, ax_scale);
-// }
-
-// void UpdateFeatureScales(AudioFeature feature, float scale)
-// {
-//     foreach (Grain grain in grains)
-//         grain.UpdateScale(sc_F, sc_F, sc_F, scale);
-// }
-
-// void UpdateFeatureColors(string r_F, string g_F, string b_F, bool hsv=false)
-// {
-//     foreach (Grain grain in grains)
-//         grain.UpdateColor(r_F, g_F, b_F, hsv);
-// }

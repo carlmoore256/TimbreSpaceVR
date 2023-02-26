@@ -25,14 +25,16 @@ public class AppConfig : SingletonScriptableObject<AudioManager>
     public GameObject worldSpaceLinePrefab;
     public GameObject xrDebugConsolePrefab;
 
+    [Header("Materials")]
+    public Material skyboxMaterial;
+
     
     public GameObject GetToolPrefab(TsvrToolType toolType) {
-        foreach(GameObject toolPrefab in toolPrefabs) {
-            Debug.Log("toolPrefab.GetComponent<TsvrTool>().ToolType: " + toolPrefab.GetComponent<TsvrTool>().ToolType);
-            if (toolPrefab.GetComponent<TsvrTool>().ToolType == toolType) {
-                return toolPrefab;
-            }
-        }
+        // foreach(GameObject toolPrefab in toolPrefabs) {
+        //     if (toolPrefab.GetComponent<TsvrTool>().ToolType == toolType) {
+        //         return toolPrefab;
+        //     }
+        // }
         return toolPrefabs.FirstOrDefault(x => x.GetComponent<TsvrTool>().ToolType == toolType);
 
     }

@@ -20,8 +20,15 @@ MonoBehaviour:
   locomotionTool: {fileID: 2485565454305222284, guid: 5616c554b8e0899429647a2893c23a52, type: 3}
   samplePackBrowser: {fileID: 5707957123579365033, guid: a2b29cd12c410f74eb3dafcac3740fd6, type: 3}
   modelMultitool: {fileID: 5707957123579365033, guid: c0762c4c9eeb8534782bf2edc9076827, type: 3}
+  toolPrefabs:
+  - {fileID: 2377529979667022799, guid: 6b8592ae1e407204a93d2d000e13e79f, type: 3}
+  - {fileID: 3165432181441587983, guid: 5d27698c9826f9041ab61818336e2257, type: 3}
+  - {fileID: 2485565454305222284, guid: 5616c554b8e0899429647a2893c23a52, type: 3}
+  - {fileID: 5707957123579365033, guid: a2b29cd12c410f74eb3dafcac3740fd6, type: 3}
+  - {fileID: 5707957123579365033, guid: c0762c4c9eeb8534782bf2edc9076827, type: 3}
   grainModel: {fileID: 3360398663443515609, guid: fe5f9dfca8e93294fb097ed51e0e3089, type: 3}
   grainPrefab: {fileID: 3015697369275448574, guid: 476fa4270a75fb74280bc997dfe0c7b5, type: 3}
   flexibleLinePrefab: {fileID: 7434248885355533583, guid: 84f0a959edeb4ac49a74d2a33e663ee1, type: 3}
   worldSpaceLinePrefab: {fileID: 3568233094526457909, guid: d3b78cf3e586eb3468ad3945e5e66716, type: 3}
   xrDebugConsolePrefab: {fileID: 0}
+  skyboxMaterial: {fileID: 2100000, guid: 220c53501a6feeb44842c61d7364609c, type: 2}

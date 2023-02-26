@@ -5,6 +5,7 @@ TagManager:
   serializedVersion: 2
   tags:
   - grain
+  - wandTip
   layers:
   - Default
   - TransparentFX

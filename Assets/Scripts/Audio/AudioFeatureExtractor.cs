@@ -72,14 +72,7 @@ public class AudioFeatureExtractor
     private int windowSize;
     private int hopSize;
     private static FeatureKey[] featureKeys;
-
-    // using a dictionary because operations may possibly happen async,
-    // and insertions might happen out of order
-    // public Dictionary<int, GrainAudioFeatures> grainAudioFeatures;
-
-    // public Dictionary<AudioFeature, float[]> FeatureValues { get; protected set; }
     public Dictionary<AudioFeature, FeatureValues> FeatureValues { get; protected set; }
-
     public List<WindowTime> WindowTimes { get; protected set; }
 
     public AudioFeatureExtractor(int windowSize, int hopSize)
@@ -244,7 +237,6 @@ public class AudioFeatureExtractor
             FeatureValues[fk.feature] = new FeatureValues(_featureValues, fk);;
         }
     }
-
 
     public void ExtractFeatures(DiscreteSignal signal, AudioFeature[] features, Action onComplete) {
         // get FeatureKeys for requested features

@@ -1,6 +1,7 @@
 using UnityEngine;
 using System.IO;
 using NWaves.Signals;
+using NWaves.Operations;
 using NWaves.Audio;
 using UnityEngine.Networking;
 using System;
@@ -8,22 +9,30 @@ using System;
 
 public class AudioIO {
 
-    public static DiscreteSignal AudioClipToDiscreteSignal(AudioClip clip) {
+    public static DiscreteSignal AudioClipToDiscreteSignal(AudioClip clip, bool resample = true) {
         float[] samples = new float[clip.samples * clip.channels];
         clip.GetData(samples, 0);
-        return new DiscreteSignal(clip.frequency, samples);
+        DiscreteSignal signal = new DiscreteSignal(clip.frequency, samples);
+        // if (signal.SamplingRate != TsvrApplication.AudioManager.SampleRate && resample) {
+        //     Debug.Log("Resampling audio file from " + signal.SamplingRate + " to " + TsvrApplication.AudioManager.SampleRate);
+        //     signal = new Resampler().Resample(signal, TsvrApplication.AudioManager.SampleRate);
+        // }
+        return signal;
     }
 
-    public static void LoadAudioFromAssets(string path, Action<DiscreteSignal> callback) {
+    public static void LoadAudioFromAssets(string path, Action<DiscreteSignal> callback, bool resample = true) {
         var handler = Resources.LoadAsync<AudioClip>(path);
-
+        Debug.Log("Loading audio file: " + path);
+        var currentTime = Time.timeAsDouble;
         handler.completed += (op) => {
             AudioClip clip = handler.asset as AudioClip;
             if (clip == null) {
                 Debug.LogError("Failed to load audio file: " + path);
                 return;
             }
-            callback(AudioClipToDiscreteSignal(clip));
+            var signal = AudioClipToDiscreteSignal(clip);
+            Debug.Log($"Finished loading audio file in {Time.timeAsDouble - currentTime} seconds");
+            callback(signal);
         };
         // callback(AudioClipToDiscreteSignal(clip));
     }

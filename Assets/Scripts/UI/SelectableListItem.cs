@@ -6,7 +6,7 @@ using TMPro;
 using System;
 
 [System.Serializable]
-public class ListItemContent {
+public class SelectableListItemContent {
     public Image icon; // if null, image is not spawned
     public TextMeshProUGUI header;
     public TextMeshProUGUI subheader;
@@ -16,7 +16,7 @@ public class ListItemContent {
 public class SelectableListItem : MonoBehaviour
 {
     public object item;
-    public ListItemContent content;
+    public SelectableListItemContent content;
     public Color selectedColor = Color.red;
     private Color originalColor;
     private Image image;
@@ -42,7 +42,7 @@ public class SelectableListItem : MonoBehaviour
         onSubmit?.Invoke();
     }
 
-    public void SetItem(object item, Action<object, ListItemContent> uiMapper, Action<object> onSubmit) {
+    public void SetItem(object item, Action<object, SelectableListItemContent> uiMapper, Action<object> onSubmit) {
         this.item = item;
         this.onSubmit = () => onSubmit(item);
         uiMapper(item, content);
@@ -53,4 +53,11 @@ public class SelectableListItem : MonoBehaviour
         content.header.text = header;
         // content.subheader.text = "";
     }
+
+    // public void SetContent(SelectableListItemContent content) {
+    //     this.content.icon = content.icon;
+    //     this.content.header = content.header;
+    //     this.content.subheader = content.subheader;
+    //     this.content.rightContent = content.rightContent;
+    // }
 }

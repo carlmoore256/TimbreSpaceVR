@@ -9,7 +9,7 @@ using System;
 /// </summary>
 public class GrainModelPlayback : MonoBehaviour
 {
-    public int NumVoices { get; private set; } = 64;
+    public int NumVoices { get; private set; } = 256;
     private PlaybackVoice[] playbackVoices;
     private Queue<PlaybackVoice> availableVoices = new Queue<PlaybackVoice>();
     private double lastPlayTime = 0d;

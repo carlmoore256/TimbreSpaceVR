@@ -52,7 +52,7 @@ public enum TsvrToolType {
     Eraser,
     StatsDisplay,
     SamplePackBrowser,
-    ModelMultitool
+    ModelInspector
 }
 
 public enum TsvrToolSound {

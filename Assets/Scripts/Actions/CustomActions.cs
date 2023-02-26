@@ -7,124 +7,166 @@ using System;
 public struct TwistLockOptions {
     public float minAngle;
     public float maxAngle;
-    public float minValue;
-    public float maxValue;
-    public float initValue;
-    public float incrementAmount;
     public bool reverse;
-
-    public TwistLockOptions(
-        float minAngle, float maxAngle, 
-        float minValue, float maxValue, 
-        float initValue,
-        float incrementAmount,
-        bool reverse = false
-    ) {
+    public TwistLockOptions(float minAngle, float maxAngle, bool reverse = false) {
         this.minAngle = minAngle;
         this.maxAngle = maxAngle;
-        this.minValue = minValue;
-        this.maxValue = maxValue;
-        this.initValue = initValue;
-        this.incrementAmount = incrementAmount;
         this.reverse = reverse;
     }
 }
 
 public class TwistLockAction {
-    public float currentValue;
-    float lockedValue;
+    public float currentValue = 0f;
+    // float lockedValue;
+    private float initialAngle = 0f;
     Quaternion initialRotation;
-
-    // callbacks are subscribed & unsubscribed to functions in this class
-    InputAction toggleAction;
+    InputActionReference toggleAction;
     InputAction rotationAction;
-    InputAction.CallbackContext rotationCallback;
-    ActionBasedController controller;
     ControllerActions controllerActions;
-    // UnityEvent<float> listener;
-    Action<float> callback;
     float modulationValue = 0f;
     bool isActive = false;
     bool reverse = false;
-
-    // InputAction.CallbackContext scalarCallback; <- implement this later
-
     private TwistLockOptions options;
+
+    private Action<float> onValueChange;
+    private Action<float> onLock;
 
     public TwistLockAction(
         TwistLockOptions options,
-        InputAction toggleAction,
-        InputAction rotationAction,
-        Action<float> callback
+        ControllerActions controllerActions,
+        InputActionReference toggleAction,
+        Action<float> onValueChange,
+        Action<float> onLock
     ) {
         this.options = options;
-        this.callback = callback;
-        this.currentValue = options.initValue;
+        this.controllerActions = controllerActions;
         this.toggleAction = toggleAction;
-        this.rotationAction = rotationAction;
-        toggleAction.started += Started;
-        toggleAction.canceled += Canceled;
-        toggleAction.performed += Modulate;
-        rotationAction.performed += ListenForRotation;
+        this.rotationAction = controllerActions.rotationAction.action;
+
+        this.onValueChange = onValueChange;
+        this.onLock = onLock;
+
+        controllerActions.AddListener(toggleAction, Started, InputActionPhase.Started);
+        controllerActions.AddListener(toggleAction, Canceled, InputActionPhase.Canceled);
+        controllerActions.AddListener(toggleAction, Modulate, InputActionPhase.Performed);
+        controllerActions.AddListener(controllerActions.rotationAction, OnRotate, InputActionPhase.Performed);
     }
 
-    void ListenForRotation(InputAction.CallbackContext ctx) {
-        // if (callback == null) return;
+    private void OnRotate(InputAction.CallbackContext ctx) {
         if (isActive) {
-            float currentAngle = AngleFrom(ctx.ReadValue<Quaternion>());
-            currentValue = lockedValue + (currentAngle * options.incrementAmount);
-            currentValue = Mathf.Clamp(currentValue, options.minValue, options.maxValue);
-            callback.Invoke(currentValue);
+            Quaternion rotation = ctx.ReadValue<Quaternion>();
+            float angle = QuaternionZRotation(rotation);
+            float delta = angle - initialAngle;
+            delta /= 360f;
+            currentValue = delta;
+            onValueChange.Invoke(delta);
         }
     }
 
-    public void Started(InputAction.CallbackContext ctx)
+    public static float QuaternionZRotation(Quaternion rotation)
     {
-        initialRotation = rotationAction.ReadValue<Quaternion>();
+        // Convert the quaternion to Euler angles
+        Vector3 euler = rotation.eulerAngles;
+
+        // Normalize the angle to be in the range [-180, 180] degrees
+        float zRotation = euler.z;
+        if (zRotation > 180f) zRotation -= 360f;
+        if (zRotation < -180f) zRotation += 360f;
+
+        return zRotation;
+    }
+
+    private void Started(InputAction.CallbackContext ctx)
+    {
+        Quaternion rotation = rotationAction.ReadValue<Quaternion>();
+        initialRotation = rotation;
+        initialAngle = QuaternionZRotation(rotation);
         isActive = true;
     }
 
-    public void Canceled(InputAction.CallbackContext ctx)
-    {
-        // Debug.Log("TwistLockAction canceled!");
-        lockedValue = currentValue; // store the locked value 
+    private void Canceled(InputAction.CallbackContext ctx) {
         isActive = false;
+        onLock.Invoke(currentValue);
     }
 
     // TODO: Implement this if we want to apply extra pressure to the button to modify an action
-    public void Modulate(InputAction.CallbackContext ctx)
+    private void Modulate(InputAction.CallbackContext ctx)
     {
-        // Debug.Log("Modulate action called!");
         if (ctx.ReadValue<float>() < 0.01f) {
             // Debug.Log("TwistLockAction value too low, deactivating");
             Canceled(ctx);
         } else {
             modulationValue = ctx.ReadValue<float>();
-            // Debug.Log("TwistLockAction value: " + modulationValue);
         }
     }
 
-    public float AngleFrom(Quaternion rotation) {
-        Quaternion deltaRotation = rotation * Quaternion.Inverse(initialRotation);
-        float angle = deltaRotation.eulerAngles.z;
-        if (angle > 180) {
-            angle -= 360;
-        }
-        angle = Mathf.Clamp(angle, options.minAngle, options.maxAngle) / 180f;
-        if (reverse) angle = -angle;
-        return angle;
+    public static float GetRotationAngle(Quaternion initialRotation, Quaternion currentRotation)
+    {
+        float angle = Quaternion.Angle(initialRotation, currentRotation);
+        Vector3 initialForward = initialRotation * Vector3.forward;
+        Vector3 currentForward = currentRotation * Vector3.forward;
+        Vector3 cross = Vector3.Cross(initialForward, currentForward);
+        float dot = Vector3.Dot(Vector3.up, cross);
+        float sign = Mathf.Sign(dot);
+        Vector3 signedAngle = Quaternion.AngleAxis(angle, Vector3.up * sign) * initialForward;
+        return Vector3.SignedAngle(initialForward, signedAngle, Vector3.up);
+    }
+
+    private float AngleFrom(Quaternion _initialRotation, Quaternion _currentRotation) {
+        float angle = Quaternion.Angle(_initialRotation, _currentRotation);
+        float sign = Mathf.Sign(Vector3.Dot(Vector3.up, Vector3.Cross(_initialRotation * Vector3.forward, _currentRotation * Vector3.forward)));
+        float normalizedAngle = angle / 180f;
+        //  * sign;
+        if (reverse) normalizedAngle = -normalizedAngle;
+        return normalizedAngle;
     }
 
     public void UnsubscribeActions() {
-        this.toggleAction.started -= Started;
-        this.toggleAction.canceled -= Canceled;
-        this.toggleAction.performed -= Modulate;
-        // if (listener != null) 
-        rotationAction.performed -= ListenForRotation;
+        controllerActions.RemoveListener(toggleAction, Started, InputActionPhase.Started);
+        controllerActions.RemoveListener(toggleAction, Canceled, InputActionPhase.Canceled);
+        controllerActions.RemoveListener(toggleAction, Modulate, InputActionPhase.Performed);
+        controllerActions.RemoveListener(controllerActions.rotationAction, OnRotate, InputActionPhase.Performed);
     }
 
     // functions for haptics and maybe sound
 }
+
+
+// float angle = deltaRotation.eulerAngles.z;
+// if (angle > 180) {
+//     angle -= 360;
+// }
+// angle = Mathf.Clamp(angle, 0, 1);
+
+
+// public TwistLockAction(
+//     TwistLockOptions options,
+//     InputAction toggleAction,
+//     InputAction rotationAction,
+//     Action<float> callback
+// ) {
+//     this.options = options;
+//     this.callback = callback;
+//     // this.currentValue = options.initValue;
+//     this.toggleAction = toggleAction;
+//     this.rotationAction = rotationAction;
+//     toggleAction.started += Started;
+//     toggleAction.canceled += Canceled;
+//     toggleAction.performed += Modulate;
+//     rotationAction.performed += OnRotate;
+// }
+
+
+// void ListenForRotation(InputAction.CallbackContext ctx) {
+//     if (isActive) {
+//         float currentAngle = AngleFrom(ctx.ReadValue<Quaternion>());
+//         currentValue = lockedValue + (currentAngle * options.incrementAmount);
+//         currentValue = Mathf.Clamp(currentValue, options.minValue, options.maxValue);
+//         callback.Invoke(currentValue);
+//     }
+// }
+
+
 
 // public TwistLockAction( 
 //     float minAngle, float maxAngle, 

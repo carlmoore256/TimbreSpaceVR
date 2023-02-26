@@ -54,6 +54,8 @@ public class Grain : MonoBehaviour
         playTimeout /= 4d;
         joint.tolerance = TsvrApplication.Settings.ParticleTolerance.value;
 
+        ToggleReposition(true);
+
         transform.localPosition  = new Vector3(
             features.Get(modelParameters.PositionFeatures[0]),
             features.Get(modelParameters.PositionFeatures[1]),
@@ -90,23 +92,14 @@ public class Grain : MonoBehaviour
         }
     }
     
-
-    
     /// <summary>
     /// Play Grain audio as a one shot event
     /// </summary>
     public void PlayGrain(float gain = 1.0f)
     {
         if (Time.timeAsDouble - lastPlayTime < playTimeout) return;
-        // if (playCoroutine != null) {
-        //     playDuration += 1f;
-        //     // StopCoroutine(playCoroutine);
-        // } else {
-
         isActivated = true;
-
         playEnd = Time.time + totalPlayDuration;
-        // playCoroutine = StartCoroutine(PlayCoroutine());
         transform.localScale = targetScale * 1.5f;
         lodRenderer.ChangeColor(Color.red);      
         playbackEvent.gain = gain;
@@ -175,8 +168,21 @@ public class Grain : MonoBehaviour
         colorCoroutine = StartCoroutine(ColorCoroutine(targetColor, durationReColor));
     }
 
-    public void ToggleSpring(bool enable) {
+    private bool isRepositioning = false;
+
+    public void ToggleReposition(bool enable) {
         if (enable) {
+            isRepositioning = true;
+            ToggleSpring(false);
+        } else {
+            isRepositioning = false;
+            ToggleSpring(true);
+        }
+    }
+
+    private void ToggleSpring(bool enable) {
+        if (enable) {
+            if (isRepositioning) return;
             joint.connectedAnchor = transform.position;
             GetComponent<Rigidbody>().isKinematic = false;
         } else {
@@ -184,10 +190,16 @@ public class Grain : MonoBehaviour
         }
     }
 
+    public void TriggerPlayAnimation() {
+        if (playCoroutine != null)
+            StopCoroutine(playCoroutine);
+        playCoroutine = StartCoroutine(PlayCoroutine());
+    }
+
     /// ==================== COROUTINES ==================== ///
 
     private Coroutine playCoroutine;
-    IEnumerator PlayCoroutine() {
+    private IEnumerator PlayCoroutine() {
         lodRenderer.ChangeColor(Color.red);
         transform.localScale = targetScale * 1.5f;
         float time = 0f;        
@@ -205,7 +217,7 @@ public class Grain : MonoBehaviour
 
     private Coroutine scaleCoroutine;
     IEnumerator ScaleCoroutine(Vector3 targetScale, float duration = 1f) {
-        float time = 0f;        
+        float time = 0f;
         while (time < duration) {
             transform.localScale = Vector3.Lerp(transform.localScale, targetScale, time/duration);
             time += Time.deltaTime;
@@ -216,23 +228,20 @@ public class Grain : MonoBehaviour
 
     private Coroutine positionCoroutine;
     IEnumerator PositionCoroutine(Vector3 targetPosition, float duration = 1f) {
-        // GetComponent<Rigidbody>().isKinematic = true; // disable physics
         ToggleSpring(false);
-        float time = 0f;        
+        float time = 0f;
         while (time < duration) {
             transform.localPosition = Vector3.Lerp(transform.localPosition, targetPosition, time/duration);
             time += Time.deltaTime;
             yield return null;
         }
         transform.localPosition = targetPosition;
-        // joint.connectedAnchor = transform.position;
-        // GetComponent<Rigidbody>().isKinematic = false;
         ToggleSpring(true);
     }
 
     private Coroutine rotateCoroutine;
     IEnumerator RotateCoroutine(Quaternion targetRotation, float duration = 1f) {
-        float time = 0f;        
+        float time = 0f;
         while (time < duration) {
             transform.rotation = Quaternion.Lerp(transform.rotation, targetRotation, time/duration);
             time += Time.deltaTime;

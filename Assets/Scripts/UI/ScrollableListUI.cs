@@ -26,7 +26,7 @@ public class ScrollableListUI : MonoBehaviour
         items.Clear();
     }
 
-    public void AddItem(object item, Action<object, ListItemContent> uiMapper, Action<object> onSubmit) {
+    public void AddItem(object item, Action<object, SelectableListItemContent> uiMapper, Action<object> onSubmit) {
         GameObject listItem = Instantiate(itemPrefab, listContainer);
         SelectableListItem selectableListItem = listItem.GetComponent<SelectableListItem>();
         selectableListItem.SetItem(item, uiMapper, onSubmit);
@@ -41,10 +41,20 @@ public class ScrollableListUI : MonoBehaviour
     }
 
     public void AddItem(SelectableListItem item) {
-        if (items == null) items = new List<SelectableListItem>();
+        // if (items == null) items = new List<SelectableListItem>();
         items.Add(item);
         item.transform.SetParent(listContainer);
         item.transform.localScale = Vector3.one;
+    }
+
+    public void AddItem(SelectableListItemContent content) {
+        // if (items == null) items = new List<SelectableListItem>();
+        GameObject listItem = Instantiate(itemPrefab, listContainer);
+        SelectableListItem selectableListItem = listItem.GetComponent<SelectableListItem>();
+        selectableListItem.content = content;
+        items.Add(selectableListItem);
+        selectableListItem.transform.SetParent(listContainer);
+        // selectableListItem.transform.localScale = Vector3.one;
     }
 
 
@@ -62,7 +72,7 @@ public class ScrollableListUI : MonoBehaviour
         items.Clear();
     }
 
-    public void SetHeader(string headerText, string subheaderText) {
+    public void SetHeader(string headerText, string subheaderText = "") {
         header.text = headerText;
         subheader.text = subheaderText;
     }

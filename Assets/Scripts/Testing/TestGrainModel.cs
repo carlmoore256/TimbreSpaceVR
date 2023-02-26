@@ -30,36 +30,36 @@ public class TestGrainModel : MonoBehaviour
     int featureIndex = 0;
     void Update() {
         frameIndex++;
-        if (frameIndex % 30 == 0) {
-            switch(featureIndex) {
-                case 0:
-                    grainModel.Parameters.XFeature = AudioFeature.Contrast_0;
-                    break;
-                case 1:
-                    grainModel.Parameters.YFeature = AudioFeature.Energy;
-                    break;
-                case 2:
-                    grainModel.Parameters.XFeature = AudioFeature.RMS;
-                    break;
-                case 3:
-                    grainModel.Parameters.YFeature = AudioFeature.MFCC_6;
-                    break;
-                case 4:
-                    grainModel.Parameters.XFeature = AudioFeature.MFCC_2;
-                    break;
-                case 5:
-                    grainModel.Parameters.YFeature = AudioFeature.MFCC_3;
-                    break;
-                case 6:
-                    grainModel.Parameters.XFeature = AudioFeature.MFCC_4;
-                    break;
-                case 7:
-                    grainModel.Parameters.YFeature = AudioFeature.MFCC_5;
-                    break;
-            }
+        // if (frameIndex % 30 == 0) {
+        //     switch(featureIndex) {
+        //         case 0:
+        //             grainModel.Parameters.XFeature = AudioFeature.Contrast_0;
+        //             break;
+        //         case 1:
+        //             grainModel.Parameters.YFeature = AudioFeature.Energy;
+        //             break;
+        //         case 2:
+        //             grainModel.Parameters.XFeature = AudioFeature.RMS;
+        //             break;
+        //         case 3:
+        //             grainModel.Parameters.YFeature = AudioFeature.MFCC_6;
+        //             break;
+        //         case 4:
+        //             grainModel.Parameters.XFeature = AudioFeature.MFCC_2;
+        //             break;
+        //         case 5:
+        //             grainModel.Parameters.YFeature = AudioFeature.MFCC_3;
+        //             break;
+        //         case 6:
+        //             grainModel.Parameters.XFeature = AudioFeature.MFCC_4;
+        //             break;
+        //         case 7:
+        //             grainModel.Parameters.YFeature = AudioFeature.MFCC_5;
+        //             break;
+        //     }
             
-            featureIndex = (featureIndex + 1) % 7;
-        }
+        //     featureIndex = (featureIndex + 1) % 7;
+        // }
     }
     // void Update()
     // {}

@@ -540,7 +540,7 @@ GameObject:
   - component: {fileID: 2463461106111642862}
   m_Layer: 0
   m_Name: TipAnchor
-  m_TagString: Untagged
+  m_TagString: wandTip
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0

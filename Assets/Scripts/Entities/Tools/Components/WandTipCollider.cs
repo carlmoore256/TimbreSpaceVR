@@ -7,10 +7,10 @@ using System;
 public class WandTipCollider : MonoBehaviour
 {
 
-    class CollisionEvent {
+    class TimedCollisionEvent {
         public Collider collider;
         public float time;
-        public CollisionEvent(Collider collider) {
+        public TimedCollisionEvent(Collider collider) {
             this.collider = collider;
             this.time = Time.time;
         }
@@ -18,11 +18,11 @@ public class WandTipCollider : MonoBehaviour
     private int maxQueueSize = 1024;
     private int numFramesThreshold = 2;
     private string colliderTag = "grain";
-    private Queue<CollisionEvent> collisionEventQueue = new Queue<CollisionEvent>();
+    private Queue<TimedCollisionEvent> collisionEventQueue = new Queue<TimedCollisionEvent>();
 
     void OnEnable()
     {
-        collisionEventQueue = new Queue<CollisionEvent>();
+        collisionEventQueue = new Queue<TimedCollisionEvent>();
     }
 
     public int CollisionQueueStats() {
@@ -34,7 +34,7 @@ public class WandTipCollider : MonoBehaviour
             if (collisionEventQueue.Count > maxQueueSize) {
                 collisionEventQueue.Dequeue();
             }
-            collisionEventQueue.Enqueue(new CollisionEvent(collision.collider));
+            collisionEventQueue.Enqueue(new TimedCollisionEvent(collision.collider));
         }
     }
 
@@ -43,13 +43,13 @@ public class WandTipCollider : MonoBehaviour
             if (collisionEventQueue.Count > maxQueueSize) {
                 collisionEventQueue.Dequeue();
             }
-            collisionEventQueue.Enqueue(new CollisionEvent(collision.collider));
+            collisionEventQueue.Enqueue(new TimedCollisionEvent(collision.collider));
         }
     }
 
     public void RunActionOnColliders(Action<GameObject> action) {
         float thresholdTime = Time.time - (Time.deltaTime * numFramesThreshold);
-        foreach (CollisionEvent collisionEvent in collisionEventQueue) {
+        foreach (TimedCollisionEvent collisionEvent in collisionEventQueue) {
             if (collisionEvent.time < thresholdTime) continue;
             action.Invoke(collisionEvent.collider.gameObject);
         }
@@ -57,7 +57,7 @@ public class WandTipCollider : MonoBehaviour
 
     public void PlayCollidedGrains(float gain) {
         float thresholdTime = Time.time - (Time.deltaTime * numFramesThreshold);
-        foreach (CollisionEvent collisionEvent in collisionEventQueue) {
+        foreach (TimedCollisionEvent collisionEvent in collisionEventQueue) {
             if (collisionEvent.time < thresholdTime) continue;
             collisionEvent.collider.gameObject.GetComponent<Grain>().PlayGrain(gain);
         }

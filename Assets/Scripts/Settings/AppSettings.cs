@@ -137,6 +137,12 @@ public class AppSettings : ScriptableObject
     public Setting<bool> GrainUseHSV = new Setting<bool>("Use HSV Color", false, "Grains");
     public Setting<bool> DebugLogging = new Setting<bool>("Enable Debug Logs", true, "Developer");
     public Setting<bool> EnableXRLogger = new Setting<bool>("Enable XR Debug Logger", true, "Developer");
+    
+    public Setting<float> AudioDbThreshold = new Setting<float>("Audio Db Threshold", -30f, "Audio/Analysis");
+    public Setting<int> AudioDbThresholdWindow = new Setting<int>("Audio Db Threshold Window Size", 1024, "Audio/Analysis");
+
+    public Setting<int> ModelMaxGrains = new Setting<int>("Max grains", 5000, "Model");
+
 
     // public void Load() {
     //     string json = PlayerPrefs.GetString("AppSettings");
