@@ -7,7 +7,7 @@ public class SamplePackBrowser : TsvrTool
 {
     public override TsvrToolType ToolType { get => TsvrToolType.SamplePackBrowser; }
     public ScrollableListUI scrollableListUI;
-    public string manifestResourcePath = "SamplePacks/sample-packs";
+    private string manifestResourcePath = "SamplePacks/packs";
     
     void Start()
     {
@@ -37,6 +37,10 @@ public class SamplePackBrowser : TsvrTool
         scrollableListUI.ClearItems();
         scrollableListUI.SetHeader("Sample Packs", "Select a pack to view its contents");
         TsvrSamplePackMetadata[] samplePacks = AppDataParser.GetInstalledSamplePacks(_manifestResourcePath);
+        if (samplePacks == null) {
+            Debug.LogError("Could not load sample packs from " + _manifestResourcePath);
+            return;
+        }
         foreach(TsvrSamplePackMetadata samplePack in samplePacks) {
 
             scrollableListUI.AddItem(samplePack, (item, content) => {

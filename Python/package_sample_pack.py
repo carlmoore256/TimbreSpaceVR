@@ -7,9 +7,25 @@ import datetime
 import shutil
 
 DEFAULT_CREATOR = "Carl Moore"
-SAMPLE_PACKS_PATH = "../Assets/Resources/SamplePacks"
-SAMPLE_PACKS_INFO = "../Assets/Resources/SamplePacks/sample-packs.json"
+SAMPLE_PACKS_RESOURCE_PATH = "samplepacks"
+SAMPLE_PACKS_PATH = f"../Assets/Resources/{SAMPLE_PACKS_RESOURCE_PATH}"
+SAMPLE_PACKS_INFO = f"{SAMPLE_PACKS_PATH}/packs.json"
+DEFAULT_PARAMETERS = {
+    "xFeature": "MFCC_0",
+    "yFeature": "MFCC_1",
+    "zFeature": "MFCC_2",
+    "rFeature": "MFCC_3",
+    "gFeature": "MFCC_4",
+    "bFeature": "MFCC_5",
+    "scaleFeature": "RMS",
+    "windowSize": 8192,
+    "hopSize": 8192,
+    "scaleMult" : 0.01,
+    "scaleExp" : 0.1,
+    "useHSV" : False,
+    "posAxisScale" : [1,1,1],
 
+}
 
 def get_audio_info(file):
     audio_file = AudioSegment.from_wav(file)
@@ -20,20 +36,23 @@ def get_audio_info(file):
 }
 
 
-def get_sample_info(file):
+def get_sample_info(file, pack_title=None):
     print(f'Getting info for {file}...')
     file_bytes = os.stat(file).st_size
     audio_info = get_audio_info(file)
-    return {
+    info = {
         "file": os.path.basename(file),
         "title": os.path.basename(file).split(".")[0].replace("_", " ").replace("-", " ").title(),
         "bytes": file_bytes,
         "duration": audio_info["duration"],
         "channels": audio_info["channels"],
-        "maxDBFS": audio_info["maxDBFS"],
-        # "info" : get_audio_info(file)
-    }
-
+        "maxDBFS": audio_info["maxDBFS"]
+    }    
+    if pack_title is not None:
+        filetype = "." + os.path.basename(file).split(".")[1]
+        info["resource"] =  f"{SAMPLE_PACKS_RESOURCE_PATH}/{pack_title}/{os.path.basename(file).replace(filetype, '')}"
+    info = {**info, **DEFAULT_PARAMETERS}
+    return info
 
 def save_json(data, path):
     with open(path, "w") as f:
@@ -51,12 +70,6 @@ def update_sample_pack_info():
     packs = [load_json(os.path.join(p, "pack.json")) for p in packs]
     packs = sorted(packs, key=lambda k: k['metadata']['title'])
     info = [p['metadata'] for p in packs]
-    # info = [{
-    #     "title": p["title"],
-    #     "id": p["id"],
-    #     "creator": p["creator"],
-    #     "numSamples": len(p["samples"]),
-    # } for p in packs]
     save_json(info, SAMPLE_PACKS_INFO)
     print(f"Updated sample pack info: {SAMPLE_PACKS_INFO}")
 
@@ -65,7 +78,7 @@ def create_sample_pack(path, title=None, creator=DEFAULT_CREATOR, description=""
     if title is None:
         title = os.path.basename(path).replace("_", " ").replace("-", " ").title()
     files = glob.glob(path + "/*.wav")
-    samples = [get_sample_info(f) for f in files]
+    samples = [get_sample_info(f, title) for f in files]
     samples = [s for s in samples if s["bytes"] > 0 and s["duration"] > 0 and s["maxDBFS"] > -60]
     print(f'Sample Pack: {title} | Found {len(samples)} samples in {path}')
     samples = sorted(samples, key=lambda k: k['title'])

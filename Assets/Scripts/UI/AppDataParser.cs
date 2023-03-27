@@ -7,6 +7,9 @@ public static class AppDataParser {
 
     public static TsvrSamplePackMetadata[] GetInstalledSamplePacks(string path) {
         TextAsset textAsset = Resources.Load<TextAsset>(path);
+        if (textAsset == null) {
+            return null;
+        }
         TsvrSamplePackMetadata[] samplePacks = JsonHelper.FromJson<TsvrSamplePackMetadata>(JsonHelper.fixJson(textAsset.ToString()));
         return samplePacks;
     }
@@ -14,6 +17,9 @@ public static class AppDataParser {
     public static TsvrSamplePack GetSamplePack(string id) {
         string resourceDir = "SamplePacks/" + id;
         TextAsset samplePackTextAsset = Resources.Load<TextAsset>(resourceDir + "/pack");
+        if (samplePackTextAsset == null) {
+            return null;
+        }
         TsvrSamplePack samplePack = JsonUtility.FromJson<TsvrSamplePack>(samplePackTextAsset.ToString());
         return samplePack;
     }

@@ -31,4 +31,4 @@ MonoBehaviour:
   flexibleLinePrefab: {fileID: 7434248885355533583, guid: 84f0a959edeb4ac49a74d2a33e663ee1, type: 3}
   worldSpaceLinePrefab: {fileID: 3568233094526457909, guid: d3b78cf3e586eb3468ad3945e5e66716, type: 3}
   xrDebugConsolePrefab: {fileID: 0}
-  skyboxMaterial: {fileID: 2100000, guid: 220c53501a6feeb44842c61d7364609c, type: 2}
+  skyboxMaterial: {fileID: 2100000, guid: 3fd6642b230386244913c137493bfda2, type: 2}

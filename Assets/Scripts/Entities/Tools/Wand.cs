@@ -36,8 +36,8 @@ public class Wand : TsvrTool {
     private TwistLockAction wandRadiusTwistLock;
     private FlexibleLine wandLine;
 
-    private InputActionValueHandler triggerValueHandler;
-    private InputActionValueHandler gripValueHandler;
+    private FloatInputActionHandler triggerValueHandler;
+    private FloatInputActionHandler gripValueHandler;
 
     private float distanceCurrent = 1f;
     private float radiusCurrent = 1f;
@@ -47,10 +47,11 @@ public class Wand : TsvrTool {
         wandLine.enabled = true;
         wandLine.Initialize(wandBase, wandTip, wandTipTarget);
 
-        triggerValueHandler = new InputActionValueHandler(ControllerActions.TriggerValue, this);
+        triggerValueHandler = new FloatInputActionHandler(ControllerActions.TriggerValue, this);
 
-        triggerValueHandler.AddObserver(InputActionValueHandler.ActionType.Value, (value) => {
+        triggerValueHandler.AddObserver(FloatInputActionHandler.ActionType.Value, (value) => {
             Collider[] hitColliders = Physics.OverlapSphere(wandTip.transform.position, wandTip.transform.localScale.x * 0.51f, 1<<7);
+            ArrayHelpers.Shuffle<Collider>(hitColliders);
             foreach (Collider hitCollider in hitColliders) {
                 hitCollider.GetComponent<Grain>().PlayGrain(value * value);
             }
