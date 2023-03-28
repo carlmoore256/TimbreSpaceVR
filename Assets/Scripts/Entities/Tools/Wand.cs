@@ -53,7 +53,7 @@ public class Wand : TsvrTool {
             Collider[] hitColliders = Physics.OverlapSphere(wandTip.transform.position, wandTip.transform.localScale.x * 0.51f, 1<<7);
             ArrayHelpers.Shuffle<Collider>(hitColliders);
             foreach (Collider hitCollider in hitColliders) {
-                hitCollider.GetComponent<Grain>().PlayGrain(value * value);
+                hitCollider.GetComponent<GrainOld>().PlayGrain(value * value);
             }
         });
 

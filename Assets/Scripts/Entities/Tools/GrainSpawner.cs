@@ -23,7 +23,7 @@ public class GrainSpawner : TsvrTool
     private float modelScale = 0.5f;
     private float modelDist = 1.5f;
 
-    private GrainModel newGrainModel;
+    private GrainModelOld newGrainModel;
 
     public void OnEnable() {
 
@@ -38,7 +38,7 @@ public class GrainSpawner : TsvrTool
 
         SubscribeActions();
         // StartCoroutine(DebugSpawnDelayed());
-        newGrainModel = Instantiate(TsvrApplication.Config.grainModel, GameObject.Find("GrainParent").transform).GetComponent<GrainModel>();
+        newGrainModel = Instantiate(TsvrApplication.Config.grainModel, GameObject.Find("GrainParent").transform).GetComponent<GrainModelOld>();
     }
 
     public void OnDisable() {
@@ -142,14 +142,14 @@ public class GrainSpawner : TsvrTool
             });
 
             StartCoroutine(SetGrainModelBuffer(newGrainModel, () => {
-                newGrainModel = Instantiate(TsvrApplication.Config.grainModel, GameObject.Find("GrainParent").transform).GetComponent<GrainModel>();
+                newGrainModel = Instantiate(TsvrApplication.Config.grainModel, GameObject.Find("GrainParent").transform).GetComponent<GrainModelOld>();
             }));
         }
 
         // newGrainModel = Instantiate(TsvrApplication.Config.grainModel, GameObject.Find("GrainParent").transform).GetComponent<GrainModel>();
     }
 
-    IEnumerator SetGrainModelBuffer(GrainModel model, Action onComplete = null) {
+    IEnumerator SetGrainModelBuffer(GrainModelOld model, Action onComplete = null) {
         yield return new WaitUntil(() => isSpawnReady);
         model.SetAudioBuffer(audioBuffer);
         onComplete?.Invoke();

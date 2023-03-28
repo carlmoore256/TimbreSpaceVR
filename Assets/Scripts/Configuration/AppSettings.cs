@@ -131,7 +131,7 @@ public class AppSettings : ScriptableObject
     public Setting<bool> InterfaceSounds = new Setting<bool>("Interface Sounds Enabled", true, "Interface");
     public Setting<float> InterfaceSoundsGain = new Setting<float>("Interface Sounds Gain", 0.3f, "Interface");
     public Setting<float> ParticleTolerance = new Setting<float>("Particle Tolerance", 0.01f, "Grains");
-    public Setting<double> GrainPlayTimeout = new Setting<double>("Grain Play Timeout", 0.01f, "Grains");
+    public Setting<double> GrainPlayCooldown = new Setting<double>("Grain Play Timeout", 0.01f, "Grains");
     public Setting<float> GrainMaxRadius = new Setting<float>("Grain Max Radius", 0.5f, "Grains");
     public Setting<float> GrainMinRadius = new Setting<float>("Grain Max Radius", 0.001f, "Grains");
     public Setting<bool> GrainUseHSV = new Setting<bool>("Use HSV Color", false, "Grains");

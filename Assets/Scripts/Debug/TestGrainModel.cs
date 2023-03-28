@@ -8,7 +8,7 @@ public class TestGrainModel : MonoBehaviour
 
     public string audioFile = "mgmt";
 
-    private GrainModel grainModel;
+    private GrainModelOld grainModel;
 
     // Start is called before the first frame update
     void OnEnable()
@@ -17,8 +17,8 @@ public class TestGrainModel : MonoBehaviour
         grainModel.PlaySequentially();
     }
 
-    private GrainModel SpawnLoadGrainModel(string path) {
-        GrainModel newGrainModel = Instantiate(TsvrApplication.Config.grainModel, GameObject.Find("GrainParent").transform).GetComponent<GrainModel>();
+    private GrainModelOld SpawnLoadGrainModel(string path) {
+        GrainModelOld newGrainModel = Instantiate(TsvrApplication.Config.grainModel, GameObject.Find("GrainParent").transform).GetComponent<GrainModelOld>();
         AudioIO.LoadAudioFromAssets("SamplePacks/tsvr-classic/" + audioFile, (signal) => {
             Debug.Log($"Loaded Audio | Num Samples: {signal.Length}.");
             newGrainModel.SetAudioBuffer(signal);

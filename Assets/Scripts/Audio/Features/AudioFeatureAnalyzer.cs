@@ -69,24 +69,33 @@ public struct WindowTime {
 // maybe each grain should have an index, which can lookup
 // an index across multiple feature vectors
 
-public class AudioFeatureExtractor
+public class AudioFeatureAnalyzer
 {    
     public DiscreteSignal Signal { get; protected set; }
     private int windowSize;
     private int hopSize;
     private static FeatureKey[] featureKeys;
     public Dictionary<AudioFeature, FeatureVector> FeatureVectors { get; protected set; }
-    public List<WindowTime> WindowTimes { get; protected set; }
+    public WindowTime[] WindowTimes { get; protected set; }
 
-    public AudioFeatureExtractor(int windowSize, int hopSize)
+    public AudioFeatureAnalyzer(int windowSize, int hopSize) {
+        this.windowSize = windowSize;
+        this.hopSize = hopSize;
+        this.Signal = null;
+        Initialize();
+    }
+
+    public AudioFeatureAnalyzer(int windowSize, int hopSize, DiscreteSignal signal)
     {
         this.windowSize = windowSize;
         this.hopSize = hopSize;
-
+        this.Signal = signal;
         CalculateWindowTimes();
+        Initialize();
+    }
 
-        // make a list of all feature keys
-        featureKeys = new FeatureKey[] {
+    private void Initialize() {
+        featureKeys = new FeatureKey[] { 
             // Spectral
             new FeatureKey("centroid", FeatureExtractorType.Spectral, AudioFeature.Centroid),
             new FeatureKey("spread", FeatureExtractorType.Spectral, AudioFeature.Spread),
@@ -116,12 +125,10 @@ public class AudioFeatureExtractor
             new FeatureKey("mfcc5", FeatureExtractorType.MFCC, AudioFeature.MFCC_5),
             new FeatureKey("mfcc6", FeatureExtractorType.MFCC, AudioFeature.MFCC_6),
         };
-
         FeatureVectors = new Dictionary<AudioFeature, FeatureVector>();
         foreach (FeatureKey key in featureKeys) {
             FeatureVectors.Add(key.feature, null);
         }
-
     }
   
 
@@ -132,11 +139,6 @@ public class AudioFeatureExtractor
         FeatureKey featureKey = Array.Find(featureKeys, key => key.feature == feature);
         return ComputeFeature(featureKey);
     }
-
-    // public void ComputeFeatures(AudioFeature[] features) {
-
-    // }
-
 
     private FeatureVector ComputeFeature(FeatureKey featureKey) {
         
@@ -258,10 +260,7 @@ public class AudioFeatureExtractor
         FeaturePostProcessing.NormalizeMean(vectors);
 
         if (WindowTimes == null) {
-            WindowTimes = new List<WindowTime>();
-            extractor.TimeMarkers(vectors.Count).ForEach((double start) => {
-                WindowTimes.Add(new WindowTime(start, start + multiOpts.FrameDuration));
-            });
+            CalculateWindowTimes();
         }
 
         var names = extractor.FeatureDescriptions;
@@ -302,12 +301,15 @@ public class AudioFeatureExtractor
         var vectors = mfccExtractor.ParallelComputeFrom(signal);
         FeaturePostProcessing.NormalizeMean(vectors);
         var names = mfccExtractor.FeatureDescriptions;
-        // FeatureKey[] _featureKeys = new FeatureKey[names.Count]; // We have to do this to ensure order is correct        
+        // FeatureKey[] _featureKeys = new FeatureKey[names.Count]; // We have to do this to ensure order is correct    
+            
         if (WindowTimes == null) { // REMOVE THIS!
-            WindowTimes = new List<WindowTime>();
-            mfccExtractor.TimeMarkers(vectors.Count).ForEach((double start) => {
-                WindowTimes.Add(new WindowTime(start, start + mfccOpts.FrameDuration));
-            });
+            CalculateWindowTimes();
+            // var _windowTimes = new List<WindowTime>();
+            // mfccExtractor.TimeMarkers(vectors.Count).ForEach((double start) => {
+            //     _windowTimes.Add(new WindowTime(start, start + mfccOpts.FrameDuration));
+            // });
+            // WindowTimes = _windowTimes.ToArray();
         }
 
         for(int featureIdx = 0; featureIdx < names.Count; featureIdx++) {
@@ -326,18 +328,17 @@ public class AudioFeatureExtractor
     }
       
     private void CalculateWindowTimes() {
-        if (WindowTimes == null) {
-            WindowTimes = new List<WindowTime>();
-            int nFrames = (Signal.Length - windowSize) / hopSize + 1;
-            for (int i = 0; i < nFrames; i++) {
-                double start = i * hopSize / Signal.SamplingRate;
-                double end = start + windowSize / Signal.SamplingRate;
-                WindowTimes.Add(new WindowTime(start, end));
-            }
+        var _windowTimes = new List<WindowTime>();
+        int nFrames = (Signal.Length - windowSize) / hopSize + 1;
+        for (int i = 0; i < nFrames; i++) {
+            double start = i * hopSize / Signal.SamplingRate;
+            double end = start + windowSize / Signal.SamplingRate;
+            _windowTimes.Add(new WindowTime(start, end));
         }
+        WindowTimes = _windowTimes.ToArray();
     }
 
-    public void ExtractFeatures(DiscreteSignal signal, AudioFeature[] features, Action onComplete) {
+    public void BatchComputeFeatures(DiscreteSignal signal, AudioFeature[] features, Action onComplete) {
         // get FeatureKeys for requested features
         List<FeatureKey> requestedFeatures = new List<FeatureKey>();
 

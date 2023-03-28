@@ -37,11 +37,11 @@ public enum AudioFeature {
 /// Wrapper class for a grain's audio features
 /// </summary>
 public class GrainAudioFeatures {
-    private AudioFeatureExtractor featureExtractor;
+    private AudioFeatureAnalyzer featureExtractor;
     public WindowTime WindowTime { get; protected set; }
     public int GrainIndex { get; protected set; }
 
-    public GrainAudioFeatures(AudioFeatureExtractor featureExtractor, int grainIndex) {
+    public GrainAudioFeatures(AudioFeatureAnalyzer featureExtractor, int grainIndex) {
         this.featureExtractor = featureExtractor;
         WindowTime = featureExtractor.WindowTimes[grainIndex];
         GrainIndex = grainIndex;

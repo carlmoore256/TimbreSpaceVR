@@ -26,7 +26,7 @@ public class ModelInspector : TsvrTool
     public Color lineUnassignedHoverColor;
     public Color linePositioningColor;
 
-    private GrainModel selectedModel;
+    private GrainModelOld selectedModel;
     private RaycastHit raycastHit;
 
     private float modelScale;
@@ -171,7 +171,7 @@ public class ModelInspector : TsvrTool
         });
     }
 
-    public void SetSelectedModel(GrainModel model) {
+    public void SetSelectedModel(GrainModelOld model) {
         selectedModel = model;
         state = ModelMultitoolState.Positioning;
         modelDist = Vector3.Distance(ToolController.transform.position, model.transform.position);
@@ -190,7 +190,7 @@ public class ModelInspector : TsvrTool
         if (Physics.Raycast(lineStart.position, lineStart.forward, out raycastHit, Mathf.Infinity, grainLayerMask))
         {
             GameObject hitObject = raycastHit.collider.gameObject;
-            GrainModel grainModel = hitObject.transform.parent.GetComponent<GrainModel>();
+            GrainModelOld grainModel = hitObject.transform.parent.GetComponent<GrainModelOld>();
             if (grainModel != null)
             {
                 selectedModel = grainModel;

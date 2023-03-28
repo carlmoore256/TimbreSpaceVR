@@ -2,7 +2,7 @@ using System;
 using UnityEngine;
 
 [System.Serializable]
-public class GrainCloudParameterValues {
+public class GranularParameterValues {
     public AudioFeature xFeature = AudioFeature.MFCC_0;
     public AudioFeature yFeature = AudioFeature.MFCC_1;
     public AudioFeature zFeature = AudioFeature.MFCC_2;
@@ -21,32 +21,32 @@ public class GrainCloudParameterValues {
 /// <summary>
 /// State manager for GrainModel parameters, invoking callbacks when parameters are changed
 /// </summary>
-public class ParameterHandler {
+public class GranularParameterHandler {
 
-    public ParameterHandler(
-            GrainCloudParameterValues values,
+    public GranularParameterHandler(
+            GranularParameterValues values,
             Action<AudioFeature[], Vector3> onPositionParameterUpdate, 
             Action<AudioFeature[], bool> onColorParameterUpdate,
             Action<AudioFeature> onScaleParameterUpdate,
             Action<int, int> onWindowUpdate) { 
         this.values = values;
-        this.onFeaturePosUpdate = onPositionParameterUpdate;
-        this.onFeatureColUpdate = onColorParameterUpdate;
-        this.onFeatureSclUpdate = onScaleParameterUpdate;
+        this.onFeaturePositionUpdate = onPositionParameterUpdate;
+        this.onFeatureColorUpdate = onColorParameterUpdate;
+        this.onFeatureScaleUpdate = onScaleParameterUpdate;
         this.onWindowUpdate = onWindowUpdate;
     }
 
-    public ParameterHandler(GrainCloudParameterValues values) {
+    public GranularParameterHandler(GranularParameterValues values) {
         this.values = values;
     }
 
 
 
-    private GrainCloudParameterValues values;
+    private GranularParameterValues values;
 
-    public Action<AudioFeature[], Vector3> onFeaturePosUpdate;
-    public Action<AudioFeature[], bool> onFeatureColUpdate;
-    public Action<AudioFeature> onFeatureSclUpdate;
+    public Action<AudioFeature[], Vector3> onFeaturePositionUpdate;
+    public Action<AudioFeature[], bool> onFeatureColorUpdate;
+    public Action<AudioFeature> onFeatureScaleUpdate;
     public Action<int, int> onWindowUpdate; // window size, hop size
 
     public AudioFeature[] PositionFeatures { get => new AudioFeature[3] { values.xFeature, values.yFeature, values.zFeature }; }
@@ -54,37 +54,37 @@ public class ParameterHandler {
 
     public AudioFeature XFeature { get => values.xFeature; set {
         values.xFeature = value;
-        onFeaturePosUpdate?.Invoke(PositionFeatures, values.posAxisScale);
+        onFeaturePositionUpdate?.Invoke(PositionFeatures, values.posAxisScale);
     } }
 
     public AudioFeature YFeature { get => values.yFeature; set {
         values.yFeature = value;
-        onFeaturePosUpdate?.Invoke(PositionFeatures, values.posAxisScale);
+        onFeaturePositionUpdate?.Invoke(PositionFeatures, values.posAxisScale);
     } }
 
     public AudioFeature ZFeature { get => values.zFeature; set {
         values.zFeature = value;
-        onFeaturePosUpdate?.Invoke(PositionFeatures, values.posAxisScale);
+        onFeaturePositionUpdate?.Invoke(PositionFeatures, values.posAxisScale);
     } }
 
     public AudioFeature RFeature { get => values.rFeature; set {
         values.rFeature = value;
-        onFeatureColUpdate?.Invoke(ColorFeatures, values.useHSV);
+        onFeatureColorUpdate?.Invoke(ColorFeatures, values.useHSV);
     } }
 
     public AudioFeature GFeature { get => values.gFeature; set {
         values.gFeature = value;
-        onFeatureColUpdate?.Invoke(ColorFeatures, values.useHSV);
+        onFeatureColorUpdate?.Invoke(ColorFeatures, values.useHSV);
     } }
 
     public AudioFeature BFeature { get => values.bFeature; set {
         values.bFeature = value;
-        onFeatureColUpdate?.Invoke(ColorFeatures, values.useHSV);
+        onFeatureColorUpdate?.Invoke(ColorFeatures, values.useHSV);
     } }
 
     public AudioFeature ScaleFeature { get => values.scaleFeature; set {
         values.scaleFeature = value;
-        onFeatureSclUpdate?.Invoke(value);
+        onFeatureScaleUpdate?.Invoke(value);
     } }
 
     public int WindowSize { get => values.windowSize; set { 
@@ -99,21 +99,21 @@ public class ParameterHandler {
 
     public float ScaleMult { get => values.scaleMult; set {
         values.scaleMult = value;
-        onFeatureSclUpdate?.Invoke(values.scaleFeature);
+        onFeatureScaleUpdate?.Invoke(values.scaleFeature);
     } }
     public float ScaleExp { get => values.scaleExp; set {
         values.scaleExp = value;
-        onFeatureSclUpdate?.Invoke(values.scaleFeature);
+        onFeatureScaleUpdate?.Invoke(values.scaleFeature);
     } }
 
     public bool UseHSV { get => values.useHSV; set {
         values.useHSV = value;
-        onFeatureColUpdate?.Invoke(ColorFeatures, value);
+        onFeatureColorUpdate?.Invoke(ColorFeatures, value);
     } }
 
     public Vector3 PosAxisScale { get => values.posAxisScale; set {
         values.posAxisScale = value;
-        onFeaturePosUpdate?.Invoke(PositionFeatures, value);
+        onFeaturePositionUpdate?.Invoke(PositionFeatures, value);
     } }
 
     /** Set window size by the number of hops per window */

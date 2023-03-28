@@ -7,7 +7,7 @@ public class WandLegacy : MonoBehaviour
 {
     public LineRenderer line;
     public Transform wandBase;
-    private List<Grain> collidedGrains;
+    private List<GrainOld> collidedGrains;
     void Start()
     {
         // if (gameObject.transform.parent.name.Contains("Left"))
@@ -20,7 +20,7 @@ public class WandLegacy : MonoBehaviour
     {
         if(collision.gameObject.CompareTag("grain"))
         {
-            collidedGrains.Add(collision.gameObject.GetComponent<Grain>());
+            collidedGrains.Add(collision.gameObject.GetComponent<GrainOld>());
         }
     }
 
@@ -28,7 +28,7 @@ public class WandLegacy : MonoBehaviour
     {
         if (collision.gameObject.CompareTag("grain"))
         {
-            collidedGrains.Remove(collision.gameObject.GetComponent<Grain>());
+            collidedGrains.Remove(collision.gameObject.GetComponent<GrainOld>());
         }
     }
 }

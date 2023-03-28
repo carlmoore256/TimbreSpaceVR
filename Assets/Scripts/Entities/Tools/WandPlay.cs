@@ -89,7 +89,7 @@ public class WandPlay : Wand {
 
     float currentGain = 0f;
     private void GrainPlayAction(GameObject grainObject) {
-        grainObject.GetComponent<Grain>().PlayGrain(currentGain);
+        grainObject.GetComponent<GrainOld>().PlayGrain(currentGain);
     }
 
 

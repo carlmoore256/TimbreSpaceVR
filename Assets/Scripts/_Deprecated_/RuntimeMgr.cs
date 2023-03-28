@@ -14,7 +14,7 @@ public class RuntimeMgr : MonoBehaviour
 
     // grainModel contains a collection of grains
     public Transform grainModel;
-    GrainModel selectedModel;
+    GrainModelOld selectedModel;
 
     public List<GameObject> allGrains;
 

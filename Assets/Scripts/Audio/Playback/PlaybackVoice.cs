@@ -73,13 +73,13 @@ public class PlaybackVoice {
     private float[] window;
     private double scheduledEndTime;
     private PlaybackEvent playbackEvent;
-    private Action<PlaybackVoice, PlaybackEvent> onPlaybackFinished;
+    private Action<PlaybackVoice, PlaybackEvent> onPlaybackComplete;
     public bool IsPlaying { get; set; } = false;
 
-    public PlaybackVoice(Action<PlaybackVoice, PlaybackEvent> _onPlaybackFinished) {
+    public PlaybackVoice(Action<PlaybackVoice, PlaybackEvent> _onPlaybackComplete) {
         window = new float[0];
         playhead = new Playhead();
-        onPlaybackFinished = _onPlaybackFinished;
+        onPlaybackComplete = _onPlaybackComplete;
     }
 
     public void Play(PlaybackEvent playbackEvent) {
@@ -121,7 +121,7 @@ public class PlaybackVoice {
         if (playhead.IsFinished()) {
             IsPlaying = false;
             mut.ReleaseMutex();
-            onPlaybackFinished?.Invoke(this, playbackEvent);
+            onPlaybackComplete?.Invoke(this, playbackEvent);
             return;
         }
 

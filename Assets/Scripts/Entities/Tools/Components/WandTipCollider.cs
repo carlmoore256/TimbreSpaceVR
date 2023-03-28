@@ -59,7 +59,7 @@ public class WandTipCollider : MonoBehaviour
         float thresholdTime = Time.time - (Time.deltaTime * numFramesThreshold);
         foreach (TimedCollisionEvent collisionEvent in collisionEventQueue) {
             if (collisionEvent.time < thresholdTime) continue;
-            collisionEvent.collider.gameObject.GetComponent<Grain>().PlayGrain(gain);
+            collisionEvent.collider.gameObject.GetComponent<GrainOld>().PlayGrain(gain);
         }
     }
 }

@@ -8,18 +8,18 @@ using System.Threading.Tasks;
 using UnityEngine;
 
 
-public enum GrainModelState {
-    Unplaced,
-    Placed,
-    Positioning,
-    Playable
-}
+// public enum GrainModelState {
+//     Unplaced,
+//     Placed,
+//     Positioning,
+//     Playable
+// }
 
 
 /// <summary>
 /// Manager and container for a collection of playable grains
 /// </summary>
-public class GrainModel : MonoBehaviour
+public class GrainModelOld : MonoBehaviour
 {
     public bool HasBeenPlaced { get; protected set; } = false;
 

@@ -3,185 +3,144 @@ using UnityEngine;
 using System;
 using System.Collections.Generic;
 
+/// <summary>
+/// A node that visually represents an audio grain
+/// </summary>
 public class Grain : MonoBehaviour
 {
     public Material material;
-    public bool UseHSV { get; set; } = false;
+    public int GrainID { get; private set; }
+
     private LODRenderer lodRenderer;
-    private GrainAudioFeatures features;
     private SpringJoint joint;
 
     private float durationRePosition = 0.5f;
     private float durationReColor = 0.5f;
     private float durationReScale = 0.5f;
 
-    private Vector3 targetPosition;
-    private Vector3 targetScale;
-    private Quaternion targetRotation;
+    private TransformSnapshot targetTransform;
     private Color targetColor;
+    private bool isRepositioning = false;
 
-    public bool IsDisplayingInfo { get; set; } = false;
-
-    private Action<PlaybackEvent> onGrainActivated;
-
-    public PlaybackEvent PlaybackEvent { get; private set; }
-
-    public int GrainIndex { get; private set; }
-
-    private double lastPlayTime = 0d;
-    private double playTimeout;
-
+    private double lastActivated = 0d;
+    private float activateEnd = 0f;
+    private float activatedDuration = 1f;
     private bool isActivated = false;
-    private float playEnd = 0f;
-    private float totalPlayDuration = 1f;
+
+    // public delegate void OnSelect(Grain grain, object caller);
+    // public event OnSelect OnSelectEvent;
+
+    public delegate void OnActivate(Grain grain, float value, object caller);
+    public event OnActivate OnActivateEvent;
+    
+
+    public void Initialize(int grainID) {
+        GrainID = grainID;
+    }
+
+    # region MonoBehaviours
 
     private void OnEnable() {
         transform.localScale = Vector3.zero;
         lodRenderer = new LODRenderer(transform.Find("LOD").gameObject, material);
         joint = GetComponent<SpringJoint>();
-        playTimeout = TsvrApplication.Settings.GrainPlayTimeout.value;
-        UseHSV = TsvrApplication.Settings.GrainUseHSV.value;
-    }
-
-
-    public void Initialize(PlaybackEvent playbackEvent, int grainIndex) {
-        this.PlaybackEvent = playbackEvent; 
-        this.GrainIndex = grainIndex;
-    }
-
-    /// <summary>
-    /// Initialize the grain with the given features and model parameters
-    /// </summary>
-    public void Initialize(GrainAudioFeatures features, ParameterHandler modelParameters, Action<PlaybackEvent> onGrainActivated) {
-        this.features = features;
-        this.onGrainActivated = onGrainActivated;
-        PlaybackEvent = new PlaybackEvent(0f, features.WindowTime, features.Get(AudioFeature.RMS), gameObject.GetInstanceID());
-
-        playTimeout = modelParameters.WindowSize / (double)AudioManager.Instance.SampleRate;
-        playTimeout /= 4d;
-        joint.tolerance = TsvrApplication.Settings.ParticleTolerance.value;
-
-        ToggleReposition(true);
-
-        transform.localPosition  = new Vector3(
-            features.Get(modelParameters.PositionFeatures[0]),
-            features.Get(modelParameters.PositionFeatures[1]),
-            features.Get(modelParameters.PositionFeatures[2]));
-
-        UpdatePosition(
-            modelParameters.PositionFeatures[0], 
-            modelParameters.PositionFeatures[1], 
-            modelParameters.PositionFeatures[2],
-            Vector3.one);
-
-        UpdateColor(
-            modelParameters.ColorFeatures[0], 
-            modelParameters.ColorFeatures[1], 
-            modelParameters.ColorFeatures[2],
-            UseHSV);
-
-        UpdateScale(modelParameters.ScaleFeature, modelParameters.ScaleMult, modelParameters.ScaleExp);
     }
 
     void Update() {
         if (isActivated) { // this saves resources as opposed to starting new coroutines
-            if (playEnd > Time.time) {
-                playEnd -= Time.deltaTime;
-                float lerp = 1f - ((playEnd - Time.time) / totalPlayDuration);
+            if (activateEnd > Time.time) {
+                activateEnd -= Time.deltaTime;
+                float lerp = 1f - ((activateEnd - Time.time) / activatedDuration);
                 lodRenderer.ChangeColorCycle(Color.Lerp(lodRenderer.GetColor(), targetColor, Mathf.Pow(lerp, 0.5f)));
-                transform.localScale = Vector3.Lerp(transform.localScale, targetScale, lerp);
+                transform.localScale = Vector3.Lerp(transform.localScale, targetTransform.scale, lerp);
             } else {
                 // apply changes to all lods
                 lodRenderer.ChangeColor(targetColor);
-                transform.localScale = targetScale;
+                transform.localScale = targetTransform.scale;
                 isActivated = false;
             }
         }
     }
-    
-    /// <summary>
-    /// Play Grain audio as a one shot event
-    /// </summary>
-    public void PlayGrain(float gain = 1.0f)
-    {
-        if (Time.timeAsDouble - lastPlayTime < playTimeout) return;
-        isActivated = true;
-        playEnd = Time.time + totalPlayDuration;
-        transform.localScale = targetScale * 1.5f;
-        lodRenderer.ChangeColor(Color.red);      
-        PlaybackEvent.gain = gain;
-        lastPlayTime = Time.timeAsDouble;
-        onGrainActivated?.Invoke(PlaybackEvent);
-    }
+
+    # endregion
+
+    # region Public Methods
+
+    // /// <summary>
+    // /// Generic event that can be called by tools and other interface elements
+    // /// For instance, if this is invoked by the wand select tool,
+    // /// the grain cloud that owns it should be subscribed to OnSelectEvent, and
+    // /// should be able to add this grain to the selection
+    // /// </summary>
+    // public void Select(object caller) {
+    //     OnSelectEvent?.Invoke(this, caller);
+    // }
 
     /// <summary>
-    /// Update Grain position to provided axes of GrainFeatures 
+    /// Notifies listeners of attempt to activate, with self, value, and delta time since last activated
     /// </summary>
-    /// <param name="fX">Audio Feature for X axis</param>
-    /// <param name="fY">Audio Feature for Y axis</param>
-    /// <param name="fZ">Audio Feature for Z axis</param>
-    /// <param name="axisScale">scale of each axis, default is 1.0f</param>
-    public void UpdatePosition(AudioFeature fX, AudioFeature fY, AudioFeature fZ, Vector3 axisScale)
-    {   
-        if (axisScale == null) axisScale = Vector3.one;
-        Vector3 targetPosition = new Vector3(
-            features.Get(fX) * axisScale.x, 
-            features.Get(fY) * axisScale.y, 
-            features.Get(fZ) * axisScale.z
-        );
-        if (positionCoroutine != null)
-            StopCoroutine(positionCoroutine);
-        positionCoroutine = StartCoroutine(PositionCoroutine(targetPosition, durationRePosition));
+    public void Activate(float value, object caller) {
+        OnActivateEvent?.Invoke(this, value, caller);
+    }
+
+
+    /// <summary>
+    /// Play an activated animation
+    /// </summary>
+    public void PlayAnimation(Color color, float radiusMultiplier = 1.2f, float duration = 1f) {
+        isActivated = true;
+        activateEnd = Time.time + duration;
+        lastActivated = Time.timeAsDouble;
+        lodRenderer.ChangeColor(color);
+        transform.localScale = targetTransform.scale * radiusMultiplier;
+        activatedDuration = duration;
+        if (playCoroutine != null)
+            StopCoroutine(playCoroutine);
+        playCoroutine = StartCoroutine(PlayCoroutine(color, radiusMultiplier));
+    }
+
+    public double TimeSinceLastPlayed() {
+        return Time.timeAsDouble - lastActivated;
     }
 
     public void UpdatePosition(Vector3 newPosition) {
         if (positionCoroutine != null)
             StopCoroutine(positionCoroutine);
-        positionCoroutine = StartCoroutine(PositionCoroutine(targetPosition, durationRePosition));
+        positionCoroutine = StartCoroutine(PositionCoroutine(targetTransform.position, durationRePosition));
     }
 
-    /// <summary>
-    /// Update rotation of Grain given an Audio Feature for each axis 
-    /// </summary>
-    /// <param name="f">Audio Feature for Grain scale</param>
-    /// <param name="multiplier">Additional multiplier of each axis, default is 1.0f</param>
-    public void UpdateScale(AudioFeature f, float multiplier, float scaleExp=1f)
-    {
-        float radius = features.Get(f, positive : true);
-        if (scaleExp != 1f) radius = Mathf.Pow(radius, scaleExp);
-        radius *= multiplier;
-
-
+    public void UpdateScale(float radius) {
         if (radius > TsvrApplication.Settings.GrainMaxRadius.value)
             radius = TsvrApplication.Settings.GrainMaxRadius.value;
         else if (radius < TsvrApplication.Settings.GrainMinRadius.value)
             radius = TsvrApplication.Settings.GrainMinRadius.value;
-        // Debug.Log($"Updating Scale | Radius {radius} | Feature {features.Get(f, true)} | Multiplier {multiplier} | Scale Exp {scaleExp} | Min {scaleMin}");
-
+        GetComponent<Rigidbody>().mass = radius * 10f;
         if (scaleCoroutine != null)
             StopCoroutine(scaleCoroutine);
-        targetScale = new Vector3(radius, radius, radius);
+        targetTransform.scale = new Vector3(radius, radius, radius);
+        scaleCoroutine = StartCoroutine(ScaleCoroutine(targetTransform.scale, durationReScale));
+    } 
 
-        // also change the mass of the rigidbody
-        GetComponent<Rigidbody>().mass = radius * 10f;
-
-        scaleCoroutine = StartCoroutine(ScaleCoroutine(targetScale, durationReScale));
-    }
-
-    /// <summary>
-    /// Update color of Grain given an Audio Feature for each axis
-    /// </summary>
-    /// <param name="hsv">if true, interpret features as HSV values, otherwise RGB</param>
-    public void UpdateColor(AudioFeature fR, AudioFeature fG, AudioFeature fB, bool hsv=false)
-    {
-        if (hsv) targetColor = Color.HSVToRGB(features.Get(fR, positive : true), features.Get(fG, positive : true), features.Get(fB, positive : true));
-        else targetColor = new Color(features.Get(fR, positive : true), features.Get(fG, positive : true), features.Get(fB, positive : true));
+    public void UpdateColor(Color color) {
         if (colorCoroutine != null)
             StopCoroutine(colorCoroutine);
         colorCoroutine = StartCoroutine(ColorCoroutine(targetColor, durationReColor));
     }
 
-    private bool isRepositioning = false;
+    /// <summary>
+    /// Interrupt any current animations and reset to target values
+    /// </summary>
+    public void ResetAnimation(float duration = 0.1f) {
+        if (positionCoroutine != null)
+            StopCoroutine(positionCoroutine);
+        if (scaleCoroutine != null)
+            StopCoroutine(scaleCoroutine);
+        if (colorCoroutine != null)
+            StopCoroutine(colorCoroutine);
+        positionCoroutine = StartCoroutine(PositionCoroutine(targetTransform.position, duration));
+        scaleCoroutine = StartCoroutine(ScaleCoroutine(targetTransform.scale, duration));
+        colorCoroutine = StartCoroutine(ColorCoroutine(targetColor, duration));
+    }
 
     public void ToggleReposition(bool enable) {
         if (enable) {
@@ -193,6 +152,10 @@ public class Grain : MonoBehaviour
         }
     }
 
+    # endregion
+
+
+
     private void ToggleSpring(bool enable) {
         if (enable) {
             if (isRepositioning) return;
@@ -203,29 +166,24 @@ public class Grain : MonoBehaviour
         }
     }
 
-    public void TriggerPlayAnimation() {
-        if (playCoroutine != null)
-            StopCoroutine(playCoroutine);
-        playCoroutine = StartCoroutine(PlayCoroutine());
-    }
 
-    /// ==================== COROUTINES ==================== ///
+    # region Coroutines
 
     private Coroutine playCoroutine;
-    private IEnumerator PlayCoroutine() {
-        lodRenderer.ChangeColor(Color.red);
-        transform.localScale = targetScale * 1.5f;
+    private IEnumerator PlayCoroutine(Color color, float radiusMultiplier = 1.2f, float duration = 1f) {
+        lodRenderer.ChangeColor(color);
+        transform.localScale = targetTransform.scale * radiusMultiplier;
         float time = 0f;        
-        while (time < playEnd) {
-            lodRenderer.ChangeColor(Color.Lerp(lodRenderer.GetColor(), targetColor, time/playEnd));
-            transform.localScale = Vector3.Lerp(transform.localScale, targetScale, time/playEnd);
+        while (time < activateEnd) {
+            lodRenderer.ChangeColor(Color.Lerp(lodRenderer.GetColor(), targetColor, time/activateEnd));
+            transform.localScale = Vector3.Lerp(transform.localScale, targetTransform.scale, time/activateEnd);
             time += Time.deltaTime;
             yield return null;
         }
 
         yield return new WaitForSeconds(0.1f);
         lodRenderer.ChangeColor(targetColor);
-        transform.localScale = targetScale;
+        transform.localScale = targetTransform.scale;
     }
 
     private Coroutine scaleCoroutine;
@@ -273,4 +231,6 @@ public class Grain : MonoBehaviour
         }
         lodRenderer.ChangeColor(targetColor);
     }
+
+    # endregion
 }
