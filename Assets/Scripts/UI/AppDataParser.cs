@@ -16,11 +16,11 @@ public static class AppDataParser {
 
     public static TsvrSamplePack GetSamplePack(string id) {
         string resourceDir = "SamplePacks/" + id;
-        TextAsset samplePackTextAsset = Resources.Load<TextAsset>(resourceDir + "/pack");
-        if (samplePackTextAsset == null) {
+        TextAsset metadataTextAsset = Resources.Load<TextAsset>(resourceDir + "/metadata");
+        if (metadataTextAsset == null) {
             return null;
         }
-        TsvrSamplePack samplePack = JsonUtility.FromJson<TsvrSamplePack>(samplePackTextAsset.ToString());
+        TsvrSamplePack samplePack = JsonUtility.FromJson<TsvrSamplePack>(metadataTextAsset.ToString());
         return samplePack;
     }
 
@@ -34,8 +34,8 @@ public static class AppDataParser {
         foreach(TsvrSamplePackMetadata metadata in samplePacks) {
             string resourceDir = "SamplePacks/" + metadata.id;
             try {
-                TextAsset samplePackTextAsset = Resources.Load<TextAsset>(resourceDir + "/pack");
-                TsvrSamplePack samplePack = JsonUtility.FromJson<TsvrSamplePack>(samplePackTextAsset.ToString());
+                TextAsset metadataTextAsset = Resources.Load<TextAsset>(resourceDir + "/metadata");
+                TsvrSamplePack samplePack = JsonUtility.FromJson<TsvrSamplePack>(metadataTextAsset.ToString());
                 Debug.Log("SAMPLE PACK | Title: " + samplePack.metadata.title + " | ID: " + samplePack.metadata.id + " | Creator: " + samplePack.metadata.creator + " | Num Samples: " + samplePack.metadata.numSamples);
                 foreach(TsvrSample sample in samplePack.samples) {
                     Debug.Log("SAMPLE | File: " + sample.file + " | Title: " + sample.title + " | Bytes: " + sample.bytes + " | Duration: " + sample.duration + " | Channels: " + sample.channels + " | Max DBFS: " + sample.maxDBFS);

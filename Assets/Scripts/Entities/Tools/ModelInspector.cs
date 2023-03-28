@@ -37,6 +37,7 @@ public class ModelInspector : TsvrTool
     enum ModelMultitoolState {
         Inspecting,
         Positioning,
+        Resizing,
         Unassigned
     }
 
@@ -62,6 +63,11 @@ public class ModelInspector : TsvrTool
 
     void Update()
     {
+        var lineEndPosition = lineStart.position + lineStart.forward * 100f;
+        if (selectedModel != null) {
+            lineEndPosition = selectedModel.transform.position + selectedModel.transform.forward * selectedModel.transform.localScale.z;
+        }
+        
         switch(state) {
             case ModelMultitoolState.Inspecting:
                 if (selectedModel != null) {
@@ -70,13 +76,29 @@ public class ModelInspector : TsvrTool
                 }
                 break;
             case ModelMultitoolState.Positioning:
-                if (lineRenderer.gameObject.activeSelf) {
-                    lineRenderer.gameObject.SetActive(false);
-                }
+                // if (lineRenderer.gameObject.activeSelf) {
+                //     lineRenderer.gameObject.SetActive(false);
+                // }
+                UpdateLine(lineEndPosition, lineInspectColor);
                 if (selectedModel != null) {
                     selectedModel.Reposition(
                         ToolController.transform.position + ToolController.transform.forward * modelDist,
                         modelRotationTarget,
+                        new Vector3(modelScale, modelScale, modelScale),
+                        0.5f
+                    );
+                }
+                break;
+            case ModelMultitoolState.Resizing:
+                // if (lineRenderer.gameObject.activeSelf) {
+                //     lineRenderer.gameObject.SetActive(false);
+                // }
+                // make line end position stop at the size of the grainModel
+                UpdateLine(lineEndPosition, lineInspectColor);
+                if (selectedModel != null) {
+                    selectedModel.Reposition(
+                        selectedModel.transform.position,
+                        selectedModel.transform.rotation,
                         new Vector3(modelScale, modelScale, modelScale),
                         0.5f
                     );
@@ -92,11 +114,60 @@ public class ModelInspector : TsvrTool
         scrollableListUI.ClearItems();
         if (selectedModel == null) return;
         // scrollableListUI.SetHeader("Grain Model Inspector", $"{selectedModel.name} | {selectedModel.}");
+        scrollableListUI.SetHeader("Inspector", $"{selectedModel.name}");
+        
         scrollableListUI.AddItem(this, (item, content) => {
             content.header.text = "Reposition";
             content.subheader.text = "Reposition the selected model";
         }, (item) => {
-            
+            state = ModelMultitoolState.Positioning;
+        });
+
+        scrollableListUI.AddItem(this, (item, content) => {
+            content.header.text = "Resize";
+            content.subheader.text = "Resize the selected model";
+        }, (item) => {
+            state = ModelMultitoolState.Resizing;
+        });
+
+        scrollableListUI.AddItem(this, (item, content) => {
+            content.header.text = "Parameters";
+            content.subheader.text = "Edit the selected model's parameters";
+        }, (item) => {
+            Debug.Log("Implement parameters");
+        });
+
+        scrollableListUI.AddItem(this, (item, content) => {
+            content.header.text = "Info";
+            content.subheader.text = "View the selected model's info";
+        }, (item) => {
+            Debug.Log("Implement info");
+        });
+
+        scrollableListUI.AddItem(this, (item, content) => {
+            content.header.text = "Save";
+            content.subheader.text = "Save the selected model";
+        }, (item) => {
+            Debug.Log("Implement save");
+        });
+
+        scrollableListUI.AddItem(this, (item, content) => {
+            content.header.text = "Delete";
+            content.subheader.text = "Delete the selected model";
+        }, (item) => {
+            Debug.Log("Deleting Current Model!");
+            if (selectedModel != null) {
+                Destroy(selectedModel.gameObject);
+                selectedModel = null;
+            }
+        });
+
+        scrollableListUI.AddItem(this, (item, content) => {
+            content.header.text = "Cancel";
+            content.subheader.text = "Cancel the current action";
+        }, (item) => {
+            selectedModel = null;
+            state = ModelMultitoolState.Unassigned;
         });
     }
 
@@ -158,6 +229,11 @@ public class ModelInspector : TsvrTool
                     // modelScale += value.y * 0.1f;
                 }
                 break;
+            case ModelMultitoolState.Resizing:
+                if (selectedModel != null) {
+                    modelScale += value.y * 0.1f;
+                }
+                break;
         }
     }
 
@@ -167,18 +243,33 @@ public class ModelInspector : TsvrTool
                 scrollableListUI.OnSubmit();
                 break;
             case ModelMultitoolState.Positioning:
-                if (selectedModel != null) {
-                    selectedModel.Place();
-                    state = ModelMultitoolState.Inspecting;
-                } else {
-                    state = ModelMultitoolState.Unassigned;
-                }
+                state = ModelMultitoolState.Inspecting;
+                selectedModel.Place();
+                DisplayMainMenu();
+                // if (selectedModel != null) {
+                //     selectedModel.Place();
+                // } else {
+                //     state = ModelMultitoolState.Unassigned;
+                // }
+                break;
+            case ModelMultitoolState.Resizing:
+                state = ModelMultitoolState.Inspecting;
+                selectedModel.Place();
+                DisplayMainMenu();
                 break;
             case ModelMultitoolState.Unassigned:
                 if (selectedModel != null) {
                     state = ModelMultitoolState.Inspecting;   
+                    DisplayMainMenu();
                 }
                 break;
         }
     }
+
+    // private void ChangeState(ModelMultitoolState newState) {
+    //     switch(newState) {
+            
+    //     }
+    //     state = newState;
+    // }
 }

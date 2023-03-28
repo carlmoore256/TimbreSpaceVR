@@ -139,15 +139,14 @@ MonoBehaviour:
   m_GameObject: {fileID: 3360398663443515609}
   m_Enabled: 1
   m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 6cd3d1529c124e043842f514190d9a35, type: 3}
+  m_Script: {fileID: 11500000, guid: 248c95617971e884ebb6f3dc9dc419fe, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  colorProcessing: {r: 222, g: 92, b: 0, a: 0.6}
-  colorPlayable: {r: 255, g: 255, b: 255, a: 0}
-  colorPositioning: {r: 255, g: 255, b: 255, a: 1}
-  colorInspecting: {r: 255, g: 255, b: 255, a: 1}
-  seqPlayRate: 0.1
   boundingBox: {fileID: 8143741633814947547}
+  colorPlayable: {r: 255, g: 255, b: 255, a: 0}
+  colorInspecting: {r: 255, g: 255, b: 255, a: 1}
+  colorPositioning: {r: 255, g: 255, b: 255, a: 1}
+  seqPlayRate: 0.1
 --- !u!1 &8143741633814947547
 GameObject:
   m_ObjectHideFlags: 0

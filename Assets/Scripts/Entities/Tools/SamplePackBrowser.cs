@@ -63,24 +63,29 @@ public class SamplePackBrowser : TsvrTool
             DisplayAllSamplePacks(manifestResourcePath);
         });
         foreach(TsvrSample sample in samplePack.samples) {
-            scrollableListUI.AddItem(sample, (item, content) => {
-                TsvrSample sampleMetadata = (TsvrSample)item;
-                content.header.text = sampleMetadata.title;
-                var stereo = sampleMetadata.channels == 2 ? "Stereo" : "Mono";
-                content.subheader.text = $"{sampleMetadata.duration} Seconds | {stereo}";
-            }, (item) => {
-                TsvrSample tsvrSample = (TsvrSample)item;
-                ToolController.ChangeTool(TsvrToolType.ModelInspector, (tool) => {
-                    ModelInspector modelMultitool = (ModelInspector)tool;
-                    Vector3 modelPosition = transform.position + transform.forward * 1.5f;
-                    Quaternion modelRotation = Quaternion.LookRotation(transform.forward, transform.up);
-                    // make model rotation only on horizontal axis
-                    modelRotation = Quaternion.Euler(0, modelRotation.eulerAngles.y, 0);
-                    GrainModel newModel = GrainModel.SpawnFromSample(metadata, tsvrSample, modelPosition, modelRotation);
-                    modelMultitool.SetSelectedModel(newModel);
-                });
-
-            });
+            scrollableListUI.AddItem(
+                sample, 
+                (item, content) => {
+                    TsvrSample sampleMetadata = (TsvrSample)item;
+                    content.header.text = sampleMetadata.title;
+                    var stereo = sampleMetadata.channels == 2 ? "Stereo" : "Mono";
+                    content.subheader.text = $"{sampleMetadata.duration} Seconds | {stereo}";
+                }, 
+                (item) => {
+                    TsvrSample tsvrSample = (TsvrSample)item;
+                    ToolController.ChangeTool(TsvrToolType.ModelInspector, (tool) => {
+                        ModelInspector modelMultitool = (ModelInspector)tool;
+                        Vector3 modelPosition = transform.position + transform.forward * 1.5f;
+                        Quaternion modelRotation = Quaternion.LookRotation(transform.forward, transform.up);
+                        // make model rotation only on horizontal axis
+                        modelRotation = Quaternion.Euler(0, modelRotation.eulerAngles.y, 0);
+                        Debug.Log("METADATA: " + metadata);
+                        GrainModel newModel = GrainModel.SpawnFromSample(metadata, tsvrSample, modelPosition, modelRotation);
+                        Debug.Log("Just created new model, " + newModel);
+                        modelMultitool.SetSelectedModel(newModel);
+                    });
+                }
+            );
         }
     }
 }

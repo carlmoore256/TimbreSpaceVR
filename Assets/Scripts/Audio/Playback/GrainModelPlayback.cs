@@ -101,24 +101,6 @@ public class GrainModelPlayback : MonoBehaviour
         }
     }
 
-    // private float CalculateReplayPenalty(PlaybackEvent e) {
-    //     if (!requestCounts.ContainsKey(e.submitterID)) {
-    //         return 0f;
-    //     }
-    //     // var now = DateTime.Now;
-    //     var eventTime = e.createdAt;
-    //     var count = 0;
-    //     foreach(var t in requestCounts[e.submitterID]) {
-    //         if (e.createdAt - t < timeWindow) {
-    //             count++;
-    //         }
-    //     }
-    //     if (count > 10) {
-    //         Debug.Log($"Too many requests from {e.submitterID} in the last {timeWindow.TotalSeconds} seconds");
-    //         return 1f;
-    //     }
-    // }
-
 
 
     /// <summary>
@@ -150,6 +132,23 @@ public class GrainModelPlayback : MonoBehaviour
 
 
 
+    // private float CalculateReplayPenalty(PlaybackEvent e) {
+    //     if (!requestCounts.ContainsKey(e.submitterID)) {
+    //         return 0f;
+    //     }
+    //     // var now = DateTime.Now;
+    //     var eventTime = e.createdAt;
+    //     var count = 0;
+    //     foreach(var t in requestCounts[e.submitterID]) {
+    //         if (e.createdAt - t < timeWindow) {
+    //             count++;
+    //         }
+    //     }
+    //     if (count > 10) {
+    //         Debug.Log($"Too many requests from {e.submitterID} in the last {timeWindow.TotalSeconds} seconds");
+    //         return 1f;
+    //     }
+    // }
 
 // foreach(PlaybackVoice voice in playbackVoices) {
 //     score = voice.Score();

@@ -83,13 +83,10 @@ public class GrainSpawner : TsvrTool
     void Update() {
         
         if (newGrainModel.State == GrainModelState.Unplaced) {
-            newGrainModel.coroutineManager.MoveTo(
+            newGrainModel.Reposition(
                 ToolController.transform.position + ToolController.transform.forward * modelDist, 
-                0.5f
-            );
-            newGrainModel.coroutineManager.ScaleTo(
-                new Vector3(modelScale, modelScale, modelScale),
-                0.5f
+                ToolController.transform.rotation, 
+                new Vector3(modelScale, modelScale, modelScale)
             );
         }
     }
@@ -120,7 +117,8 @@ public class GrainSpawner : TsvrTool
     async void SpawnSelectedFile(InputAction.CallbackContext ctx) {
         animations.Play("GrainSpawnerButton");
 
-        newGrainModel.ChangeState(GrainModelState.Placed);
+        // newGrainModel.ChangeState(GrainModelState.Placed);
+        newGrainModel.Place();
 
         Debug.Log("Spawn selected file " + fileListUI.CurrentlySelectedFile.Name);
         if (fileListUI.isBrowsingBuiltInFiles) {

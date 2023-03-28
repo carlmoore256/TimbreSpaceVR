@@ -19,7 +19,7 @@ public class TestGrainModel : MonoBehaviour
 
     private GrainModel SpawnLoadGrainModel(string path) {
         GrainModel newGrainModel = Instantiate(TsvrApplication.Config.grainModel, GameObject.Find("GrainParent").transform).GetComponent<GrainModel>();
-        AudioIO.LoadAudioFromAssets("Audio/" + audioFile, (signal) => {
+        AudioIO.LoadAudioFromAssets("SamplePacks/tsvr-classic/" + audioFile, (signal) => {
             Debug.Log($"Loaded Audio | Num Samples: {signal.Length}.");
             newGrainModel.SetAudioBuffer(signal);
         });

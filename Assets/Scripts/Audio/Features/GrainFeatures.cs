@@ -48,19 +48,19 @@ public class GrainAudioFeatures {
     }
 
     public float Get(AudioFeature feature, bool normalize = true, bool positive = false) {
-        if (featureExtractor.FeatureValues.ContainsKey(feature)) {
+        if (featureExtractor.FeatureVectors.ContainsKey(feature)) {
             if (normalize) {
                 if (positive) {
-                    return (featureExtractor.FeatureValues[feature].GetNormalized(GrainIndex, 0f, 1f));
+                    return (featureExtractor.FeatureVectors[feature].GetNormalized(GrainIndex, 0f, 1f));
                 } else {
-                    return (featureExtractor.FeatureValues[feature].GetNormalized(GrainIndex, -1f, 1f));
+                    return (featureExtractor.FeatureVectors[feature].GetNormalized(GrainIndex, -1f, 1f));
                 }
             } else {
                 if (positive) {
-                    float min = featureExtractor.FeatureValues[feature].min;
-                    return featureExtractor.FeatureValues[feature][GrainIndex] + min;
+                    float min = featureExtractor.FeatureVectors[feature].min;
+                    return featureExtractor.FeatureVectors[feature][GrainIndex] + min;
                 } else {
-                    return featureExtractor.FeatureValues[feature][GrainIndex];
+                    return featureExtractor.FeatureVectors[feature][GrainIndex];
                 }
             } 
         } else {

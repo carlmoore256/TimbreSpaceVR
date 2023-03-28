@@ -8,6 +8,7 @@ import shutil
 
 DEFAULT_CREATOR = "Carl Moore"
 SAMPLE_PACKS_RESOURCE_PATH = "samplepacks"
+PACK_METADATA_PATH = "metadata.json"
 SAMPLE_PACKS_PATH = f"../Assets/Resources/{SAMPLE_PACKS_RESOURCE_PATH}"
 SAMPLE_PACKS_INFO = f"{SAMPLE_PACKS_PATH}/packs.json"
 DEFAULT_PARAMETERS = {
@@ -67,7 +68,7 @@ def load_json(path):
 def update_sample_pack_info():
     packs = glob.glob(SAMPLE_PACKS_PATH + "/*")
     packs = [p for p in packs if os.path.isdir(p)]
-    packs = [load_json(os.path.join(p, "pack.json")) for p in packs]
+    packs = [load_json(os.path.join(p, PACK_METADATA_PATH)) for p in packs]
     packs = sorted(packs, key=lambda k: k['metadata']['title'])
     info = [p['metadata'] for p in packs]
     save_json(info, SAMPLE_PACKS_INFO)
@@ -109,7 +110,7 @@ def create_sample_pack(path, title=None, creator=DEFAULT_CREATOR, description=""
         else:
             print(f"Copying {src} => {dst}")
             shutil.copyfile(src, dst)
-    save_json(pack, os.path.join(outdir, "pack.json"))
+    save_json(pack, os.path.join(outdir, PACK_METADATA_PATH))
     update_sample_pack_info()
 
 

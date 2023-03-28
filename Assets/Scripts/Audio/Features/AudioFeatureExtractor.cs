@@ -29,13 +29,15 @@ public struct FeatureKey {
     }
 }
 
-public class FeatureValues {
+public class FeatureVector {
+
+    // THIS SHOULD HAVE AN AudioFeature
     public float[] values;
     public float min;
     public float max;
     public FeatureKey key;
     public int Length { get { return values.Length; }}
-    public FeatureValues(float[] values, FeatureKey key) {
+    public FeatureVector(float[] values, FeatureKey key) {
         this.values = values;
         this.key = key;
         this.min = values.Min();
@@ -69,16 +71,19 @@ public struct WindowTime {
 
 public class AudioFeatureExtractor
 {    
+    public DiscreteSignal Signal { get; protected set; }
     private int windowSize;
     private int hopSize;
     private static FeatureKey[] featureKeys;
-    public Dictionary<AudioFeature, FeatureValues> FeatureValues { get; protected set; }
+    public Dictionary<AudioFeature, FeatureVector> FeatureVectors { get; protected set; }
     public List<WindowTime> WindowTimes { get; protected set; }
 
     public AudioFeatureExtractor(int windowSize, int hopSize)
     {
         this.windowSize = windowSize;
         this.hopSize = hopSize;
+
+        CalculateWindowTimes();
 
         // make a list of all feature keys
         featureKeys = new FeatureKey[] {
@@ -112,11 +117,93 @@ public class AudioFeatureExtractor
             new FeatureKey("mfcc6", FeatureExtractorType.MFCC, AudioFeature.MFCC_6),
         };
 
-        FeatureValues = new Dictionary<AudioFeature, FeatureValues>();
+        FeatureVectors = new Dictionary<AudioFeature, FeatureVector>();
         foreach (FeatureKey key in featureKeys) {
-            FeatureValues.Add(key.feature, null);
+            FeatureVectors.Add(key.feature, null);
         }
 
+    }
+  
+
+    public FeatureVector GetFeatureVector(AudioFeature feature, bool recompute = false) {
+        if (!recompute && FeatureVectors.ContainsKey(feature)) {
+            return FeatureVectors[feature];
+        }
+        FeatureKey featureKey = Array.Find(featureKeys, key => key.feature == feature);
+        return ComputeFeature(featureKey);
+    }
+
+    // public void ComputeFeatures(AudioFeature[] features) {
+
+    // }
+
+
+    private FeatureVector ComputeFeature(FeatureKey featureKey) {
+        
+        FeatureExtractor extractor = GetFeatureExtractor(featureKey);
+        
+        List<float[]> vectors = extractor.ParallelComputeFrom(Signal);
+        
+        FeaturePostProcessing.NormalizeMean(vectors);
+
+        var names = extractor.FeatureDescriptions;
+
+        float[] _featureVector = new float[vectors.Count];
+
+        // FOR MFCCS THIS WILL NEED TO BE DIFFERENT
+
+        for (int i = 0; i < vectors.Count; i++) {
+            _featureVector[i] = vectors[i][0];
+        }
+
+        FeatureVector featureVector = new FeatureVector(_featureVector, featureKey);
+
+        FeatureVectors[featureKey.feature] = featureVector;
+
+        // new DiscreteSignal()
+
+        return featureVector;
+    }
+
+    private FeatureExtractor GetFeatureExtractor(FeatureKey featureKey) {
+        FeatureExtractor extractor;
+        double frameDuration = (double)windowSize / (double)Signal.SamplingRate;
+        double hopDuration = (double)hopSize / (double)Signal.SamplingRate;
+        switch (featureKey.extractorType) {
+            case FeatureExtractorType.MFCC:
+                return new MfccExtractor(new MfccOptions {
+                    SamplingRate = Signal.SamplingRate,
+                    FrameDuration = frameDuration,
+                    HopDuration = hopDuration,
+                    FftSize = windowSize,
+                    FilterBankSize = 26,
+                    FeatureCount = 8
+                });
+
+            case FeatureExtractorType.Spectral:
+                extractor = new SpectralFeaturesExtractor(new MultiFeatureOptions {
+                    SamplingRate = Signal.SamplingRate,
+                    FrameDuration = frameDuration,
+                    HopDuration = hopDuration,
+                    FftSize = windowSize,
+                    FeatureList = featureKey.alias // <= THIS MAY CAUSE AN ISSUE...
+                });
+                break;
+
+            case FeatureExtractorType.Temporal:
+                extractor = new TimeDomainFeaturesExtractor(new MultiFeatureOptions {
+                    SamplingRate = Signal.SamplingRate,
+                    FrameDuration = frameDuration,
+                    HopDuration = hopDuration,
+                    FftSize = windowSize,
+                    FeatureList = featureKey.alias // <= THIS MAY CAUSE AN ISSUE...
+                });
+                break;
+
+            default:
+                throw new Exception("Invalid feature extractor type");
+        }
+        return null;
     }
 
     private string FeatureKeysToNWavesOptions(List<FeatureKey> featureKeys) {
@@ -143,7 +230,7 @@ public class AudioFeatureExtractor
             return;
         }
         // remove any existing computed features
-        var keysToRemove = keys.FindAll(k => FeatureValues[k.feature] != null);
+        var keysToRemove = keys.FindAll(k => FeatureVectors[k.feature] != null);
         foreach(FeatureKey key in keysToRemove)
             keys.Remove(key);
         if (keys.Count == 0)
@@ -191,13 +278,13 @@ public class AudioFeatureExtractor
             // for(int i = 0; i < _featureValues.Length; i++)
             //     _featureValues[i] = ((_featureValues[i] - _min) / (_max - _min)) * 2 - 1;
 
-            FeatureValues[fk.feature] = new FeatureValues(_featureValues, fk);
+            FeatureVectors[fk.feature] = new FeatureVector(_featureValues, fk);
         }
     }
 
     private void ComputeMfccFeatures(DiscreteSignal signal, List<FeatureKey> keys) {
         // make sure feature isn't already computed
-        var keysToRemove = keys.FindAll(k => FeatureValues[k.feature] != null);
+        var keysToRemove = keys.FindAll(k => FeatureVectors[k.feature] != null);
         foreach(FeatureKey key in keysToRemove)
             keys.Remove(key);
         if (keys.Count == 0)
@@ -234,7 +321,19 @@ public class AudioFeatureExtractor
             // // normalize FeatureValues to -1 to 1
             // for(int i = 0; i < _featureValues.Length; i++)
             //     _featureValues[i] = ((_featureValues[i] - _min) / (_max - _min)) * 2 - 1;
-            FeatureValues[fk.feature] = new FeatureValues(_featureValues, fk);;
+            FeatureVectors[fk.feature] = new FeatureVector(_featureValues, fk);;
+        }
+    }
+      
+    private void CalculateWindowTimes() {
+        if (WindowTimes == null) {
+            WindowTimes = new List<WindowTime>();
+            int nFrames = (Signal.Length - windowSize) / hopSize + 1;
+            for (int i = 0; i < nFrames; i++) {
+                double start = i * hopSize / Signal.SamplingRate;
+                double end = start + windowSize / Signal.SamplingRate;
+                WindowTimes.Add(new WindowTime(start, end));
+            }
         }
     }
 
@@ -256,212 +355,3 @@ public class AudioFeatureExtractor
         onComplete?.Invoke();
     }
 }
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-// private void ComputeSpectralFeatures(DiscreteSignal signal, List<FeatureKey> keys) {
-//     // make sure feature isn't already computed
-//     foreach(FeatureKey key in keys) {
-//         if (computedFeatures[key.feature].values != null)
-//             keys.Remove(key);
-//     }
-//     if (keys.Count == 0)
-//         return;
-//     var multiOpts = new MultiFeatureOptions {
-//         SamplingRate = signal.SamplingRate,
-//         FrameDuration = (double)windowSize / (double)signal.SamplingRate,
-//         HopDuration = (double)hopSize / (double)signal.SamplingRate,
-//         FftSize = windowSize
-//     };
-//     multiOpts.FeatureList = FeatureKeysToNWavesOptions(keys);
-//     var specExtractor = new SpectralFeaturesExtractor(multiOpts);
-//     var vectors = specExtractor.ParallelComputeFrom(signal);
-//     FeaturePostProcessing.NormalizeMean(vectors);
-//     var names = specExtractor.FeatureDescriptions;
-//     FeatureKey[] _featureKeys = new FeatureKey[names.Count];
-//     for(int i = 0; i < names.Count; i++) {
-//         _featureKeys[i] = Array.Find(featureKeys, k => k.alias == names[i]);
-//     }
-
-//     for (int i = 0; i < vectors.Count; i++) {
-//         GrainAudioFeatures gf = null;
-//         grainAudioFeatures.TryGetValue(i, out gf);
-//         if (gf == null) {
-//             gf = new GrainAudioFeatures(vectors[i], _featureKeys);
-//             grainAudioFeatures.Add(i, gf);
-//         }
-//         // computedFeatures[key.feature] = new FeatureValues(vectors[i], key);
-//     }
-// }
-
-// private void ComputeTemporalFeatures(DiscreteSignal signal, List<FeatureKey> keys) {
-//     foreach(FeatureKey key in keys) {
-//         if (computedFeatures[key.feature].values != null)
-//             keys.Remove(key);
-//     }
-//     if (keys.Count == 0)
-//         return;
-//     var multiOpts = new MultiFeatureOptions {
-//         SamplingRate = signal.SamplingRate,
-//         FrameDuration = (double)windowSize / (double)signal.SamplingRate,
-//         HopDuration = (double)hopSize / (double)signal.SamplingRate,
-//         FftSize = windowSize
-//     };
-//     multiOpts.FeatureList = FeatureKeysToNWavesOptions(keys);
-//     var timeExtractor = new TimeDomainFeaturesExtractor(multiOpts);
-//     var vectors = timeExtractor.ParallelComputeFrom(signal);
-//     FeaturePostProcessing.NormalizeMean(vectors);
-//     var names = timeExtractor.FeatureDescriptions;
-//     for(int i = 0; i < names.Count; i++) {
-//         var key = Array.Find(featureKeys, k => k.alias == names[i]);
-//         computedFeatures[key.feature] = new FeatureValues(vectors[i], key);
-//     }
-// }
-
-// var spectralKeys = requestedFeatures.FindAll(key => key.extractorType == FeatureExtractorType.Spectral);
-// var temporalKeys = requestedFeatures.FindAll(key => key.extractorType == FeatureExtractorType.Temporal);
-// var mfccKeys = requestedFeatures.FindAll(key => key.extractorType == FeatureExtractorType.MFCC);
-
-// // ==== run extractors ==================================================
-
-// if (spectralKeys.Count > 0) {
-// ComputeSpectralFeatures(signal, spectralKeys);
-// }
-
-// if (temporalKeys.Count > 0) {
-// ComputeTemporalFeatures(signal, temporalKeys);
-// }
-
-// if (mfccKeys.Count > 0) {
-// ComputeMfccFeatures(signal, mfccKeys);
-// }
-
-// create extractors
-// var spectralKeys = requestedFeatures.FindAll(key => key.extractorType == FeatureExtractorType.Spectral);
-// var temporalKeys = requestedFeatures.FindAll(key => key.extractorType == FeatureExtractorType.Temporal);
-// var mfccKeys = requestedFeatures.FindAll(key => key.extractorType == FeatureExtractorType.MFCC);
-
-// // List<FeatureExtractor> extractors = new List<FeatureExtractor>();
-// var multiOpts = new MultiFeatureOptions {
-//     SamplingRate = signal.SamplingRate,
-//     FrameDuration = (double)windowSize / (double)signal.SamplingRate,
-//     HopDuration = (double)hopSize / (double)signal.SamplingRate,
-//     FftSize = windowSize
-// };
-
-// // ==== run extractors ==================================================
-
-// if (spectralKeys.Count > 0) {
-//     // make sure feature isn't already computed
-//     foreach(FeatureKey key in spectralKeys) {
-//         if (computedFeatures[key.feature].values != null)
-//             spectralKeys.Remove(key);
-//     }
-
-//     multiOpts.FeatureList = FeatureKeysToNWavesOptions(spectralKeys);
-//     var specExtractor = new SpectralFeaturesExtractor(multiOpts);
-//     var vectors = specExtractor.ParallelComputeFrom(signal);
-//     FeaturePostProcessing.NormalizeMean(vectors);
-//     var names = specExtractor.FeatureDescriptions;
-//     for(int i = 0; i < names.Count; i++) {
-//         var key = Array.Find(featureKeys, k => k.alias == names[i]);
-//         computedFeatures[key.feature] = new FeatureValues(vectors[i], key);
-//     }
-// }
-
-// if (temporalKeys.Count > 0) {
-//     // make sure feature isn't already computed
-//     foreach(FeatureKey key in temporalKeys) {
-//         if (computedFeatures[key.feature].values != null)
-//             temporalKeys.Remove(key);
-//     }
-//     multiOpts.FeatureList = FeatureKeysToNWavesOptions(temporalKeys);
-//     var timeExtractor = new TimeDomainFeaturesExtractor(multiOpts);
-//     var vectors = timeExtractor.ParallelComputeFrom(signal);
-//     FeaturePostProcessing.NormalizeMean(vectors);
-//     var names = timeExtractor.FeatureDescriptions;
-//     for(int i = 0; i < names.Count; i++) {
-//         var key = Array.Find(featureKeys, k => k.alias == names[i]);
-//         computedFeatures[key.feature] = new FeatureValues(vectors[i], key);
-//     }
-// }
-
-// if (mfccKeys.Count > 0) {
-//     // make sure feature isn't already computed
-//     bool hasComputed = false;
-//     foreach(FeatureKey key in mfccKeys) {
-//         if (computedFeatures[key.feature].values != null)
-//             hasComputed = true;
-//     }
-//     if (!hasComputed) { // only run mfcc extraction once per instance of AudioFeatures
-//         var mfccOpts = new MfccOptions {
-//             SamplingRate = signal.SamplingRate,
-//             FrameDuration = (double)windowSize / (double)signal.SamplingRate,
-//             HopDuration = (double)hopSize / (double)signal.SamplingRate,
-//             FftSize = windowSize,
-//             FilterBankSize = 26,
-//         };
-//         var mfccExtractor = new MfccExtractor(mfccOpts);
-//     }
-// }
-
-
-// featureOptions = featureOptions.Substring(0, featureOptions.Length - 1);        
-
-// private MultiFeatureOptions optionsMultiFeature;
-// private MfccOptions optionsMFCC;
-
-// private static Dictionary<AudioFeature, FeatureKey> featureKeys;
-// make a dictionary linking AudioFeature to FeatureKey
-// featureKeys = new Dictionary<AudioFeature, FeatureKey>() {
-//     // Spectral
-//     { AudioFeature.Centroid, new FeatureKey("centroid", FeatureExtractorType.Spectral, AudioFeature.Centroid) },
-//     { AudioFeature.Spread, new FeatureKey("spread", FeatureExtractorType.Spectral, AudioFeature.Spread) },
-//     { AudioFeature.Flatness, new FeatureKey("flatness", FeatureExtractorType.Spectral, AudioFeature.Flatness) },
-//     { AudioFeature.Noiseness, new FeatureKey("noiseness", FeatureExtractorType.Spectral, AudioFeature.Noiseness) },
-//     { AudioFeature.Rolloff, new FeatureKey("rolloff", FeatureExtractorType.Spectral, AudioFeature.Rolloff) },
-//     { AudioFeature.Crest, new FeatureKey("crest", FeatureExtractorType.Spectral, AudioFeature.Crest) },
-//     { AudioFeature.Entropy, new FeatureKey("entropy", FeatureExtractorType.Spectral, AudioFeature.Entropy) },
-//     { AudioFeature.Decrease, new FeatureKey("decrease", FeatureExtractorType.Spectral, AudioFeature.Decrease) },
-//     { AudioFeature.Contrast_0, new FeatureKey("c1", FeatureExtractorType.Spectral, AudioFeature.Contrast_0) },
-//     { AudioFeature.Contrast_1, new FeatureKey("c2", FeatureExtractorType.Spectral, AudioFeature.Contrast_1) },
-//     { AudioFeature.Contrast_2, new FeatureKey("c3", FeatureExtractorType.Spectral, AudioFeature.Contrast_2) },
-//     { AudioFeature.Contrast_3, new FeatureKey("c4", FeatureExtractorType.Spectral, AudioFeature.Contrast_3) },
-//     { AudioFeature.Contrast_4, new FeatureKey("c5", FeatureExtractorType.Spectral, AudioFeature.Contrast_4) },
-//     { AudioFeature.Contrast_5, new FeatureKey("c6", FeatureExtractorType.Spectral, AudioFeature.Contrast_5) },
-//     // Temporal
-//     { AudioFeature.Energy, new FeatureKey("energy", FeatureExtractorType.Temporal, AudioFeature.Energy) },
-//     { AudioFeature.RMS, new FeatureKey("rms", FeatureExtractorType.Temporal, AudioFeature.RMS) },
-//     { AudioFeature.ZCR, new FeatureKey("zcr", FeatureExtractorType.Temporal, AudioFeature.ZCR) },
-//     { AudioFeature.TimeEntropy, new FeatureKey("time_entropy", FeatureExtractorType.Temporal, AudioFeature.TimeEntropy)},
-//     // MFCC
-//     { AudioFeature.MFCC_0, new FeatureKey("mfcc1", FeatureExtractorType.MFCC, AudioFeature.MFCC_0) },
-//     { AudioFeature.MFCC_1, new FeatureKey("mfcc2", FeatureExtractorType.MFCC, AudioFeature.MFCC_1) },
-//     { AudioFeature.MFCC_2, new FeatureKey("mfcc3", FeatureExtractorType.MFCC, AudioFeature.MFCC_2) },
-//     { AudioFeature.MFCC_3, new FeatureKey("mfcc4", FeatureExtractorType.MFCC, AudioFeature.MFCC_3) },
-//     { AudioFeature.MFCC_4, new FeatureKey("mfcc5", FeatureExtractorType.MFCC, AudioFeature.MFCC_4) },
-//     { AudioFeature.MFCC_5, new FeatureKey("mfcc6", FeatureExtractorType.MFCC, AudioFeature.MFCC_5) },
-//     { AudioFeature.MFCC_6, new FeatureKey("mfcc7", FeatureExtractorType.MFCC, AudioFeature.MFCC_6) },
-//     { AudioFeature.MFCC_7, new FeatureKey("mfcc8", FeatureExtractorType.MFCC, AudioFeature.MFCC_7) },
-// };

@@ -202,7 +202,7 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 6768700354464914481, guid: fe23510c161267e4fba2b4ae814d01dd, type: 3}
       propertyPath: m_LocalPosition.z
-      value: 0
+      value: -1.57
       objectReference: {fileID: 0}
     - target: {fileID: 6768700354464914481, guid: fe23510c161267e4fba2b4ae814d01dd, type: 3}
       propertyPath: m_LocalRotation.w
@@ -572,6 +572,7 @@ GameObject:
   m_Component:
   - component: {fileID: 1726958732}
   - component: {fileID: 1726958733}
+  - component: {fileID: 1726958734}
   m_Layer: 0
   m_Name: Area Light
   m_TagString: Untagged
@@ -656,6 +657,29 @@ Light:
   m_UseViewFrustumForShadowCasterCull: 1
   m_ShadowRadius: 0
   m_ShadowAngle: 0
+--- !u!114 &1726958734
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1726958731}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 474bcb49853aa07438625e644c072ee6, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  m_Version: 2
+  m_UsePipelineSettings: 1
+  m_AdditionalLightsShadowResolutionTier: 2
+  m_LightLayerMask: 1
+  m_RenderingLayers: 1
+  m_CustomShadowLayers: 0
+  m_ShadowLayerMask: 1
+  m_ShadowRenderingLayers: 1
+  m_LightCookieSize: {x: 1, y: 1}
+  m_LightCookieOffset: {x: 0, y: 0}
+  m_SoftShadowQuality: 1
 --- !u!1001 &6353488163422055821
 PrefabInstance:
   m_ObjectHideFlags: 0
@@ -719,6 +743,10 @@ PrefabInstance:
     - target: {fileID: 8875818719488643630, guid: 82ac23fa60bfa074ab269a61a69977bc, type: 3}
       propertyPath: audioFile
       value: Audio/Sax.wav
+      objectReference: {fileID: 0}
+    - target: {fileID: 9153650144597648754, guid: 82ac23fa60bfa074ab269a61a69977bc, type: 3}
+      propertyPath: audioFile
+      value: Mozart
       objectReference: {fileID: 0}
     m_RemovedComponents: []
     m_RemovedGameObjects: []

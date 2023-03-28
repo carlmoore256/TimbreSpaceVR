@@ -23,14 +23,15 @@ public class Grain : MonoBehaviour
     public bool IsDisplayingInfo { get; set; } = false;
 
     private Action<PlaybackEvent> onGrainActivated;
-    private PlaybackEvent playbackEvent;
+
+    public PlaybackEvent PlaybackEvent { get; private set; }
+
+    public int GrainIndex { get; private set; }
 
     private double lastPlayTime = 0d;
     private double playTimeout;
 
     private bool isActivated = false;
-
-
     private float playEnd = 0f;
     private float totalPlayDuration = 1f;
 
@@ -42,13 +43,19 @@ public class Grain : MonoBehaviour
         UseHSV = TsvrApplication.Settings.GrainUseHSV.value;
     }
 
+
+    public void Initialize(PlaybackEvent playbackEvent, int grainIndex) {
+        this.PlaybackEvent = playbackEvent; 
+        this.GrainIndex = grainIndex;
+    }
+
     /// <summary>
     /// Initialize the grain with the given features and model parameters
     /// </summary>
-    public void Initialize(GrainAudioFeatures features, GrainModelParameters modelParameters, Action<PlaybackEvent> onGrainActivated) {
+    public void Initialize(GrainAudioFeatures features, ParameterHandler modelParameters, Action<PlaybackEvent> onGrainActivated) {
         this.features = features;
         this.onGrainActivated = onGrainActivated;
-        playbackEvent = new PlaybackEvent(0f, features.WindowTime, features.Get(AudioFeature.RMS), gameObject.GetInstanceID());
+        PlaybackEvent = new PlaybackEvent(0f, features.WindowTime, features.Get(AudioFeature.RMS), gameObject.GetInstanceID());
 
         playTimeout = modelParameters.WindowSize / (double)AudioManager.Instance.SampleRate;
         playTimeout /= 4d;
@@ -73,7 +80,7 @@ public class Grain : MonoBehaviour
             modelParameters.ColorFeatures[2],
             UseHSV);
 
-        UpdateScale(modelParameters.ScaleFeature, modelParameters.ScaleMult, 2f);
+        UpdateScale(modelParameters.ScaleFeature, modelParameters.ScaleMult, modelParameters.ScaleExp);
     }
 
     void Update() {
@@ -102,9 +109,9 @@ public class Grain : MonoBehaviour
         playEnd = Time.time + totalPlayDuration;
         transform.localScale = targetScale * 1.5f;
         lodRenderer.ChangeColor(Color.red);      
-        playbackEvent.gain = gain;
+        PlaybackEvent.gain = gain;
         lastPlayTime = Time.timeAsDouble;
-        onGrainActivated?.Invoke(playbackEvent);
+        onGrainActivated?.Invoke(PlaybackEvent);
     }
 
     /// <summary>
@@ -127,15 +134,21 @@ public class Grain : MonoBehaviour
         positionCoroutine = StartCoroutine(PositionCoroutine(targetPosition, durationRePosition));
     }
 
+    public void UpdatePosition(Vector3 newPosition) {
+        if (positionCoroutine != null)
+            StopCoroutine(positionCoroutine);
+        positionCoroutine = StartCoroutine(PositionCoroutine(targetPosition, durationRePosition));
+    }
+
     /// <summary>
     /// Update rotation of Grain given an Audio Feature for each axis 
     /// </summary>
     /// <param name="f">Audio Feature for Grain scale</param>
     /// <param name="multiplier">Additional multiplier of each axis, default is 1.0f</param>
-    public void UpdateScale(AudioFeature f, float multiplier=0.05f, float scaleExp=1f)
+    public void UpdateScale(AudioFeature f, float multiplier, float scaleExp=1f)
     {
         float radius = features.Get(f, positive : true);
-        if (scaleExp != 1f) radius = Mathf.Pow(multiplier, scaleExp);
+        if (scaleExp != 1f) radius = Mathf.Pow(radius, scaleExp);
         radius *= multiplier;
 
 
