@@ -1,31 +1,14 @@
 using System;
 using UnityEngine;
 
-[System.Serializable]
-public class GranularParameterValues {
-    public AudioFeature xFeature = AudioFeature.MFCC_0;
-    public AudioFeature yFeature = AudioFeature.MFCC_1;
-    public AudioFeature zFeature = AudioFeature.MFCC_2;
-    public AudioFeature rFeature = AudioFeature.MFCC_3;
-    public AudioFeature gFeature = AudioFeature.MFCC_4;
-    public AudioFeature bFeature = AudioFeature.MFCC_5;
-    public AudioFeature scaleFeature = AudioFeature.RMS;
-    public int windowSize = 8192;
-    public int hopSize = 8192;
-    public float scaleMult = 0.01f;
-    public float scaleExp = 0.1f;
-    public bool useHSV = false;
-    public Vector3 posAxisScale = Vector3.one; // scale x,y,z axis
-}
-
 /// <summary>
 /// State manager for GrainModel parameters, invoking callbacks when parameters are changed
 /// </summary>
 public class GranularParameterHandler {
 
     public GranularParameterHandler(
-            GranularParameterValues values,
-            Action<AudioFeature[], Vector3> onPositionParameterUpdate, 
+            GranularParameters values,
+            Action<AudioFeature[], float[]> onPositionParameterUpdate, 
             Action<AudioFeature[], bool> onColorParameterUpdate,
             Action<AudioFeature> onScaleParameterUpdate,
             Action<int, int> onWindowUpdate) { 
@@ -36,15 +19,15 @@ public class GranularParameterHandler {
         this.onWindowUpdate = onWindowUpdate;
     }
 
-    public GranularParameterHandler(GranularParameterValues values) {
+    public GranularParameterHandler(GranularParameters values) {
         this.values = values;
     }
 
 
 
-    private GranularParameterValues values;
+    private GranularParameters values;
 
-    public Action<AudioFeature[], Vector3> onFeaturePositionUpdate;
+    public Action<AudioFeature[], float[]> onFeaturePositionUpdate;
     public Action<AudioFeature[], bool> onFeatureColorUpdate;
     public Action<AudioFeature> onFeatureScaleUpdate;
     public Action<int, int> onWindowUpdate; // window size, hop size
@@ -111,7 +94,7 @@ public class GranularParameterHandler {
         onFeatureColorUpdate?.Invoke(ColorFeatures, value);
     } }
 
-    public Vector3 PosAxisScale { get => values.posAxisScale; set {
+    public float[] PosAxisScale { get => values.posAxisScale; set {
         values.posAxisScale = value;
         onFeaturePositionUpdate?.Invoke(PositionFeatures, value);
     } }

@@ -63,6 +63,13 @@ public struct WindowTime {
         this.endTime = endTime;
         this.duration = endTime - startTime;
     }
+
+    public (int start, int end, int count) GetSampleRange(int sampleRate) {
+        var startSample = (int)(startTime * sampleRate);
+        var endSample = (int)(endTime * sampleRate);
+        var numSamples = endSample - startSample;
+        return (startSample, endSample, numSamples);
+    }
 }
 
 // instead of having a lot of little GrainAudioFeatures,

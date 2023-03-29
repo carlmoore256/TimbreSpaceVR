@@ -1,3 +1,6 @@
+
+
+
 [System.Serializable]
 public class TsvrSample {
     public string file;
@@ -5,7 +8,9 @@ public class TsvrSample {
     public int bytes;
     public float duration;
     public int channels;
-    public float maxDBFS;
+    // public float maxDBFS;
+    public string resource;
+    public GranularParameters granularParameterValues;
 }
 
 
@@ -17,7 +22,6 @@ public class TsvrSamplePackMetadata {
     public string date;
     public int numSamples;
 }
-
 
 [System.Serializable]
 public class TsvrSamplePack {

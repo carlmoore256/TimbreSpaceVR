@@ -11,22 +11,42 @@ using System;
 /// </summary>
 public class GrainCloud : MonoBehaviour {
 
+    public GrainModel grainModel; // the model that this cloud is linked to which handles positioning, scaling, and so on
+
     private GranularBuffer granularBuffer;
     private GranularParameterHandler parameterHandler;
     private List<Grain> grains;
     private List<Grain> selectedGrains;
 
-    public GrainModel GrainModel { get; private set; } // the model that this cloud is linked to
-    // it handles positioning, scaling, and so on
+    private void OnEnable() {
 
-    private void Initialize(GranularBuffer granularBuffer, 
-                            GranularParameterValues parameterValues) {
-        this.granularBuffer = granularBuffer;
-        selectedGrains = new List<Grain>();
-        SetParameters(parameterValues);
     }
 
-    public void SetParameters(GranularParameterValues parameterValues) {
+    private void OnDisable() {
+        granularBuffer?.Stop();
+    }
+
+    // we're gonna need ways to merge, split, and delete clouds
+    // and delete individual grains
+
+    public void Initialize(DiscreteSignal audioBuffer, GranularParameters parameterValues = null) {
+        Debug.Log("Initializing grain cloud");
+        granularBuffer = new GranularBuffer(audioBuffer, gameObject.GetOrAddComponent<PolyvoicePlayer>());
+        grainModel = gameObject.GetOrAddComponent<GrainModel>();
+        selectedGrains = new List<Grain>();
+        SetParameters(parameterValues == null ? new GranularParameters() : parameterValues);
+    }
+
+    public void Initialize(GranularBuffer granularBuffer, GranularParameters parameterValues = null) {
+        Debug.Log("Initializing grain cloud");
+        this.granularBuffer = granularBuffer;
+        grainModel = gameObject.GetOrAddComponent<GrainModel>();
+        selectedGrains = new List<Grain>();
+        SetParameters(parameterValues == null ? new GranularParameters() : parameterValues);
+    }
+
+
+    public void SetParameters(GranularParameters parameterValues) {
         if (parameterHandler != null) {
             parameterHandler.onFeaturePositionUpdate -= UpdateGrainPositions;
             parameterHandler.onFeatureColorUpdate -= UpdateGrainColors;
@@ -38,6 +58,7 @@ public class GrainCloud : MonoBehaviour {
         parameterHandler.onFeatureColorUpdate += UpdateGrainColors;
         parameterHandler.onFeatureScaleUpdate += UpdateGrainScales;
         parameterHandler.onWindowUpdate += GenerateGrains;
+        GenerateGrains(parameterValues.windowSize, parameterValues.hopSize);
     }
 
     public void GenerateGrains(int windowSize, int hopSize) {
@@ -45,7 +66,9 @@ public class GrainCloud : MonoBehaviour {
         var features = parameterHandler.CurrentFeatures();
         granularBuffer.RunBatchAnalysis(features, () => {
             for (int i = 0; i < granularBuffer.WindowTimes.Length; i++) {
-                GameObject grainObject = Instantiate(TsvrApplication.Config.grainPrefab, transform);
+                // place the grains under GrainModel
+                GameObject grainObject = Instantiate(
+                    TsvrApplication.Config.grainPrefab, grainModel.transform);
                 Grain grain = grainObject.GetComponent<Grain>();
                 grain.Initialize(i);
                 grain.OnActivateEvent += OnGrainActivated;
@@ -102,12 +125,12 @@ public class GrainCloud : MonoBehaviour {
         grains.Clear();
     }
 
-    private void UpdateGrainPositions(AudioFeature[] features, Vector3 axisScale) {
+    private void UpdateGrainPositions(AudioFeature[] features, float[] axisScale) {
         foreach(Grain grain in grains) {
             Vector3 newPos = new Vector3(
-                granularBuffer.GetFeatureValue(features[0], grain.GrainID),
-                granularBuffer.GetFeatureValue(features[1], grain.GrainID),
-                granularBuffer.GetFeatureValue(features[2], grain.GrainID)
+                granularBuffer.GetFeatureValue(features[0], grain.GrainID) * axisScale[0],
+                granularBuffer.GetFeatureValue(features[1], grain.GrainID) * axisScale[1],
+                granularBuffer.GetFeatureValue(features[2], grain.GrainID) * axisScale[2]
             );
             grain.UpdatePosition(newPos);
         } 

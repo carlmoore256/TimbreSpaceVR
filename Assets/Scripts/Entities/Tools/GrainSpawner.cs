@@ -122,7 +122,7 @@ public class GrainSpawner : TsvrTool
 
         Debug.Log("Spawn selected file " + fileListUI.CurrentlySelectedFile.Name);
         if (fileListUI.isBrowsingBuiltInFiles) {
-            AudioIO.LoadAudioFromAssets("Audio/" + fileListUI.CurrentlySelectedFile.Name, (signal) => {
+            AudioIO.LoadAudioFromResources("Audio/" + fileListUI.CurrentlySelectedFile.Name, (signal) => {
                 Debug.Log($"Loaded Audio | Num Samples: {signal.Length}.");
                 newGrainModel.SetAudioBuffer(signal);
             });

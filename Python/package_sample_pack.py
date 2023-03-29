@@ -33,7 +33,7 @@ def get_audio_info(file):
     return {
         "duration": round(audio_file.duration_seconds, 4),
         "channels": audio_file.channels,
-        "maxDBFS": round(audio_file.max_dBFS, 4),
+        # "maxDBFS": round(audio_file.max_dBFS, 4),
 }
 
 
@@ -47,12 +47,12 @@ def get_sample_info(file, pack_title=None):
         "bytes": file_bytes,
         "duration": audio_info["duration"],
         "channels": audio_info["channels"],
-        "maxDBFS": audio_info["maxDBFS"]
+        # "maxDBFS": audio_info["maxDBFS"]
     }    
     if pack_title is not None:
         filetype = "." + os.path.basename(file).split(".")[1]
         info["resource"] =  f"{SAMPLE_PACKS_RESOURCE_PATH}/{pack_title}/{os.path.basename(file).replace(filetype, '')}"
-    info = {**info, **DEFAULT_PARAMETERS}
+    info = {**info, "parameters" : DEFAULT_PARAMETERS}
     return info
 
 def save_json(data, path):

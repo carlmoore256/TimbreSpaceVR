@@ -56,7 +56,7 @@ public class GrainModelOld : MonoBehaviour
 
         // Determine how grain parameter updates are handled
         this.parameterHandler = new GranularParameterHandler(
-            new GranularParameterValues(),
+            new GranularParameters(),
             OnPositionParameterUpdate,
             OnColorParameterUpdate, 
             OnScaleParameterUpdate,
@@ -76,7 +76,7 @@ public class GrainModelOld : MonoBehaviour
 
 
     # region Event Handlers
-    private void OnPositionParameterUpdate(AudioFeature[] posFeatures, Vector3 axisScale) {
+    private void OnPositionParameterUpdate(AudioFeature[] posFeatures, float[] axisScale) {
         if (this.AudioBuffer == null) return;
         TsvrApplication.DebugLogger.Log("Position Parameters changed " + posFeatures[0].ToString() + " " + posFeatures[1].ToString() + " " + posFeatures[2].ToString(), "[GrainModel]");
         featureExtractor.BatchComputeFeatures(this.AudioBuffer, posFeatures, () => { // make sure we compute any features that need to be computed
@@ -258,7 +258,7 @@ public class GrainModelOld : MonoBehaviour
         GrainModelOld grainModel = grainModelObject.GetComponent<GrainModelOld>();
         var sampleFileName = sample.file.Replace(".wav", "");
 
-        AudioIO.LoadAudioFromAssets($"SamplePacks/{pack.id}/{sampleFileName}", (signal) => {
+        AudioIO.LoadAudioFromResources($"SamplePacks/{pack.id}/{sampleFileName}", (signal) => {
             int sigLen = signal.Length;
             var tcs = new TaskCompletionSource<DiscreteSignal>();
             var stripSilenceTask = Task.Run(() => {

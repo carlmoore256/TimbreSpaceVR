@@ -5,20 +5,22 @@ using UnityEngine;
 using NWaves.Signals;
 using System;
 using System.Threading;
+using NWaves.Utils;
 
 // buffer based on audioFeatures
 public class GranularBuffer {
     public AudioFeatureAnalyzer featureAnalyzer;
     public PolyvoicePlayer player;
     private DiscreteSignal audioBuffer;
-    private ObjectPool<PlaybackEvent> playbackEventPool; // Object pool for PlaybackEvent instances
+    private ObjectPool<PlaybackEvent> playbackEventPool;
     public WindowTime[] WindowTimes {get {
         if (featureAnalyzer == null) {
             Debug.LogError("Feature analyzer has not been set yet, run ResetAnalysis() before accessing WindowTimes");
             return null;
         }
         return featureAnalyzer.WindowTimes;
-    } } // Array of WindowTime instances
+    } }
+
     private Thread analyzerThread;
     
     public GranularBuffer(DiscreteSignal audioBuffer, PolyvoicePlayer player) {
@@ -28,7 +30,14 @@ public class GranularBuffer {
     }
 
     /// <summary>
-    /// Set/reset feature analyzer, which needs to occur whenever there is a new
+    /// Initialize feature analyzer and compute features
+    /// </summary>
+    public void Initialize(int windowSize, int hopSize, AudioFeature[] features, Action onComplete = null) {
+        ResetAnalysis(windowSize, hopSize, features, onComplete);
+    }
+
+    /// <summary>
+    /// Set/reset feature analyzer, which will occur whenever there is a new
     /// window or hop size
     /// </summary>
     public void ResetAnalysis(int windowSize, int hopSize, AudioFeature[] features, Action onComplete = null) {
@@ -47,17 +56,16 @@ public class GranularBuffer {
     }
 
     /// <summary>
-    /// Batch computes the given features, and fires onComplete when finished
-    /// <summary>
+    /// Batch computes the given features, and invokes onComplete when finished. Cached features
+    /// will not be recomputed.
+    /// </summary>
     public void RunBatchAnalysis(AudioFeature[] features, Action onComplete = null) {
         if (featureAnalyzer == null) {
             Debug.LogError("Feature analyzer has not been set yet, run ResetAnalysis() before running batch analysis");
             return;
         }
-        
-        // TO DO: ADD THREADING
         analyzerThread = new Thread(() => {
-            Debug.Log("Runn/ing batch analysis on " + features.Length + " features");
+            Debug.Log("Running batch analysis on " + features.Length + " features");
             featureAnalyzer.BatchComputeFeatures(
                 audioBuffer, 
                 features, 
@@ -67,7 +75,7 @@ public class GranularBuffer {
     }
 
     /// <summary>
-    /// Plays a grain at a given index
+    /// Plays a grain at a given index in the granular windows (grainID)
     /// </summary>
     public void PlayGrain(int grainID, float gain = 1f) {
         if (grainID >= 0 && grainID < WindowTimes.Length)
@@ -84,10 +92,50 @@ public class GranularBuffer {
     }
 
     /// <summary>
-    /// Returns the value of a feature at a given index
+    /// Returns the value of an AudioFeature computed for the current buffer, provided
+    /// an index into the granular windows (grainID)
     /// </summary>
-    public float GetFeatureValue(AudioFeature feature, int index, bool normalized = true) {
+    public float GetFeatureValue(AudioFeature feature, int grainID, bool normalized = true) {
         var featureVector = featureAnalyzer.GetFeatureVector(feature);
-        return normalized ? featureVector.GetNormalized(index, 0, 1) : featureVector[index];
+        return normalized ? featureVector.GetNormalized(grainID, 0, 1) : featureVector[grainID];
+    }
+
+    /// <summary>
+    /// Stops all playback and audio processing workers
+    /// </summary>
+    public void Stop() {
+        player.StopAllCoroutines();
+        analyzerThread?.Abort();
+    }
+
+    /// <summary>
+    /// Returns a copy of the current audioBuffer, cropped based on the given grain IDs window times
+    /// </summary>
+    public DiscreteSignal GetCroppedBuffer(int[] grainIDs) {
+        int newLength = (int)Mathf.Ceil((float)grainIDs.Length * (float)WindowTimes[0].duration * (float)audioBuffer.SamplingRate);
+        float[] newSamples = new float[0];
+        foreach (int grainID in grainIDs) {
+            var windowTime = WindowTimes[grainID];
+            var sampleRange = windowTime.GetSampleRange(audioBuffer.SamplingRate);
+            newSamples = MemoryOperationExtensions.MergeWithArray(
+                newSamples, 
+                audioBuffer[sampleRange.start, sampleRange.end].Samples
+            );
+        }
+        return new DiscreteSignal(audioBuffer.SamplingRate, newSamples);
+    }
+
+    /// <summary>
+    /// Returns a copy of the current audioBuffer cropped starting at 
+    /// the playhead of grainStart and continuing to grainEnd
+    /// </summary>
+    public DiscreteSignal GetCroppedBuffer(int grainStart, int grainEnd) {
+        if (grainEnd <= grainStart) {
+            Debug.LogError("grainEnd must be greater than grainStart");
+            return null;
+        }
+        var sampleRange = WindowTimes[grainStart].GetSampleRange(audioBuffer.SamplingRate);
+        var endSampleRange = WindowTimes[grainEnd].GetSampleRange(audioBuffer.SamplingRate);
+        return audioBuffer[sampleRange.start, endSampleRange.end];
     }
 }

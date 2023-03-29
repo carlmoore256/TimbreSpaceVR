@@ -11,6 +11,7 @@ using NWaves.Filters.Base;
 using System.Linq;
 using UnityEngine;
 using System.Threading;
+using System.Threading.Tasks;
 
 public static class AudioFilters {
 
@@ -62,6 +63,18 @@ public static class AudioFilters {
         var elapsedTime = AudioSettings.dspTime - currentTime;
         Debug.Log($"Finished filtering audio RMS in {elapsedTime} s");
         return newSignal;
+    }
+
+    public static void StripSilenceAsync(DiscreteSignal signal, float thresholdDb, int windowSize, Action<DiscreteSignal> callback) {
+        var tcs = new TaskCompletionSource<DiscreteSignal>();
+        Task.Run(() => {
+            var strippedSignal = AudioFilters.StripSilence(signal, thresholdDb, windowSize);
+            tcs.SetResult(strippedSignal);
+        }).ContinueWith(task => {
+            if (task.Status == TaskStatus.RanToCompletion) {
+                callback(tcs.Task.Result);
+            }
+        }, TaskScheduler.FromCurrentSynchronizationContext());
     }
 
     private static float RMS(float[] samples) {

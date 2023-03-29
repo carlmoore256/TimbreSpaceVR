@@ -74,7 +74,7 @@ public class GrainOld : MonoBehaviour
             modelParameters.PositionFeatures[0], 
             modelParameters.PositionFeatures[1], 
             modelParameters.PositionFeatures[2],
-            Vector3.one);
+            new float[] { 1.0f, 1.0f, 1.0f });
 
         UpdateColor(
             modelParameters.ColorFeatures[0], 
@@ -123,13 +123,13 @@ public class GrainOld : MonoBehaviour
     /// <param name="fY">Audio Feature for Y axis</param>
     /// <param name="fZ">Audio Feature for Z axis</param>
     /// <param name="axisScale">scale of each axis, default is 1.0f</param>
-    public void UpdatePosition(AudioFeature fX, AudioFeature fY, AudioFeature fZ, Vector3 axisScale)
+    public void UpdatePosition(AudioFeature fX, AudioFeature fY, AudioFeature fZ, float[] axisScale)
     {   
-        if (axisScale == null) axisScale = Vector3.one;
+        if (axisScale == null) axisScale = new float[] { 1.0f, 1.0f, 1.0f };
         Vector3 targetPosition = new Vector3(
-            features.Get(fX) * axisScale.x, 
-            features.Get(fY) * axisScale.y, 
-            features.Get(fZ) * axisScale.z
+            features.Get(fX) * axisScale[0], 
+            features.Get(fY) * axisScale[1], 
+            features.Get(fZ) * axisScale[2]
         );
         if (positionCoroutine != null)
             StopCoroutine(positionCoroutine);
