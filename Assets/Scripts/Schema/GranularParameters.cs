@@ -13,8 +13,4 @@ public class GranularParameters {
     public float scaleExp = 0.1f;
     public bool useHSV = false;
     public float[] posAxisScale = { 0f,0f,0f }; // scale x,y,z axis
-
-    public static GranularParameters Default() {
-        return new GranularParameters();
-    }
 }

@@ -2,7 +2,7 @@
 
 
 [System.Serializable]
-public class TsvrSample {
+public class TsvrAudioSample {
     public string file;
     public string title;
     public int bytes;
@@ -11,6 +11,24 @@ public class TsvrSample {
     // public float maxDBFS;
     public string resource;
     public GranularParameters granularParameterValues;
+
+    public static TsvrAudioSample FromResourceData(ResourceData resourceData) {
+        if (resourceData.type != "audio") {
+            throw new System.Exception("ResourceData is not audio");
+        }
+        if (resourceData.category != ResourceData.ResourceCategory.Sample) {
+            throw new System.Exception("ResourceData is not a sample");
+        }
+        if (resourceData.location != ResourceData.ResourceDataLocation.Package) {
+            throw new System.Exception("ResourceData is not local");
+        }
+        TsvrAudioSample sample = new TsvrAudioSample();
+        sample.file = resourceData.uri;
+        sample.title = resourceData.hash;
+        sample.bytes = resourceData.bytes;
+        sample.resource = resourceData.uri;
+        return sample;
+    }
 }
 
 
@@ -26,5 +44,5 @@ public class TsvrSamplePackMetadata {
 [System.Serializable]
 public class TsvrSamplePack {
     public TsvrSamplePackMetadata metadata;
-    public TsvrSample[] samples;
+    public TsvrAudioSample[] samples;
 }

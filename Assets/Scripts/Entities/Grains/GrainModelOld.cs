@@ -251,7 +251,7 @@ public class GrainModelOld : MonoBehaviour
     /// <summary>
     /// Spawn a grain model from a TsvrSamplePack sample. Sample packs are installed in resources
     /// </summary>
-    public static GrainModelOld SpawnFromSample(TsvrSamplePackMetadata pack, TsvrSample sample, Vector3 position, Quaternion rotation) {
+    public static GrainModelOld SpawnFromSample(TsvrSamplePackMetadata pack, TsvrAudioSample sample, Vector3 position, Quaternion rotation) {
         GameObject grainModelObject = Instantiate(Resources.Load<GameObject>("Prefabs/GrainModel"), GameObject.Find("GrainParent").transform);
         grainModelObject.transform.position = position;
         grainModelObject.transform.rotation = rotation;

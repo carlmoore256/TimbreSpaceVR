@@ -84,3 +84,8 @@ crashlytics-build.properties
 Assets/Resources/Data.meta
 
 /Assets/Samples
+
+/Python/.env
+/Python/nb_testing.ipynb
+/Python/data
+/Python/__pycache__

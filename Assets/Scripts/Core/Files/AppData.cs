@@ -20,6 +20,8 @@ public enum AppDataCategory
     User,
     Cache,
     Downloads,
+    Logs,
+    None
 }
 
 public static class AppData
@@ -45,6 +47,11 @@ public static class AppData
 
         foreach (AppDataCategory location in Enum.GetValues(typeof(AppDataCategory)))
         {
+            if (location == AppDataCategory.None)
+            {
+                categoryPaths[location] = Application.persistentDataPath;
+                continue;
+            }
             string locationName = location.ToString();
             string directoryPath = Path.Combine(Application.persistentDataPath, locationName);
             categoryPaths[location] = directoryPath;
@@ -53,13 +60,13 @@ public static class AppData
         }
     }
 
-    public static void SaveFileRaw(AppDataCategory category, string relativePath, byte[] fileData)
+    public static void SaveFileRaw(string relativePath, byte[] fileData, AppDataCategory category = AppDataCategory.None)
     {  
         string filePath = Path.Combine(categoryPaths[category], relativePath);
         File.WriteAllBytes(filePath, fileData);
     }
 
-    public static byte[] ReadFileRaw(AppDataCategory category, string fileName)
+    public static byte[] ReadFileRaw(string fileName, AppDataCategory category = AppDataCategory.None)
     {
         string filePath = Path.Combine(categoryPaths[category], fileName);
         if (File.Exists(filePath))
@@ -70,7 +77,7 @@ public static class AppData
         return null;
     }
 
-    public static void SaveFileObject<T>(AppDataCategory category, string relativePath, T data)
+    public static void SaveFileObject<T>(string relativePath, T data, AppDataCategory category = AppDataCategory.None)
     {
         BinaryFormatter binaryFormatter = new BinaryFormatter();
         using (FileStream fileStream = new FileStream(Path.Combine(categoryPaths[category], relativePath), FileMode.Create))
@@ -79,7 +86,7 @@ public static class AppData
         }
     }
 
-    public static T LoadFileObject<T>(AppDataCategory category, string relativePath)
+    public static T LoadFileObject<T>(string relativePath, AppDataCategory category = AppDataCategory.None)
     {
         if (File.Exists(relativePath))
         {
@@ -94,13 +101,13 @@ public static class AppData
         return default(T);
     }
 
-    public static void SaveFileJson<T>(T data, string filePath)
+    public static void SaveFileJson<T>(T data, string filePath, AppDataCategory category = AppDataCategory.None)
     {
         string jsonData = JsonUtility.ToJson(data);
         File.WriteAllText(filePath, jsonData);
     }
 
-    public static T LoadFileJson<T>(string filePath)
+    public static T LoadFileJson<T>(string filePath, AppDataCategory category = AppDataCategory.None)
     {
         if (File.Exists(filePath))
         {
@@ -110,6 +117,17 @@ public static class AppData
         }
 
         return default(T);
+    }
+
+    /// <summary>
+    /// Creates a hash of key, and returns a full path to the directory
+    /// </summary>
+    public static string CreateHashDirectory(string key, AppDataCategory category = AppDataCategory.None) {
+        // hash key, and create a directory at the location
+        string hash = key.GetHashCode().ToString();
+        string directoryPath = Path.Combine(categoryPaths[category], hash);
+        Directory.CreateDirectory(directoryPath);
+        return directoryPath;
     }
 }
 

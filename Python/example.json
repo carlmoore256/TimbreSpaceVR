@@ -1,0 +1,49 @@
+{
+    "title": "Jazzy Guitar",
+    "description": "Jazzy guitar samples generated with tsvr-samplepack-tools",
+    "hash": "83da021d51e468078ba30bd93f8e327f129fd0560d009afc3e3d40efe1fc0154",
+    "creator": {
+        "name": "Carl Moore",
+        "website": "https://carlmoore.xyz"
+    },
+    "parameters": {
+        "xFeature": "MFCC_0",
+        "yFeature": "MFCC_1",
+        "zFeature": "MFCC_2",
+        "rFeature": "MFCC_3",
+        "gFeature": "MFCC_4",
+        "bFeature": "MFCC_5",
+        "scaleFeature": "RMS",
+        "windowSize": 8192,
+        "hopSize": 8192,
+        "scaleMult": 0.01,
+        "scaleExp": 0.1,
+        "useHSV": false,
+        "posAxisScale": [
+            1,
+            1,
+            1
+        ]
+    },
+    "resources": [
+        {
+            "type": "audio/wav",
+            "category": "sample",
+            "location": "web",
+            "uri": "https://ipfs.io/ipfs/bafybeickmhgadwb6qcuchd32tozpfpeccx7773b4vyifsx6iikb33cmz5e",
+            "hash": "aed81f0321367154fd9e2477713741cea5eeb62b96c69ec8e47c1b3dcc5e27b4",
+            "bytes": 7001658
+        },
+        {
+            "type": "audio/wav",
+            "category": "thumbnail",
+            "location": "package",
+            "uri": "SamplePacks/Jazzy Guitar/jazzGuitar",
+            "hash": "aed81f0321367154fd9e2477713741cea5eeb62b96c69ec8e47c1b3dcc5e27b4",
+            "bytes": 7001658
+        }
+    ],
+    "session": {
+        "sequences": []
+    }
+}

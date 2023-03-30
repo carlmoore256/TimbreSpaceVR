@@ -26,7 +26,7 @@ public class GrainCloudSpawner : MonoBehaviour {
 
     # region Spawn Methods
 
-    public static GrainCloud Spawn(TsvrSample sample) {
+    public static GrainCloud Spawn(TsvrAudioSample sample) {
         GameObject cloudObject = SpawnPrefab();
         GrainCloud cloud = cloudObject.GetOrAddComponent<GrainCloud>();
         AudioIO.LoadAudioFromResources(sample.resource, (DiscreteSignal audioBuffer) => {
@@ -75,13 +75,22 @@ public class GrainCloudSpawner : MonoBehaviour {
 
 
     public static async Task<GrainCloud> SpawnFromMetadataURI(string uri) {
-        TsvrSample tsvrSample = await JsonDownloader.Download<TsvrSample>(uri);
-        if (tsvrSample == null) return null;
 
-        tsvrSample.resource = tsvrSample.resource.Replace(" ", "%20");
+        
+        TsvrGrainCloudData grainCloudData = await JsonDownloader.Download<TsvrGrainCloudData>(uri);
+        Debug.Log("tsvrSample: " + grainCloudData);
+        if (grainCloudData == null) return null;
+
+        // first check if the resources have already been downloaded
+
+        // tsvrSample.resource = AppDataCategory category = AppDataCategory.None;
+        // get the hash path of the resource
+
+        string dir = AppData.CreateHashDirectory(grainCloudData.hash, AppDataCategory.Downloads);
+
         // save to a new directory in persistentData
-        AppData.SaveFileJson<TsvrSample>(tsvrSample, tsvrSample.title);
-        return Spawn(tsvrSample);
+        AppData.SaveFileJson<TsvrGrainCloudData>(grainCloudData, grainCloudData.title, AppDataCategory.Downloads);
+        return Spawn(grainCloudData);
         // return null;
     }
 

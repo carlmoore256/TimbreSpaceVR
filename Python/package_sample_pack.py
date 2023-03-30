@@ -5,6 +5,7 @@ import argparse
 from pydub import AudioSegment
 import datetime
 import shutil
+from utils import save_json, load_json
 
 DEFAULT_CREATOR = "Carl Moore"
 SAMPLE_PACKS_RESOURCE_PATH = "samplepacks"
@@ -25,7 +26,6 @@ DEFAULT_PARAMETERS = {
     "scaleExp" : 0.1,
     "useHSV" : False,
     "posAxisScale" : [1,1,1],
-
 }
 
 def get_audio_info(file):
@@ -80,7 +80,7 @@ def create_sample_pack(path, title=None, creator=DEFAULT_CREATOR, description=""
         title = os.path.basename(path).replace("_", " ").replace("-", " ").title()
     files = glob.glob(path + "/*.wav")
     samples = [get_sample_info(f, title) for f in files]
-    samples = [s for s in samples if s["bytes"] > 0 and s["duration"] > 0 and s["maxDBFS"] > -60]
+    samples = [s for s in samples if s["bytes"] > 0 and s["duration"] > 0]
     print(f'Sample Pack: {title} | Found {len(samples)} samples in {path}')
     samples = sorted(samples, key=lambda k: k['title'])
     pack = {

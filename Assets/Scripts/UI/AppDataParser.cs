@@ -37,8 +37,8 @@ public static class AppDataParser {
                 TextAsset metadataTextAsset = Resources.Load<TextAsset>(resourceDir + "/metadata");
                 TsvrSamplePack samplePack = JsonUtility.FromJson<TsvrSamplePack>(metadataTextAsset.ToString());
                 Debug.Log("SAMPLE PACK | Title: " + samplePack.metadata.title + " | ID: " + samplePack.metadata.id + " | Creator: " + samplePack.metadata.creator + " | Num Samples: " + samplePack.metadata.numSamples);
-                foreach(TsvrSample sample in samplePack.samples) {
-                    Debug.Log("SAMPLE | File: " + sample.file + " | Title: " + sample.title + " | Bytes: " + sample.bytes + " | Duration: " + sample.duration + " | Channels: " + sample.channels + " | Max DBFS: " + sample.maxDBFS);
+                foreach(TsvrAudioSample sample in samplePack.samples) {
+                    Debug.Log("SAMPLE | File: " + sample.file + " | Title: " + sample.title + " | Bytes: " + sample.bytes + " | Duration: " + sample.duration + " | Channels: " + sample.channels);
                 }
             } catch {
                 Debug.Log($"ERROR: Sample pack {metadata.title} is missing or corrupted");

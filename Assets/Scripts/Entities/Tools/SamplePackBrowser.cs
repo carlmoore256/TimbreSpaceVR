@@ -62,17 +62,17 @@ public class SamplePackBrowser : TsvrTool
         scrollableListUI.AddItem("Back", () => {
             DisplayAllSamplePacks(manifestResourcePath);
         });
-        foreach(TsvrSample sample in samplePack.samples) {
+        foreach(TsvrAudioSample sample in samplePack.samples) {
             scrollableListUI.AddItem(
                 sample, 
                 (item, content) => {
-                    TsvrSample sampleMetadata = (TsvrSample)item;
+                    TsvrAudioSample sampleMetadata = (TsvrAudioSample)item;
                     content.header.text = sampleMetadata.title;
                     var stereo = sampleMetadata.channels == 2 ? "Stereo" : "Mono";
                     content.subheader.text = $"{sampleMetadata.duration} Seconds | {stereo}";
                 }, 
                 (item) => {
-                    TsvrSample tsvrSample = (TsvrSample)item;
+                    TsvrAudioSample tsvrSample = (TsvrAudioSample)item;
                     ToolController.ChangeTool(TsvrToolType.ModelInspector, (tool) => {
                         ModelInspector modelMultitool = (ModelInspector)tool;
                         Vector3 modelPosition = transform.position + transform.forward * 1.5f;
