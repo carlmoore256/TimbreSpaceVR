@@ -5,6 +5,8 @@ using System.IO;
 using UnityEngine;
 using System.Runtime.Serialization.Formatters.Binary;
 using System;
+using System.Threading.Tasks;
+using System.Net;
 
 public enum AppDataFileType
 {
@@ -60,6 +62,23 @@ public static class AppData
         }
     }
 
+    // , bool downloadIfNot = false
+    public static bool Exists(string folder, string filename, AppDataCategory category = AppDataCategory.None)
+    {
+        string filePath = GetAppDataSubFilepath(folder, filename, category);
+        return File.Exists(filePath);
+    }
+
+    public static string GetAppDataSubFilepath(string folder, string filename, AppDataCategory category = AppDataCategory.None, bool createDirectory = true)
+    {
+        string directoryPath = Path.Combine(categoryPaths[category], folder);
+        if (createDirectory)
+        {
+            CheckMakeDirectory(directoryPath);
+        }
+        return Path.Combine(directoryPath, filename);
+    }
+
     public static void SaveFileRaw(string relativePath, byte[] fileData, AppDataCategory category = AppDataCategory.None)
     {  
         string filePath = Path.Combine(categoryPaths[category], relativePath);
@@ -101,19 +120,84 @@ public static class AppData
         return default(T);
     }
 
-    public static void SaveFileJson<T>(T data, string filePath, AppDataCategory category = AppDataCategory.None)
+    public static void CheckMakeDirectory(string directoryPath)
     {
-        string jsonData = JsonUtility.ToJson(data);
-        File.WriteAllText(filePath, jsonData);
+        if (!Directory.Exists(directoryPath))
+        {
+            Directory.CreateDirectory(directoryPath);
+        }
     }
 
-    public static T LoadFileJson<T>(string filePath, AppDataCategory category = AppDataCategory.None)
+    public static void SaveFileJson<T>(T data, string folder, string filename, AppDataCategory category = AppDataCategory.None)
     {
-        if (File.Exists(filePath))
+        // fileName = GetAppDataPath(fileName, folder, category);
+        // string filePath = Path.Combine(categoryPaths[category], folder, filename);
+        string filepath = GetAppDataSubFilepath(folder, filename, category, true);
+        string jsonData = JsonUtility.ToJson(data);
+        Debug.Log("Saving JSON " + filename + " to " + filepath);
+        File.WriteAllText(filepath, jsonData);
+    }
+
+    public static T LoadFileJson<T>(string folder, string filename, AppDataCategory category = AppDataCategory.None)
+    {
+        // string filePath = Path.Combine(categoryPaths[category], relativePath);
+        // filename = GetAppDataPath(filename, category);
+        string filepath = Path.Combine(categoryPaths[category], folder, filename);
+        if (File.Exists(filepath))
         {
-            string jsonData = File.ReadAllText(filePath);
+            string jsonData = File.ReadAllText(filepath);
             T data = JsonUtility.FromJson<T>(jsonData);
             return data;
+        }
+
+        return default(T);
+    }
+
+    public static async void Download(string url, string folder, string filename, AppDataCategory category, Action<string> callback = null) {
+        string filepath = GetAppDataSubFilepath(folder, filename, category, true);
+        
+        using (var webClient = new WebClient())
+        {
+            await webClient.DownloadFileTaskAsync(url, filepath);
+        }
+
+        callback?.Invoke(filepath);
+    }
+
+
+    public static async Task<string> DownloadOrGetCachedPath(string url, string folder, string filename, AppDataCategory category) {
+        string filepath = GetAppDataSubFilepath(folder, filename, category, true);
+
+        if (File.Exists(filepath))
+        {
+            return filepath;
+        }
+
+        using (var webClient = new WebClient())
+        {
+            await webClient.DownloadFileTaskAsync(url, filepath);
+        }
+
+        return filepath;
+    }
+
+
+
+    public static async Task<T> DownloadOrGetCached<T>(string url, string folder, string filename, AppDataCategory category = AppDataCategory.Downloads)
+    {
+        string filepath = GetAppDataSubFilepath(folder, filename, category, true);
+
+        if (!File.Exists(filepath))
+        {
+            using (var webClient = new WebClient())
+            {
+                await webClient.DownloadFileTaskAsync(url, filepath);
+            }
+        }
+
+        if (File.Exists(filepath))
+        {
+            return LoadFileObject<T>(filepath);
         }
 
         return default(T);
@@ -126,8 +210,30 @@ public static class AppData
         // hash key, and create a directory at the location
         string hash = key.GetHashCode().ToString();
         string directoryPath = Path.Combine(categoryPaths[category], hash);
-        Directory.CreateDirectory(directoryPath);
+        // Directory.CreateDirectory(directoryPath);
+        CheckMakeDirectory(directoryPath);
         return directoryPath;
     }
+
+    // public static async Task<ResourceData> DownloadOrGetCachedResourceData(ResourceData resourceData, string folder, AppDataCategory category = AppDataCategory.Downloads)
+    // {
+    //     string filepath = GetAppDataSubFilepath(folder, resourceData.filename, category, true);
+
+    //     if (!File.Exists(filepath))
+    //     {
+    //         using (var webClient = new WebClient())
+    //         {
+    //             await webClient.DownloadFileTaskAsync(resourceData.url, filepath);
+    //         }
+    //     }
+
+    //     if (File.Exists(filepath))
+    //     {
+    //         resourceData.filepath = filepath;
+    //         return resourceData;
+    //     }
+
+    //     return null;
+    // }
 }
 

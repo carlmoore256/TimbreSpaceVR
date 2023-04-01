@@ -54,24 +54,6 @@ public class FeatureVector {
     }
 }
 
-public struct WindowTime {
-    public double startTime;
-    public double endTime;
-    public double duration;
-    public WindowTime(double startTime, double endTime) {
-        this.startTime = startTime;
-        this.endTime = endTime;
-        this.duration = endTime - startTime;
-    }
-
-    public (int start, int end, int count) GetSampleRange(int sampleRate) {
-        var startSample = (int)(startTime * sampleRate);
-        var endSample = (int)(endTime * sampleRate);
-        var numSamples = endSample - startSample;
-        return (startSample, endSample, numSamples);
-    }
-}
-
 // instead of having a lot of little GrainAudioFeatures,
 // maybe each grain should have an index, which can lookup
 // an index across multiple feature vectors
@@ -338,9 +320,13 @@ public class AudioFeatureAnalyzer
         var _windowTimes = new List<WindowTime>();
         int nFrames = (Signal.Length - windowSize) / hopSize + 1;
         for (int i = 0; i < nFrames; i++) {
-            double start = i * hopSize / Signal.SamplingRate;
-            double end = start + windowSize / Signal.SamplingRate;
-            _windowTimes.Add(new WindowTime(start, end));
+            int startIdx = i * hopSize;
+            int endIdx = startIdx + windowSize;
+            double start = (double)startIdx / Signal.SamplingRate;
+            double end = (double)endIdx / Signal.SamplingRate;
+
+            Debug.Log("WINDOW start: " + start + " end: " + end);
+            _windowTimes.Add(new WindowTime(start, end, windowSize));
         }
         WindowTimes = _windowTimes.ToArray();
     }

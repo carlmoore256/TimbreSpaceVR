@@ -10,7 +10,7 @@ public class GranularParameterHandler {
             GranularParameters values,
             Action<AudioFeature[], float[]> onPositionParameterUpdate, 
             Action<AudioFeature[], bool> onColorParameterUpdate,
-            Action<AudioFeature> onScaleParameterUpdate,
+            Action<AudioFeature, float, float> onScaleParameterUpdate,
             Action<int, int> onWindowUpdate) { 
         this.values = values;
         this.onFeaturePositionUpdate = onPositionParameterUpdate;
@@ -29,7 +29,7 @@ public class GranularParameterHandler {
 
     public Action<AudioFeature[], float[]> onFeaturePositionUpdate;
     public Action<AudioFeature[], bool> onFeatureColorUpdate;
-    public Action<AudioFeature> onFeatureScaleUpdate;
+    public Action<AudioFeature, float, float> onFeatureScaleUpdate;
     public Action<int, int> onWindowUpdate; // window size, hop size
 
     public AudioFeature[] PositionFeatures { get => new AudioFeature[3] { values.xFeature, values.yFeature, values.zFeature }; }
@@ -50,6 +50,8 @@ public class GranularParameterHandler {
         onFeaturePositionUpdate?.Invoke(PositionFeatures, values.posAxisScale);
     } }
 
+    public AudioFeature[] XYZFeatures { get => new AudioFeature[3] { values.xFeature, values.yFeature, values.zFeature }; }
+
     public AudioFeature RFeature { get => values.rFeature; set {
         values.rFeature = value;
         onFeatureColorUpdate?.Invoke(ColorFeatures, values.useHSV);
@@ -65,9 +67,11 @@ public class GranularParameterHandler {
         onFeatureColorUpdate?.Invoke(ColorFeatures, values.useHSV);
     } }
 
+    public AudioFeature[] RGBFeatures { get => new AudioFeature[3] { values.rFeature, values.gFeature, values.bFeature }; }
+
     public AudioFeature ScaleFeature { get => values.scaleFeature; set {
         values.scaleFeature = value;
-        onFeatureScaleUpdate?.Invoke(value);
+        onFeatureScaleUpdate?.Invoke(value, values.scaleMult, values.scaleExp);
     } }
 
     public int WindowSize { get => values.windowSize; set { 
@@ -82,11 +86,11 @@ public class GranularParameterHandler {
 
     public float ScaleMult { get => values.scaleMult; set {
         values.scaleMult = value;
-        onFeatureScaleUpdate?.Invoke(values.scaleFeature);
+        onFeatureScaleUpdate?.Invoke(values.scaleFeature, value, values.scaleExp);
     } }
     public float ScaleExp { get => values.scaleExp; set {
         values.scaleExp = value;
-        onFeatureScaleUpdate?.Invoke(values.scaleFeature);
+        onFeatureScaleUpdate?.Invoke(values.scaleFeature, values.scaleMult, value);
     } }
 
     public bool UseHSV { get => values.useHSV; set {
@@ -110,6 +114,12 @@ public class GranularParameterHandler {
             values.rFeature, values.gFeature, values.bFeature,
             values.scaleFeature
         };
+    }
+
+    public void CallUpdate() {
+        onFeaturePositionUpdate?.Invoke(PositionFeatures, values.posAxisScale);
+        onFeatureColorUpdate?.Invoke(ColorFeatures, values.useHSV);
+        onFeatureScaleUpdate?.Invoke(values.scaleFeature, values.scaleMult, values.scaleExp);
     }
 }
 

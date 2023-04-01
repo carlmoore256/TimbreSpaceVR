@@ -26,20 +26,9 @@ public class JsonDownloader : MonoBehaviour
         }
 
         string json = webRequest.downloadHandler.text;
-        T result = JsonUtility.FromJson<T>(json);
-
-        // callback?.Invoke(result);
+        // Debug.Log("GOT JSON: " + json);
+        // T result = JsonUtility.FromJson<T>(json);
+        T result = JsonHelper.FromJson<T>(json);
         return result;
-    }
-
-    public static IEnumerator Get(string url, Action<string> callback, Action<string> errorCallback) {
-        using (WWW www = new WWW(url)) {
-            yield return www;
-            if (www.error == null) {
-                callback(www.text);
-            } else {
-                errorCallback(www.error);
-            }
-        }
     }
 }

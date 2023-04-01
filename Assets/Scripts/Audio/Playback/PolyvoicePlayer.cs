@@ -42,7 +42,8 @@ public class PolyvoicePlayer : MonoBehaviour
     }
 
     public void SetAudioBuffer(DiscreteSignal signal) {
-
+        Debug.Log("Setting audio buffer");
+        
         foreach(PlaybackVoice voice in playbackVoices) {
             voice.SetSignal(signal);
         }
@@ -94,7 +95,6 @@ public class PolyvoicePlayer : MonoBehaviour
         // playbackEventQueue.Enqueue(e);
         // if (playbackEventQueue.Count > maxQueueSize) {
         //     playbackEventQueue.Dequeue();
-        // }
         v.Play(e);
         if (!requestCounts.ContainsKey(e.submitterID))
             requestCounts[e.submitterID] = new List<DateTime>();

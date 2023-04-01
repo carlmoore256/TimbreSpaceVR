@@ -83,7 +83,7 @@ public class PlaybackVoice {
     }
 
     public void Play(PlaybackEvent playbackEvent) {
-        mut.WaitOne();       
+        mut.WaitOne();
         IsPlaying = true;
         this.playhead.SetPlaybackEvent(playbackEvent, _signal);
         this.playbackEvent = playbackEvent;

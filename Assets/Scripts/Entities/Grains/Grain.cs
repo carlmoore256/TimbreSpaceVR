@@ -6,7 +6,7 @@ using System.Collections.Generic;
 /// <summary>
 /// A node that visually represents an audio grain
 /// </summary>
-public class Grain : MonoBehaviour
+public class Grain : MonoBehaviour, ISequenceable
 {
     public Material material;
     public int GrainID { get; private set; }
@@ -27,10 +27,17 @@ public class Grain : MonoBehaviour
     private float activatedDuration = 1f;
     private bool isActivated = false;
 
+
+    public enum ActivationAction {
+        Play,
+        Select,
+        Delete
+    }
+
     // public delegate void OnSelect(Grain grain, object caller);
     // public event OnSelect OnSelectEvent;
 
-    public delegate void OnActivate(Grain grain, float value, object caller);
+    public delegate void OnActivate(Grain grain, float value, ActivationAction activationAction);
     public event OnActivate OnActivateEvent;
     
 
@@ -64,6 +71,16 @@ public class Grain : MonoBehaviour
 
     # endregion
 
+    # region ISequenceable
+
+    public float SequenceGain { get; set; }
+
+    public void Play() {
+        Activate(SequenceGain, ActivationAction.Play);
+    }
+
+    # endregion
+
     # region Public Methods
 
     // /// <summary>
@@ -79,15 +96,15 @@ public class Grain : MonoBehaviour
     /// <summary>
     /// Notifies listeners of attempt to activate, with self, value, and delta time since last activated
     /// </summary>
-    public void Activate(float value, object caller) {
-        OnActivateEvent?.Invoke(this, value, caller);
+    public void Activate(float value, ActivationAction activationAction) {
+        OnActivateEvent?.Invoke(this, value, activationAction);
     }
 
 
     /// <summary>
     /// Play an activated animation
     /// </summary>
-    public void PlayAnimation(Color color, float radiusMultiplier = 1.2f, float duration = 1f) {
+    public void Play(Color color, float radiusMultiplier = 1.2f, float duration = 1f) {
         isActivated = true;
         activateEnd = Time.time + duration;
         lastActivated = Time.timeAsDouble;
@@ -99,6 +116,11 @@ public class Grain : MonoBehaviour
         playCoroutine = StartCoroutine(PlayCoroutine(color, radiusMultiplier));
     }
 
+    public void Delete() {
+        UpdateScale(0f);
+        Destroy(gameObject, durationReScale + 0.1f);
+    }
+
     public double TimeSinceLastPlayed() {
         return Time.timeAsDouble - lastActivated;
     }
@@ -106,6 +128,7 @@ public class Grain : MonoBehaviour
     public void UpdatePosition(Vector3 newPosition) {
         if (positionCoroutine != null)
             StopCoroutine(positionCoroutine);
+        targetTransform.position = newPosition;
         positionCoroutine = StartCoroutine(PositionCoroutine(targetTransform.position, durationRePosition));
     }
 
@@ -124,6 +147,7 @@ public class Grain : MonoBehaviour
     public void UpdateColor(Color color) {
         if (colorCoroutine != null)
             StopCoroutine(colorCoroutine);
+        targetColor = color;
         colorCoroutine = StartCoroutine(ColorCoroutine(targetColor, durationReColor));
     }
 
@@ -202,6 +226,7 @@ public class Grain : MonoBehaviour
         ToggleSpring(false);
         float time = 0f;
         while (time < duration) {
+            Vector3 test = Vector3.Lerp(transform.localPosition, targetPosition, time/duration);
             transform.localPosition = Vector3.Lerp(transform.localPosition, targetPosition, time/duration);
             time += Time.deltaTime;
             yield return null;

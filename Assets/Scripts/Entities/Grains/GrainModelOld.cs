@@ -94,12 +94,12 @@ public class GrainModelOld : MonoBehaviour
         });
     }
 
-    private void OnScaleParameterUpdate(AudioFeature sclFeature) {
+    private void OnScaleParameterUpdate(AudioFeature sclFeature, float scaleMult, float scaleExp) {
         if (this.AudioBuffer == null) return;
         TsvrApplication.DebugLogger.Log("Scale Parameters changed " + sclFeature.ToString(), "[GrainModel]");
         featureExtractor.BatchComputeFeatures(this.AudioBuffer, new AudioFeature[] {sclFeature}, () => {
             foreach(GrainOld grain in Grains)
-                grain.UpdateScale(sclFeature, parameterHandler.ScaleMult, parameterHandler.ScaleExp);
+                grain.UpdateScale(sclFeature, scaleMult, scaleExp);
         });
     }
 

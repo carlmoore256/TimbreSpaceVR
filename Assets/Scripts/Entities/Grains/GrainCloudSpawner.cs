@@ -1,5 +1,6 @@
 using UnityEngine;
 using System.Collections;
+using System.Collections.Generic;
 using NWaves.Signals;
 using System.Threading.Tasks;
 
@@ -38,6 +39,7 @@ public class GrainCloudSpawner : MonoBehaviour {
         return cloud;
     }
 
+
     public static GrainCloud Spawn(DiscreteSignal audioBuffer, GranularParameters parameters = null) {
         GameObject cloudObject = SpawnPrefab();
         GrainCloud cloud = cloudObject.GetOrAddComponent<GrainCloud>();
@@ -57,10 +59,32 @@ public class GrainCloudSpawner : MonoBehaviour {
         return cloud;
     }
 
+    public static async Task<GrainCloud> SpawnFromMetadata(GrainCloudMetadata metadata) {
+        GameObject cloudObject = SpawnPrefab();
+        GrainCloud cloud = cloudObject.GetOrAddComponent<GrainCloud>();
+        ResourceData audioResource = await metadata.GetLocalResourceData(ResourceData.ResourceCategory.Sample);
+        DiscreteSignal signal = await AudioIO.LoadAudioFromURI(audioResource.uri);
+        Debug.Log("Signal Length Samples: " + signal.Length + " | SampleRate: " + signal.SamplingRate);
+        cloud.Initialize(signal, metadata.parameters);
+        return cloud;
+    }
+
+    /// <summary>
+    /// Spawns a grain cloud from a web URI pointing to a metadata file
+    /// </summary>
+    public static async Task<GrainCloud> SpawnFromMetadataURI(string uri) {
+        GrainCloudMetadata grainCloudData = await JsonDownloader.Download<GrainCloudMetadata>(uri);
+        Debug.Log("tsvrSample: " + grainCloudData);
+        if (grainCloudData == null) return null;
+        // save to a new directory in persistentData
+        AppData.SaveFileJson<GrainCloudMetadata>(grainCloudData, grainCloudData.hash, "metadata.json", AppDataCategory.Downloads);
+        return await SpawnFromMetadata(grainCloudData);
+    }
+
     /// <summary>
     /// Spawns a grain cloud from a web URI pointing to an audio file.
     /// </summary>
-    public static GrainCloud SpawnFromURI(string uri) {
+    public static GrainCloud SpawnFromAudioURI(string uri) {
         GameObject cloudObject = SpawnPrefab();
         GrainCloud cloud = cloudObject.GetOrAddComponent<GrainCloud>();
         AudioIO.LoadAudioFromURI(uri).ContinueWith(task => {
@@ -71,27 +95,6 @@ public class GrainCloudSpawner : MonoBehaviour {
             // cloud.Initialize(audioBuffer);
         });
         return cloud;
-    }
-
-
-    public static async Task<GrainCloud> SpawnFromMetadataURI(string uri) {
-
-        
-        TsvrGrainCloudData grainCloudData = await JsonDownloader.Download<TsvrGrainCloudData>(uri);
-        Debug.Log("tsvrSample: " + grainCloudData);
-        if (grainCloudData == null) return null;
-
-        // first check if the resources have already been downloaded
-
-        // tsvrSample.resource = AppDataCategory category = AppDataCategory.None;
-        // get the hash path of the resource
-
-        string dir = AppData.CreateHashDirectory(grainCloudData.hash, AppDataCategory.Downloads);
-
-        // save to a new directory in persistentData
-        AppData.SaveFileJson<TsvrGrainCloudData>(grainCloudData, grainCloudData.title, AppDataCategory.Downloads);
-        return Spawn(grainCloudData);
-        // return null;
     }
 
 

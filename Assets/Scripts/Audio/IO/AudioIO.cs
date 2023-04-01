@@ -58,7 +58,6 @@ public class AudioIO {
     {
         UnityWebRequest webRequest = UnityWebRequest.Get(path);
         var operation = webRequest.SendWebRequest();
-
         while (!operation.isDone)
         {
             Debug.Log($"[*] Downloading audio from {path}");
@@ -80,6 +79,8 @@ public class AudioIO {
             {
                 Debug.LogError("Invalid number of channels for audio file: " + path);
             }
+
+            signal = waveFile[Channels.Average];
         }
 
         // callback?.Invoke(signal);

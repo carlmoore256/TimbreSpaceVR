@@ -37,20 +37,20 @@ public class GranularBuffer {
     }
 
     /// <summary>
-    /// Set/reset feature analyzer, which will occur whenever there is a new
-    /// window or hop size
+    /// Set/reset feature analyzer, which will occur whenever there is a new window or hop size
     /// </summary>
     public void ResetAnalysis(int windowSize, int hopSize, AudioFeature[] features, Action onComplete = null) {
         featureAnalyzer = new AudioFeatureAnalyzer(windowSize, hopSize, audioBuffer);
         playbackEventPool = new ObjectPool<PlaybackEvent>(
-            () => {
+            createFunc : () => {
                 var playbackEvent = new PlaybackEvent();
-                playbackEvent.onComplete += () => playbackEventPool.Release(playbackEvent);
+                playbackEvent.onComplete += () => {
+                    playbackEventPool.Release(playbackEvent);
+                };
                 return playbackEvent;
             }, 
-            playbackEvent => playbackEvent.Reset(),
-            defaultCapacity: WindowTimes.Length,
-            maxSize: WindowTimes.Length * 10
+            // actionOnRelease : playbackEvent => playbackEvent.Reset(),
+            defaultCapacity : WindowTimes.Length
         );
         RunBatchAnalysis(features, onComplete);
     }
@@ -72,6 +72,7 @@ public class GranularBuffer {
                 () => Dispatcher.RunOnMainThread(onComplete) // return to main thread for onComplete
             );
         });
+        analyzerThread.Start();
     }
 
     /// <summary>
@@ -95,9 +96,9 @@ public class GranularBuffer {
     /// Returns the value of an AudioFeature computed for the current buffer, provided
     /// an index into the granular windows (grainID)
     /// </summary>
-    public float GetFeatureValue(AudioFeature feature, int grainID, bool normalized = true) {
+    public float GetFeatureValue(AudioFeature feature, int grainID, bool normalized = true, float normalizedHi = 1f, float normalizedLo = -1f) {
         var featureVector = featureAnalyzer.GetFeatureVector(feature);
-        return normalized ? featureVector.GetNormalized(grainID, 0, 1) : featureVector[grainID];
+        return normalized ? featureVector.GetNormalized(grainID, normalizedHi, normalizedLo) : featureVector[grainID];
     }
 
     /// <summary>

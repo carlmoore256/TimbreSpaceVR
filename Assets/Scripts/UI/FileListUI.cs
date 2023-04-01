@@ -34,12 +34,12 @@ public class FileListUI : MonoBehaviour
     // make a SamplePackBrowser class that inherits from a generic base called ItemList or something
     public static TsvrSamplePackMetadata[] ListSamplePacks() {
         TextAsset textAsset = Resources.Load<TextAsset>("SamplePacks/sample-packs");
-        return JsonHelper.FromJson<TsvrSamplePackMetadata>(JsonHelper.fixJson(textAsset.ToString()));
+        return JsonHelper.FromJsonArray<TsvrSamplePackMetadata>(JsonHelper.FixJson(textAsset.ToString()));
     }
 
     public static AddressableResourceInfo[] ListBuiltinFiles() {
         TextAsset textAsset = Resources.Load<TextAsset>("Data/builtin-sounds");
-        return JsonHelper.FromJson<AddressableResourceInfo>(JsonHelper.fixJson(textAsset.ToString()));
+        return JsonHelper.FromJsonArray<AddressableResourceInfo>(JsonHelper.FixJson(textAsset.ToString()));
     }
 
     public void SetToBuiltinFiles() {

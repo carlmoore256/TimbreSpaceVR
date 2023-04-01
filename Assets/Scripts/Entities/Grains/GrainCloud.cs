@@ -26,6 +26,15 @@ public class GrainCloud : MonoBehaviour {
         granularBuffer?.Stop();
     }
 
+    // int grainIndex = 0;
+    // void Update() {
+    //     if (grains != null && grains.Count > 0) {
+    //         grains[grainIndex % grains.Count].Activate(1f, Grain.ActivationAction.Play);
+    //         granularBuffer.PlayGrain(grains[grainIndex % grains.Count].GrainID, 1f);
+    //         grainIndex++;
+    //     }
+    // }
+
     // we're gonna need ways to merge, split, and delete clouds
     // and delete individual grains
 
@@ -34,6 +43,7 @@ public class GrainCloud : MonoBehaviour {
         granularBuffer = new GranularBuffer(audioBuffer, gameObject.GetOrAddComponent<PolyvoicePlayer>());
         grainModel = gameObject.GetOrAddComponent<GrainModel>();
         selectedGrains = new List<Grain>();
+        grains = new List<Grain>();
         SetParameters(parameterValues == null ? new GranularParameters() : parameterValues);
     }
 
@@ -42,9 +52,9 @@ public class GrainCloud : MonoBehaviour {
         this.granularBuffer = granularBuffer;
         grainModel = gameObject.GetOrAddComponent<GrainModel>();
         selectedGrains = new List<Grain>();
+        grains = new List<Grain>();
         SetParameters(parameterValues == null ? new GranularParameters() : parameterValues);
     }
-
 
     public void SetParameters(GranularParameters parameterValues) {
         if (parameterHandler != null) {
@@ -64,54 +74,70 @@ public class GrainCloud : MonoBehaviour {
     public void GenerateGrains(int windowSize, int hopSize) {
         ClearGrains();
         var features = parameterHandler.CurrentFeatures();
-        granularBuffer.RunBatchAnalysis(features, () => {
+
+        granularBuffer.ResetAnalysis(windowSize, hopSize, features, () => {
             for (int i = 0; i < granularBuffer.WindowTimes.Length; i++) {
-                // place the grains under GrainModel
-                GameObject grainObject = Instantiate(
-                    TsvrApplication.Config.grainPrefab, grainModel.transform);
-                Grain grain = grainObject.GetComponent<Grain>();
-                grain.Initialize(i);
-                grain.OnActivateEvent += OnGrainActivated;
-                grains.Add(grain);
+                grains.Add(CreateGrain(i));
             }
+            parameterHandler.CallUpdate();
         });
     }
 
+    private Grain CreateGrain(int id) {
+        GameObject grainObject = Instantiate(TsvrApplication.Config.grainPrefab, grainModel.transform);
+        Grain grain = grainObject.GetComponent<Grain>();
+        grain.Initialize(id);
+        grain.OnActivateEvent += OnGrainActivated;
+        return grain;
+    }
+
+    
+
     # region Grain Callbacks
 
-    private void OnGrainActivated(Grain grain, float value, object caller) {
+    private void OnGrainActivated(Grain grain, float value, Grain.ActivationAction activationAction) {
         // if the cloud allows the grain to be played, then 
         // tell it to animate, and send granularBuffer a playback event
         if (selectedGrains.Count > 0 && !selectedGrains.Contains(grain)) {
             Debug.Log($"Grain {grain.GrainID} is not selected, not activating");
             return;
         }
-        // if type of caller is PlayWand, then play the grain if time has been long enough
-        if (caller.GetType() == typeof(TsvrTool)) {
-            switch (((TsvrTool)caller).ToolType) {
-                case TsvrToolType.PlayWand:
-                    if (grain.TimeSinceLastPlayed() < TsvrApplication.Settings.GrainPlayCooldown) {
-                        Debug.Log($"Grain {grain.GrainID} has been played too recently, not activating");
-                        return;
-                    }
-                    granularBuffer.PlayGrain(grain.GrainID, value);
-                    grain.PlayAnimation(Color.red, radiusMultiplier : 1.2f, duration : 1f);
-                    break;
+        switch (activationAction) {
+            case Grain.ActivationAction.Play :
+                HandleGrainPlay(grain, value);
+                break;
+            
+            case Grain.ActivationAction.Select :
+                HandleGrainSelect(grain);
+                break;
 
-                case TsvrToolType.SelectWand:
-                    Debug.Log("Grain activated with select wand");
-                    if (selectedGrains.Contains(grain)) {
-                        selectedGrains.Remove(grain);
-                        grain.PlayAnimation(Color.white, radiusMultiplier : 1f, duration : 1f);
-                    } else {
-                        selectedGrains.Add(grain);
-                        grain.PlayAnimation(Color.green, radiusMultiplier : 1.2f, duration : 1f);
-                    }
-                    break;
-                default:
-                    break;
-            }
+            case Grain.ActivationAction.Delete : 
+                HandleGrainDelete(grain);
+                break;
         }
+    }
+
+    private void HandleGrainPlay(Grain grain, float value) {
+        if (grain.TimeSinceLastPlayed() < TsvrApplication.Settings.GrainPlayCooldown) {
+            Debug.Log($"Grain {grain.GrainID} has been played too recently, not activating");
+            return;
+        }
+        granularBuffer.PlayGrain(grain.GrainID, value);
+        grain.Play(Color.red, radiusMultiplier: 1.2f, duration: 1f);
+    }
+
+    private void HandleGrainSelect(Grain grain) {
+        if (selectedGrains.Contains(grain)) {
+            selectedGrains.Remove(grain);
+            grain.Play(Color.white, radiusMultiplier: 1f, duration: 1f);
+        } else {
+            selectedGrains.Add(grain);
+            grain.Play(Color.green, radiusMultiplier: 1.2f, duration: 1f);
+        }
+    }
+
+    private void HandleGrainDelete(Grain grain) {
+        grain.Delete();
     }
 
     # endregion
@@ -147,26 +173,23 @@ public class GrainCloud : MonoBehaviour {
                 );
             } else {
                 newColor = new Color(
-                    granularBuffer.GetFeatureValue(features[0], grain.GrainID),
-                    granularBuffer.GetFeatureValue(features[1], grain.GrainID),
-                    granularBuffer.GetFeatureValue(features[2], grain.GrainID)
+                    granularBuffer.GetFeatureValue(features[0], grain.GrainID, true, 0f, 1f),
+                    granularBuffer.GetFeatureValue(features[1], grain.GrainID, true, 0f, 1f),
+                    granularBuffer.GetFeatureValue(features[2], grain.GrainID, true, 0f, 1f)
                 );
             }
             grain.UpdateColor(newColor);
         }
     }
 
-    private void UpdateGrainScales(AudioFeature feature) {
+    private void UpdateGrainScales(AudioFeature feature, float multiplier, float exponential) {
 
         foreach(Grain grain in grains) {
-            float newScale = granularBuffer.GetFeatureValue(feature, grain.GrainID);
+            float newScale = granularBuffer.GetFeatureValue(feature, grain.GrainID, true, 0.1f, 1f);
+            newScale = Mathf.Pow(newScale, exponential) * multiplier;
             grain.UpdateScale(newScale);
         }
     }
 
     # endregion
-
-
-    
-
 }
