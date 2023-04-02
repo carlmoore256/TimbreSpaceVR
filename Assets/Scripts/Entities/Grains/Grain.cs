@@ -6,10 +6,9 @@ using System.Collections.Generic;
 /// <summary>
 /// A node that visually represents an audio grain
 /// </summary>
-public class Grain : MonoBehaviour, ISequenceable
+public class Grain : MonoBehaviour, IPositionedSequenceable
 {
     public Material material;
-    public int GrainID { get; private set; }
 
     private LODRenderer lodRenderer;
     private SpringJoint joint;
@@ -42,7 +41,7 @@ public class Grain : MonoBehaviour, ISequenceable
     
 
     public void Initialize(int grainID) {
-        GrainID = grainID;
+        ID = grainID;
     }
 
     # region MonoBehaviours
@@ -73,10 +72,10 @@ public class Grain : MonoBehaviour, ISequenceable
 
     # region ISequenceable
 
-    public float SequenceGain { get; set; }
-
-    public void Play() {
-        Activate(SequenceGain, ActivationAction.Play);
+    public int ID { get; private set; }
+    public Vector3 Position { get => transform.position; }
+    public void Play(float gain) {
+        Activate(gain, ActivationAction.Play);
     }
 
     # endregion

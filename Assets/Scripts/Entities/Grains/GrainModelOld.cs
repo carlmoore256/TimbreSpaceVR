@@ -79,7 +79,7 @@ public class GrainModelOld : MonoBehaviour
     private void OnPositionParameterUpdate(AudioFeature[] posFeatures, float[] axisScale) {
         if (this.AudioBuffer == null) return;
         TsvrApplication.DebugLogger.Log("Position Parameters changed " + posFeatures[0].ToString() + " " + posFeatures[1].ToString() + " " + posFeatures[2].ToString(), "[GrainModel]");
-        featureExtractor.BatchComputeFeatures(this.AudioBuffer, posFeatures, () => { // make sure we compute any features that need to be computed
+        featureExtractor.BatchComputeFeatures(posFeatures, () => { // make sure we compute any features that need to be computed
             foreach(GrainOld grain in Grains)
                 grain.UpdatePosition(posFeatures[0], posFeatures[1], posFeatures[2], axisScale);
         });
@@ -88,7 +88,7 @@ public class GrainModelOld : MonoBehaviour
     private void OnColorParameterUpdate(AudioFeature[] colFeatures, bool useHSV) {
         if (this.AudioBuffer == null) return;
         TsvrApplication.DebugLogger.Log("Color Parameters changed " + colFeatures[0].ToString() + " " + colFeatures[1].ToString() + " " + colFeatures[2].ToString(), "[GrainModel]");
-        featureExtractor.BatchComputeFeatures(this.AudioBuffer, colFeatures, () => {
+        featureExtractor.BatchComputeFeatures(colFeatures, () => {
             foreach(GrainOld grain in Grains)
                 grain.UpdateColor(colFeatures[0], colFeatures[1], colFeatures[2], useHSV);
         });
@@ -97,7 +97,7 @@ public class GrainModelOld : MonoBehaviour
     private void OnScaleParameterUpdate(AudioFeature sclFeature, float scaleMult, float scaleExp) {
         if (this.AudioBuffer == null) return;
         TsvrApplication.DebugLogger.Log("Scale Parameters changed " + sclFeature.ToString(), "[GrainModel]");
-        featureExtractor.BatchComputeFeatures(this.AudioBuffer, new AudioFeature[] {sclFeature}, () => {
+        featureExtractor.BatchComputeFeatures(new AudioFeature[] {sclFeature}, () => {
             foreach(GrainOld grain in Grains)
                 grain.UpdateScale(sclFeature, scaleMult, scaleExp);
         });
@@ -129,7 +129,6 @@ public class GrainModelOld : MonoBehaviour
         tFeatureExtractor = new Thread(() => {
             var selectedFeatures = this.parameterHandler.CurrentFeatures();
             featureExtractor.BatchComputeFeatures(
-                audioBuffer, 
                 selectedFeatures, 
                 () => {
                     for(int i = 0; i < featureExtractor.FeatureVectors[selectedFeatures[0]].Length; i++) {

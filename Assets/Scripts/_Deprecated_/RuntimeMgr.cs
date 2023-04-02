@@ -5,7 +5,7 @@ using UnityEngine;
 #if true
 public class RuntimeMgr : MonoBehaviour
 {
-    AudioFeatures audioFeatures;
+    // AudioFeatures audioFeatures;
     public string audioFile = "Assets/Resources/Audio/sax.wav";
     public int frameSize = 4096;
     public int hop = 4096;

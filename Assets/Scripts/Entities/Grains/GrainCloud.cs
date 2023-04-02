@@ -5,73 +5,132 @@ using UnityEngine.Pool;
 using UnityEngine;
 using NWaves.Signals;
 using System;
+using System.Linq;
 
 /// <summary>
 /// A collection of audio grains linked to a granular buffer and parameter handler
 /// </summary>
-public class GrainCloud : MonoBehaviour {
+public class GrainCloud : MonoBehaviour, IPositionedSequenceable {
 
     public GrainModel grainModel; // the model that this cloud is linked to which handles positioning, scaling, and so on
+    public GranularBuffer granularBuffer;
+    public List<Sequence> Sequences { get {
+        if (_sequences == null) {
+            _sequences = new List<Sequence>();
+        }
+        return _sequences;
+    } }
 
-    private GranularBuffer granularBuffer;
-    private GranularParameterHandler parameterHandler;
+    private List<Sequence> _sequences;
+
+    public GranularParameterHandler parameterHandler;
     private List<Grain> grains;
     private List<Grain> selectedGrains;
 
-    private void OnEnable() {
-
-    }
+    # region MonoBehaviours
 
     private void OnDisable() {
         granularBuffer?.Stop();
+        foreach(Sequence sequence in Sequences) {
+            sequence.Stop();
+        }
     }
 
-    // int grainIndex = 0;
-    // void Update() {
-    //     if (grains != null && grains.Count > 0) {
-    //         grains[grainIndex % grains.Count].Activate(1f, Grain.ActivationAction.Play);
-    //         granularBuffer.PlayGrain(grains[grainIndex % grains.Count].GrainID, 1f);
-    //         grainIndex++;
-    //     }
-    // }
 
-    // we're gonna need ways to merge, split, and delete clouds
-    // and delete individual grains
+    # endregion
 
+    # region Public Methods
     public void Initialize(DiscreteSignal audioBuffer, GranularParameters parameterValues = null) {
-        Debug.Log("Initializing grain cloud");
-        granularBuffer = new GranularBuffer(audioBuffer, gameObject.GetOrAddComponent<PolyvoicePlayer>());
-        grainModel = gameObject.GetOrAddComponent<GrainModel>();
-        selectedGrains = new List<Grain>();
-        grains = new List<Grain>();
-        SetParameters(parameterValues == null ? new GranularParameters() : parameterValues);
+        InitializeWithAudioBuffer(audioBuffer, parameterValues);
     }
 
     public void Initialize(GranularBuffer granularBuffer, GranularParameters parameterValues = null) {
-        Debug.Log("Initializing grain cloud");
+        InitializeWithGranularBuffer(granularBuffer, parameterValues);
+    }
+
+    /// <summary>
+    /// Set the GranularParameters, which determine the feature ordering for display
+    /// </summary>
+    public void SetParameters(GranularParameters parameterValues) {
+        UnsubscribeFromParameterHandlerEvents();
+        parameterHandler = new GranularParameterHandler(parameterValues);
+        SubscribeToParameterHandlerEvents();
+        GenerateGrains(parameterValues.windowSize, parameterValues.hopSize);
+    }
+
+    /// <summary>
+    /// Create a new GrainCloud from the current selection of Grains
+    /// </summary>
+    public GrainCloud FromCurrentSelection() {
+        // create a new grain cloud from the selected grains
+        DiscreteSignal newAudioBuffer = granularBuffer.GetCroppedBuffer(
+            selectedGrains.Select(g => g.ID).ToArray());
+        return GrainCloudSpawner.Spawn(newAudioBuffer, parameterHandler.GetParameters());
+    }
+
+    public Sequence LinearSequence(float bpm = 120) {
+        Sequence sequence = new Sequence();
+        SequenceRenderer sequenceRenderer = gameObject.AddComponent<SequenceRenderer>();
+        sequence.AddObserver(sequenceRenderer);
+        sequence.Add(grains, 1f);
+        sequence.SetBPM(bpm);
+        return sequence;
+    }
+    
+    # endregion
+
+    # region ISequencable
+    public int ID { get => parameterHandler.ID; }
+    public Vector3 Position { get => transform.position; }
+    public void Play(float gain) {
+        // play through the subsequence set for this cloud
+        if (Sequences.Count > 0) {
+            Sequences[0].Play(gain);
+        }
+    }
+
+    # endregion
+    
+    # region Initialization
+    
+    private void InitializeWithAudioBuffer(DiscreteSignal audioBuffer, GranularParameters parameterValues) {
+        granularBuffer = new GranularBuffer(audioBuffer, gameObject.GetOrAddComponent<PolyvoicePlayer>());
+        InitializeGrainCloud(parameterValues);
+    }
+
+    private void InitializeWithGranularBuffer(GranularBuffer granularBuffer, GranularParameters parameterValues) {
         this.granularBuffer = granularBuffer;
+        InitializeGrainCloud(parameterValues);
+    }
+
+    private void InitializeGrainCloud(GranularParameters parameterValues) {
         grainModel = gameObject.GetOrAddComponent<GrainModel>();
         selectedGrains = new List<Grain>();
         grains = new List<Grain>();
-        SetParameters(parameterValues == null ? new GranularParameters() : parameterValues);
+        SetParameters(parameterValues ?? new GranularParameters());
     }
 
-    public void SetParameters(GranularParameters parameterValues) {
+    private void SubscribeToParameterHandlerEvents() {
+        parameterHandler.onFeaturePositionUpdate += UpdateGrainPositions;
+        parameterHandler.onFeatureColorUpdate += UpdateGrainColors;
+        parameterHandler.onFeatureScaleUpdate += UpdateGrainScales;
+        parameterHandler.onWindowUpdate += GenerateGrains;
+    }
+
+    private void UnsubscribeFromParameterHandlerEvents() {
         if (parameterHandler != null) {
             parameterHandler.onFeaturePositionUpdate -= UpdateGrainPositions;
             parameterHandler.onFeatureColorUpdate -= UpdateGrainColors;
             parameterHandler.onFeatureScaleUpdate -= UpdateGrainScales;
             parameterHandler.onWindowUpdate -= GenerateGrains;
         }
-        parameterHandler = new GranularParameterHandler(parameterValues);
-        parameterHandler.onFeaturePositionUpdate += UpdateGrainPositions;
-        parameterHandler.onFeatureColorUpdate += UpdateGrainColors;
-        parameterHandler.onFeatureScaleUpdate += UpdateGrainScales;
-        parameterHandler.onWindowUpdate += GenerateGrains;
-        GenerateGrains(parameterValues.windowSize, parameterValues.hopSize);
     }
 
-    public void GenerateGrains(int windowSize, int hopSize) {
+    # endregion
+
+    # region Grain Lifecycle
+
+    private void GenerateGrains(int windowSize, int hopSize) {
         ClearGrains();
         var features = parameterHandler.CurrentFeatures();
 
@@ -91,7 +150,7 @@ public class GrainCloud : MonoBehaviour {
         return grain;
     }
 
-    
+    # endregion
 
     # region Grain Callbacks
 
@@ -99,7 +158,7 @@ public class GrainCloud : MonoBehaviour {
         // if the cloud allows the grain to be played, then 
         // tell it to animate, and send granularBuffer a playback event
         if (selectedGrains.Count > 0 && !selectedGrains.Contains(grain)) {
-            Debug.Log($"Grain {grain.GrainID} is not selected, not activating");
+            Debug.Log($"Grain {grain.ID} is not selected, not activating");
             return;
         }
         switch (activationAction) {
@@ -119,10 +178,10 @@ public class GrainCloud : MonoBehaviour {
 
     private void HandleGrainPlay(Grain grain, float value) {
         if (grain.TimeSinceLastPlayed() < TsvrApplication.Settings.GrainPlayCooldown) {
-            Debug.Log($"Grain {grain.GrainID} has been played too recently, not activating");
+            Debug.Log($"Grain {grain.ID} has been played too recently, not activating");
             return;
         }
-        granularBuffer.PlayGrain(grain.GrainID, value);
+        granularBuffer.PlayGrain(grain.ID, value);
         grain.Play(Color.red, radiusMultiplier: 1.2f, duration: 1f);
     }
 
@@ -153,10 +212,17 @@ public class GrainCloud : MonoBehaviour {
 
     private void UpdateGrainPositions(AudioFeature[] features, float[] axisScale) {
         foreach(Grain grain in grains) {
+            // debug log if any features are NaN
+            if (granularBuffer.GetFeatureValue(features[0], grain.ID).Equals(float.NaN) ||
+                granularBuffer.GetFeatureValue(features[1], grain.ID).Equals(float.NaN) ||
+                granularBuffer.GetFeatureValue(features[2], grain.ID).Equals(float.NaN)) {
+                Debug.Log($"NaN feature value for grain {grain.ID}");
+            }
+
             Vector3 newPos = new Vector3(
-                granularBuffer.GetFeatureValue(features[0], grain.GrainID) * axisScale[0],
-                granularBuffer.GetFeatureValue(features[1], grain.GrainID) * axisScale[1],
-                granularBuffer.GetFeatureValue(features[2], grain.GrainID) * axisScale[2]
+                granularBuffer.GetFeatureValue(features[0], grain.ID) * axisScale[0],
+                granularBuffer.GetFeatureValue(features[1], grain.ID) * axisScale[1],
+                granularBuffer.GetFeatureValue(features[2], grain.ID) * axisScale[2]
             );
             grain.UpdatePosition(newPos);
         } 
@@ -167,15 +233,15 @@ public class GrainCloud : MonoBehaviour {
             Color newColor;
             if (useHSV) {
                 newColor = Color.HSVToRGB(
-                    granularBuffer.GetFeatureValue(features[0], grain.GrainID),
-                    granularBuffer.GetFeatureValue(features[1], grain.GrainID),
-                    granularBuffer.GetFeatureValue(features[2], grain.GrainID)
+                    granularBuffer.GetFeatureValue(features[0], grain.ID),
+                    granularBuffer.GetFeatureValue(features[1], grain.ID),
+                    granularBuffer.GetFeatureValue(features[2], grain.ID)
                 );
             } else {
                 newColor = new Color(
-                    granularBuffer.GetFeatureValue(features[0], grain.GrainID, true, 0f, 1f),
-                    granularBuffer.GetFeatureValue(features[1], grain.GrainID, true, 0f, 1f),
-                    granularBuffer.GetFeatureValue(features[2], grain.GrainID, true, 0f, 1f)
+                    granularBuffer.GetFeatureValue(features[0], grain.ID, true, 0f, 1f),
+                    granularBuffer.GetFeatureValue(features[1], grain.ID, true, 0f, 1f),
+                    granularBuffer.GetFeatureValue(features[2], grain.ID, true, 0f, 1f)
                 );
             }
             grain.UpdateColor(newColor);
@@ -185,11 +251,20 @@ public class GrainCloud : MonoBehaviour {
     private void UpdateGrainScales(AudioFeature feature, float multiplier, float exponential) {
 
         foreach(Grain grain in grains) {
-            float newScale = granularBuffer.GetFeatureValue(feature, grain.GrainID, true, 0.1f, 1f);
+            float newScale = granularBuffer.GetFeatureValue(feature, grain.ID, true, 0.1f, 1f);
             newScale = Mathf.Pow(newScale, exponential) * multiplier;
             grain.UpdateScale(newScale);
         }
     }
 
     # endregion
+
+    // int grainIndex = 0;
+    // void Update() {
+    //     if (grains != null && grains.Count > 0) {
+    //         grains[grainIndex % grains.Count].Activate(1f, Grain.ActivationAction.Play);
+    //         granularBuffer.PlayGrain(grains[grainIndex % grains.Count].GrainID, 1f);
+    //         grainIndex++;
+    //     }
+    // }
 }

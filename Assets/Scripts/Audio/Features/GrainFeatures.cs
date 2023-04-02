@@ -14,7 +14,7 @@ public enum AudioFeature {
     Energy,
     RMS,
     ZCR,
-    TimeEntropy,
+    // TimeEntropy,
     MFCC_0,
     MFCC_1,
     MFCC_2,
@@ -23,13 +23,18 @@ public enum AudioFeature {
     MFCC_5,
     MFCC_6,
     MFCC_7,
+    MFCC_8,
+    MFCC_9,
+    MFCC_10,
+    MFCC_11,
+    MFCC_12,
     Contrast_0,
     Contrast_1,
     Contrast_2,
     Contrast_3,
     Contrast_4,
     Contrast_5,
-    GrainIndex,
+    // GrainIndex,
 }
 
 
@@ -142,7 +147,7 @@ public class GrainFeatures
             { AudioFeature.Energy, energy},
             { AudioFeature.RMS, rms},
             { AudioFeature.ZCR, zcr},
-            { AudioFeature.TimeEntropy, timeEntropy},
+            // { AudioFeature.TimeEntropy, timeEntropy},
             { AudioFeature.MFCC_0, mfccs[0]},
             { AudioFeature.MFCC_1, mfccs[1]},
             { AudioFeature.MFCC_2, mfccs[2]},
@@ -155,7 +160,7 @@ public class GrainFeatures
             { AudioFeature.Contrast_1, contrast[1]},
             { AudioFeature.Contrast_2, contrast[2]},
             { AudioFeature.Contrast_3, contrast[3]},
-            { AudioFeature.GrainIndex, grainIndex}
+            // { AudioFeature.GrainIndex, grainIndex}
         };
     }
 

@@ -13,4 +13,23 @@ public class GranularParameters {
     public float scaleExp = 0.1f;
     public bool useHSV = false;
     public float[] posAxisScale = { 0f,0f,0f }; // scale x,y,z axis
+    public int ID = 0;
+
+    public GranularParameters Copy() {
+        GranularParameters copy = new GranularParameters();
+        copy.xFeature = xFeature;
+        copy.yFeature = yFeature;
+        copy.zFeature = zFeature;
+        copy.rFeature = rFeature;
+        copy.gFeature = gFeature;
+        copy.bFeature = bFeature;
+        copy.scaleFeature = scaleFeature;
+        copy.windowSize = windowSize;
+        copy.hopSize = hopSize;
+        copy.scaleMult = scaleMult;
+        copy.scaleExp = scaleExp;
+        copy.useHSV = useHSV;
+        copy.posAxisScale = posAxisScale;
+        return copy;
+    }
 }

@@ -11,7 +11,7 @@ using NWaves.Utils;
 public class GranularBuffer {
     public AudioFeatureAnalyzer featureAnalyzer;
     public PolyvoicePlayer player;
-    private DiscreteSignal audioBuffer;
+    public DiscreteSignal audioBuffer;
     private ObjectPool<PlaybackEvent> playbackEventPool;
     public WindowTime[] WindowTimes {get {
         if (featureAnalyzer == null) {
@@ -67,9 +67,7 @@ public class GranularBuffer {
         analyzerThread = new Thread(() => {
             Debug.Log("Running batch analysis on " + features.Length + " features");
             featureAnalyzer.BatchComputeFeatures(
-                audioBuffer, 
-                features, 
-                () => Dispatcher.RunOnMainThread(onComplete) // return to main thread for onComplete
+                features, () => Dispatcher.RunOnMainThread(onComplete)
             );
         });
         analyzerThread.Start();
@@ -138,5 +136,12 @@ public class GranularBuffer {
         var sampleRange = WindowTimes[grainStart].GetSampleRange(audioBuffer.SamplingRate);
         var endSampleRange = WindowTimes[grainEnd].GetSampleRange(audioBuffer.SamplingRate);
         return audioBuffer[sampleRange.start, endSampleRange.end];
+    }
+
+    /// <summary>
+    /// Returns a concatenated version of the current audioBuffer and another buffer
+    /// </summary>
+    public DiscreteSignal ConcatenateBuffer(GranularBuffer otherAudioBuffer) {
+        return DiscreteSignalExtensions.Concatenate(audioBuffer, otherAudioBuffer.audioBuffer);
     }
 }
