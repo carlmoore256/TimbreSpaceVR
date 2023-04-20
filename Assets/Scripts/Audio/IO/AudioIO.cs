@@ -38,6 +38,25 @@ public class AudioIO {
         // callback(AudioClipToDiscreteSignal(clip));
     }
 
+    public static Task<DiscreteSignal> LoadAudioFromResources(string path, bool resample = true) {
+        var handler = Resources.LoadAsync<AudioClip>(path);
+        Debug.Log("Loading audio file: " + path);
+        var currentTime = Time.timeAsDouble;
+        var task = new TaskCompletionSource<DiscreteSignal>();
+        handler.completed += (op) => {
+            AudioClip clip = handler.asset as AudioClip;
+            if (clip == null) {
+                Debug.LogError("Failed to load audio file: " + path);
+                task.SetResult(default);
+                return;
+            }
+            var signal = AudioClipToDiscreteSignal(clip);
+            Debug.Log($"Finished loading audio file in {Time.timeAsDouble - currentTime} seconds");
+            task.SetResult(signal);
+        };
+        return task.Task;
+    }
+
     // public static async void LoadAddressableAudioClip(string path, Action<DiscreteSignal> callback) {
     //     var resourceRequest = Addressables.LoadAssetAsync<AudioClip>(path);
     //     resourceRequest.Completed += (op) => {
@@ -57,11 +76,12 @@ public class AudioIO {
     public static async Task<DiscreteSignal> LoadAudioFromURI(string path)
     {
         UnityWebRequest webRequest = UnityWebRequest.Get(path);
+        webRequest.timeout = 160;
         var operation = webRequest.SendWebRequest();
         while (!operation.isDone)
         {
-            Debug.Log($"[*] Downloading audio from {path}");
-            await System.Threading.Tasks.Task.Delay(100);
+            Debug.Log($"[*] Downloading audio from {path} | Progress: {webRequest.downloadProgress}");
+            await System.Threading.Tasks.Task.Delay(300);
         }
 
         if (webRequest.result == UnityWebRequest.Result.ConnectionError || webRequest.result == UnityWebRequest.Result.ProtocolError)

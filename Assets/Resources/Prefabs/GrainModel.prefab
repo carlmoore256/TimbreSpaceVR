@@ -146,7 +146,6 @@ MonoBehaviour:
   colorPlayable: {r: 255, g: 255, b: 255, a: 0}
   colorInspecting: {r: 255, g: 255, b: 255, a: 1}
   colorPositioning: {r: 255, g: 255, b: 255, a: 1}
-  seqPlayRate: 0.1
 --- !u!1 &8143741633814947547
 GameObject:
   m_ObjectHideFlags: 0
@@ -175,7 +174,7 @@ Transform:
   m_GameObject: {fileID: 8143741633814947547}
   m_LocalRotation: {x: -0, y: -0, z: -0, w: 1}
   m_LocalPosition: {x: 0, y: 0, z: 0}
-  m_LocalScale: {x: 2, y: 2, z: 2}
+  m_LocalScale: {x: 2.15, y: 2.15, z: 2.15}
   m_ConstrainProportionsScale: 1
   m_Children: []
   m_Father: {fileID: 3360398663443515610}

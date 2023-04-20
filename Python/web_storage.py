@@ -72,3 +72,43 @@ def upload_json_to_pinata(data, jwt=env['PINATA_JWT'], pinata_metadata=None):
 # helper to plug into create_web_resource
 def pinata_web_provider(file_path):
     return upload_file_to_pinata(file_path, None, env['PINATA_JWT'], None)['url']
+
+
+def upload_file_to_aws(file_path, bucket_name=env['AWS_BUCKET_NAME'], object_key=None):
+    import boto3
+    # Create an S3 client
+    s3 = boto3.client(
+        's3',
+        aws_access_key_id=env['AWS_ACCESS_KEY_ID'],
+        aws_secret_access_key=env['AWS_SECRET_ACCESS_KEY'])
+
+    # Use the filename as the object key if not provided
+    if object_key is None:
+        object_key = os.path.basename(file_path)
+
+    # Upload the file
+    with open(file_path, 'rb') as file:
+        response = s3.upload_fileobj(file, bucket_name, object_key)
+        # , ExtraArgs={'ACL': 'public-read'}
+
+    # If successful, return the object key and URL
+    if response is None:
+        url = f'https://{bucket_name}.s3.amazonaws.com/{object_key}'
+        return {'object_key': object_key, 'url': url}
+    else:
+        print(f'Error uploading to AWS S3: {response}')
+        return None
+    
+def upload_json_to_aws(data, bucket_name=env['AWS_BUCKET_NAME'], object_key=None):
+    # create a temp json file
+    import tempfile
+    import json
+    with tempfile.NamedTemporaryFile(mode='w+b', suffix='.json', delete=False) as temp:
+        json_data = json.dumps(data).encode('utf-8')
+        temp.write(json_data)
+        temp.flush()
+        temp.close() # close the file to release the file lock
+        return upload_file_to_aws(temp.name, bucket_name, object_key)
+    
+def aws_web_provider(file_path):
+    return upload_file_to_aws(file_path, env['AWS_BUCKET_NAME'], None)['url']

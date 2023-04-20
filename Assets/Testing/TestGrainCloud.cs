@@ -29,7 +29,7 @@ public class TestGrainCloud : MonoBehaviour
             Debug.Log("BPM: " + bpm);
         }
         if (Input.GetKeyUp(KeyCode.Space)) {
-            sequence = grainCloud.LinearSequence(bpm);
+            sequence = grainCloud.CreateLinearSequence(bpm);
             grainCloud.Sequences.Add(sequence);
             grainCloud.Play(1.0f);
             Debug.Log("GrainCloud Playing Sequence!");

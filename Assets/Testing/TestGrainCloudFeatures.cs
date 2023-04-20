@@ -7,19 +7,26 @@ public class TestGrainCloudFeatures : MonoBehaviour {
     private GrainCloud grainCloud;
     int numFeatures = Enum.GetNames(typeof(AudioFeature)).Length;
 
+    public Sequence sequence;
+
     void Start() 
     {
         Debug.Log("TestGrainCloud Start");
         GrainCloudSpawner.SpawnFromMetadataURI(metadataURI).ContinueWith((task) => {
             grainCloud = task.Result;
             Debug.Log("GrainCloud Spawned");
+            grainCloud.OnCloudReset += () => {
+                Debug.Log("Cloud Reset!");
+                StartCoroutine(UpdateGrainCloudFeatures());
+            };
         });
-        StartCoroutine(UpdateGrainCloudFeatures());
     }
 
     private IEnumerator UpdateGrainCloudFeatures() {
-        yield return new WaitForSeconds(3.0f);
-        Debug.Log("Updating features");
+        sequence = grainCloud.CreateLinearSequence(600);
+        grainCloud.Sequences.Add(sequence);
+        grainCloud.Play(1.0f);
+        Debug.Log("GrainCloud Playing Sequence!");
         while (true) {
             // Update the XFeature, YFeature, and ZFeature with random values
             var x = AudioFeatures.RandomAudioFeature();

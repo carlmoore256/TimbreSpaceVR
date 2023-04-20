@@ -44,6 +44,7 @@ def create_web_resource(
     
     if type is None:
         type = get_mimetype(local_file)
+        print(f'Autodetected MIME type: {type}')
     assert type in definitions.RESOURCE_TYPES
     assert category in definitions.RESOURCE_CATEGORIES
     hash = hash_file(local_file)

@@ -50,7 +50,6 @@ public class AudioFeatureAnalyzer
     public DiscreteSignal Signal { get; protected set; }
     private int windowSize;
     private int hopSize;
-    // private static FeatureKey[] featureKeys;
     public Dictionary<AudioFeature, FeatureVector> FeatureVectors { get; protected set; }
     public WindowTime[] WindowTimes { get; protected set; }
 
@@ -136,7 +135,7 @@ public class AudioFeatureAnalyzer
         float[] _featureVector = new float[vectors.Count];
         for (int i = 0; i < vectors.Count; i++)
         {
-            _featureVector[i] = vectors[i][0];
+            _featureVector[i] = float.IsNaN(vectors[i][0]) ? 0 : vectors[i][0];
         }
         FeatureVector featureVector = new FeatureVector(_featureVector, feature);
         FeatureVectors[feature] = featureVector;
@@ -296,8 +295,13 @@ public class AudioFeatureAnalyzer
             var kvp = featureExtractors.FirstOrDefault(kv => kv.Value.alias == names[featureIdx]);
             AudioFeature feature = kvp.Key;
             float[] _featureValues = new float[vectors.Count];
-            for (int j = 0; j < vectors.Count; j++)  // transpose values
+            for (int j = 0; j < vectors.Count; j++) { // transpose values
+                // change NaN values to 0
+                if (float.IsNaN(vectors[j][featureIdx])) {
+                    vectors[j][featureIdx] = 0;
+                }
                 _featureValues[j] = vectors[j][featureIdx];
+            }
             FeatureVectors[feature] = new FeatureVector(_featureValues, feature);
         }
     }

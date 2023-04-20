@@ -43,6 +43,7 @@ RESOURCE_CATEGORIES = [
 RESOURCE_TYPES = [
     "audio/wav",
     "audio/mp3",
+    "audio/mpeg",
     "image/png",
     "image/jpeg",
     "image/gif",

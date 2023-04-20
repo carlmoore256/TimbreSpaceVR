@@ -63,7 +63,18 @@ public class GrainCloudSpawner : MonoBehaviour {
         GameObject cloudObject = SpawnPrefab();
         GrainCloud cloud = cloudObject.GetOrAddComponent<GrainCloud>();
         ResourceData audioResource = await metadata.GetLocalResourceData(ResourceData.ResourceCategory.Sample);
-        DiscreteSignal signal = await AudioIO.LoadAudioFromURI(audioResource.uri);
+        DiscreteSignal signal;
+        if (audioResource.location == ResourceData.ResourceDataLocation.package) {
+            // load signal from resources
+            signal = await AudioIO.LoadAudioFromResources(audioResource.uri, false);
+        } else {
+            // load signal from web
+            signal = await AudioIO.LoadAudioFromURI(audioResource.uri);
+        }
+        if (signal == null) {
+            Debug.LogError("Failed to load audio from URI: " + audioResource.uri);
+            return null;
+        }
         Debug.Log("Signal Length Samples: " + signal.Length + " | SampleRate: " + signal.SamplingRate);
         cloud.Initialize(signal, metadata.parameters);
         return cloud;
@@ -75,8 +86,16 @@ public class GrainCloudSpawner : MonoBehaviour {
     public static async Task<GrainCloud> SpawnFromMetadataURI(string uri) {
         GrainCloudMetadata grainCloudData = await JsonDownloader.Download<GrainCloudMetadata>(uri);
         Debug.Log("tsvrSample: " + grainCloudData);
-        if (grainCloudData == null) return null;
+        if (grainCloudData == null) { 
+            Debug.LogError("Failed to download metadata from URI: " + uri);
+            return null;
+        }
         // save to a new directory in persistentData
+        if (AppData.Exists(grainCloudData.hash, "metadata.json", AppDataCategory.Downloads)) {
+            Debug.Log("Metadata already exists in persistent data");
+            grainCloudData = AppData.LoadFileJson<GrainCloudMetadata>(grainCloudData.hash, "metadata.json", AppDataCategory.Downloads);
+            return await SpawnFromMetadata(grainCloudData);
+        }
         AppData.SaveFileJson<GrainCloudMetadata>(grainCloudData, grainCloudData.hash, "metadata.json", AppDataCategory.Downloads);
         return await SpawnFromMetadata(grainCloudData);
     }

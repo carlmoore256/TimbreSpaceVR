@@ -38,7 +38,7 @@ RenderSettings:
   m_ReflectionIntensity: 1
   m_CustomReflection: {fileID: 0}
   m_Sun: {fileID: 0}
-  m_IndirectSpecularColor: {r: 0.20353264, g: 0.21748316, b: 0.25735432, a: 1}
+  m_IndirectSpecularColor: {r: 0.031271454, g: 0.03943447, b: 0.06840527, a: 1}
   m_UseRadianceAmbientProbe: 0
 --- !u!157 &3
 LightmapSettings:
@@ -628,7 +628,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: c1b8640baa3a0e24791f29d7cd83a289, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  metadataURI: E:/UnityProjects/TimbreSpaceVR/Python/data/metadata/jazzGuitar.json
+  metadataURI: https://timbrespace.s3.amazonaws.com/tmpynh_q9b9.json
   grainCloud: {fileID: 0}
   bpm: 120
 --- !u!114 &1529067716
@@ -643,7 +643,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 72c8c9c5897aa4f4c9753b3a99c56d7c, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  metadataURI: E:/UnityProjects/TimbreSpaceVR/Python/data/metadata/jazzGuitar.json
+  metadataURI: E:\UnityProjects\TimbreSpaceVR\Python\data\metadata\4e9ff2232ad6a3491784922585d10ff167304bd2226ba2a982896a00602d89c3.json
   parameterValues:
     xFeature: 12
     yFeature: 13

@@ -111,7 +111,6 @@ public class Sequence : ISequenceable {
     public void AddObserver(ISequenceObserver observer)
     {
         observers.Add(observer);
-        UnityEngine.Debug.Log("ADDED OBSERVER " + observer + " new length of observers: " + observers.Count);
     }
 
     public void RemoveObserver(ISequenceObserver observer)

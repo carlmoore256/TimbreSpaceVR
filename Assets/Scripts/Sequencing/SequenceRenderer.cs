@@ -42,16 +42,19 @@ public class SequenceRenderer : MonoBehaviour, ISequenceObserver {
             lineRenderer.Enabled = true;
         }
         // Filter IPositionedSequenceable items from the sequenceItems list
-        var positionedSequenceables = sequenceItems
-            .Where(item => item.sequenceable is IPositionedSequenceable)
-            .Select(item => (IPositionedSequenceable)item.sequenceable);
+        // var positionedSequenceables = sequenceItems
+        //     .Where(item => item.sequenceable is IPositionedSequenceable)
+        //     .Select(item => (IPositionedSequenceable)item.sequenceable);
 
         // Obtain positions of the IPositionedSequenceable objects
         List<Vector3> positions = new List<Vector3>();
-        foreach (var sequenceItem in positionedSequenceables)
+        foreach (var sequenceItem in sequenceItems)
         {
-            positions.Add(sequenceItem.Position);
+            if (sequenceItem.sequenceable is IPositionedSequenceable)
+                positions.Add(((IPositionedSequenceable)sequenceItem.sequenceable).Position);
         }
+
+        // VectorHelpers.GenerateBezierPoints(positions, 10);
 
         // Update the line positions
         lineRenderer.SetPositions(positions);

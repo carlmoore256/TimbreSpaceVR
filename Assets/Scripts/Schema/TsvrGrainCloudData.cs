@@ -16,6 +16,10 @@ public class GrainCloudMetadata
     public List<ResourceData> resources;
     public SessionData session;
 
+    public void SaveToAppData() {
+        AppData.SaveFileJson(this, hash, "metadata.json", AppDataCategory.Downloads);
+    }
+
     public List<ResourceData> QueryResourceData(Func<ResourceData, bool> predicate)
     {
         return resources.Where(predicate).ToList();
@@ -25,38 +29,40 @@ public class GrainCloudMetadata
     {
         Debug.Log("Getting local resource data for category: " + category);
         var package = QueryResourceData((ResourceData resource) => {
-            return resource.category == category && resource.location == ResourceData.ResourceDataLocation.Package;
+            return resource.category == category && resource.location == ResourceData.ResourceDataLocation.package;
         }).FirstOrDefault();
 
         if (package != null) {
-            Debug.Log("Found package: " + package.uri);
+            Debug.Log("Found Resource in Unity package: " + package.uri);
             return package;
         }
 
         var appdata = QueryResourceData((ResourceData resource) => {
-            return resource.category == category && resource.location == ResourceData.ResourceDataLocation.AppData;
+            return resource.category == category && resource.location == ResourceData.ResourceDataLocation.appdata;
         }).FirstOrDefault();
 
+
         if (appdata != null) {
-            Debug.Log("Found appdata: " + appdata.uri);
+            Debug.Log("Found Resource in AppData: " + appdata.uri);
             return appdata;
         }
 
         // if we get here, we may need to download, or at least update the list of Resources to have
         // the correct cache ResourceData, which exists but for some reason isn't in the list here
-        Debug.Log("Downloading: " + category);
 
         var web = QueryResourceData((ResourceData resource) => {
-            return resource.category == category && resource.location == ResourceData.ResourceDataLocation.Web;
+            return resource.category == category && resource.location == ResourceData.ResourceDataLocation.web;
         }).FirstOrDefault();
 
         if (web != null) {
+            Debug.Log("Downloading: " + category);
             string appDataFilepath = await AppData.DownloadOrGetCachedPath(web.uri, hash, web.hash, AppDataCategory.Downloads);
             var newResource = new ResourceData(
                 web.type, web.category, 
-                ResourceData.ResourceDataLocation.AppData, 
+                ResourceData.ResourceDataLocation.appdata, 
                 appDataFilepath, web.hash, web.bytes);
             resources.Add(newResource);
+            SaveToAppData();
             return newResource;
         }
 
@@ -81,13 +87,13 @@ public class GrainCloudMetadata
                     return resource.hash == hash;
             });
 
-            var package = matchingResources.Find(r => r.location == ResourceData.ResourceDataLocation.Package);
+            var package = matchingResources.Find(r => r.location == ResourceData.ResourceDataLocation.package);
             if (package != null) {
                 Debug.Log("Package exists: " + package.uri);
                 continue;
             }
 
-            var appdata = matchingResources.Find(r => r.location == ResourceData.ResourceDataLocation.AppData);
+            var appdata = matchingResources.Find(r => r.location == ResourceData.ResourceDataLocation.appdata);
             if (appdata != null) {
                 Debug.Log("AppData exists: " + appdata.uri);
                 continue;
@@ -97,19 +103,19 @@ public class GrainCloudMetadata
             // the correct cache ResourceData, which exists but for some reason isn't in the list here
             Debug.Log("Downloading: " + hash);
 
-            var web = matchingResources.Find(r => r.location == ResourceData.ResourceDataLocation.Web);
+            var web = matchingResources.Find(r => r.location == ResourceData.ResourceDataLocation.web);
             if (web != null) {
                 if (!AppData.Exists(hash, web.uri, AppDataCategory.Downloads)) {
                     Debug.Log("Downloading: " + web.uri);
                     AppData.Download(web.uri, hash, web.hash, AppDataCategory.Downloads, (string appDataFilepath) => {
                         Debug.Log("Downloaded: " + appDataFilepath);
-                        var newResource = new ResourceData(web.type, web.category, ResourceData.ResourceDataLocation.AppData, appDataFilepath, web.hash, web.bytes);
+                        var newResource = new ResourceData(web.type, web.category, ResourceData.ResourceDataLocation.appdata, appDataFilepath, web.hash, web.bytes);
                         resources.Add(newResource);
                     });
                 } else {
                     // load from appdata
                     string existingURI = AppData.GetAppDataSubFilepath(hash, web.uri, AppDataCategory.Downloads);
-                    var newResource = new ResourceData(web.type, web.category, ResourceData.ResourceDataLocation.AppData, existingURI, web.hash, web.bytes);
+                    var newResource = new ResourceData(web.type, web.category, ResourceData.ResourceDataLocation.appdata, existingURI, web.hash, web.bytes);
                     resources.Add(newResource);
                 }
             }

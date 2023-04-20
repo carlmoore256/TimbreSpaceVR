@@ -7,9 +7,9 @@ public class ResourceData
 {
     public enum ResourceDataLocation
     {
-        Package,
-        AppData,
-        Web,
+        package,
+        appdata,
+        web,
     }
 
     public enum ResourceCategory
