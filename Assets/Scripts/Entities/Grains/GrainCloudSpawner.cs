@@ -64,19 +64,33 @@ public class GrainCloudSpawner : MonoBehaviour {
         GrainCloud cloud = cloudObject.GetOrAddComponent<GrainCloud>();
         ResourceData audioResource = await metadata.GetLocalResourceData(ResourceData.ResourceCategory.Sample);
         DiscreteSignal signal;
+
         if (audioResource.location == ResourceData.ResourceDataLocation.package) {
             // load signal from resources
             signal = await AudioIO.LoadAudioFromResources(audioResource.uri, false);
+            // AudioIO.LoadAudioFromResources(audioResource.uri, false).ContinueWith((task) => {
+            //     signal = task.Result;
+            //     AudioFilters.StripSilenceAsync(signal, -30, 1024, (DiscreteSignal strippedSignal) => {
+            //         cloud.Initialize(strippedSignal, metadata.parameters);
+            //     });
+            // });
         } else {
             // load signal from web
+
             signal = await AudioIO.LoadAudioFromURI(audioResource.uri);
         }
+
         if (signal == null) {
             Debug.LogError("Failed to load audio from URI: " + audioResource.uri);
             return null;
         }
+
+        AudioFilters.StripSilenceAsync(signal, -30, 1024, (DiscreteSignal strippedSignal) => {
+                cloud.Initialize(strippedSignal, metadata.parameters);
+        });
+
         Debug.Log("Signal Length Samples: " + signal.Length + " | SampleRate: " + signal.SamplingRate);
-        cloud.Initialize(signal, metadata.parameters);
+        // cloud.Initialize(signal, metadata.parameters);
         return cloud;
     }
 

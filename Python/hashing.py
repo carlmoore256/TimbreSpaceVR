@@ -2,8 +2,9 @@ import hashlib
 import json
 
 SHORT_HASH = 16
+USE_SHORT_HASH = True
 
-def hash_file(file_path, short=False):
+def hash_file(file_path, short=USE_SHORT_HASH):
     with open(file_path, 'rb') as f:
         sha256 = hashlib.sha256()
         while True:
@@ -16,7 +17,7 @@ def hash_file(file_path, short=False):
             return hash[:SHORT_HASH]
         return hash
 
-def hash_string(text, short=False):
+def hash_string(text, short=USE_SHORT_HASH):
     sha256 = hashlib.sha256()
     sha256.update(text.encode('utf-8'))
     hash = sha256.hexdigest()
@@ -24,7 +25,7 @@ def hash_string(text, short=False):
         return hash[:SHORT_HASH]
     return hash
 
-def hash_dict(data, short=False):
+def hash_dict(data, short=USE_SHORT_HASH):
     sha256 = hashlib.sha256()
     sha256.update(json.dumps(data, sort_keys=True).encode('utf-8'))
     hash = sha256.hexdigest()
@@ -32,7 +33,7 @@ def hash_dict(data, short=False):
         return hash[:SHORT_HASH]
     return hash
 
-def hash_list(data, short=False):
+def hash_list(data, short=USE_SHORT_HASH):
     sha256 = hashlib.sha256()
     sha256.update(json.dumps(data, sort_keys=True).encode('utf-8'))
     hash = sha256.hexdigest()

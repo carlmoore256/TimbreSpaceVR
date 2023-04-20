@@ -1,18 +1,19 @@
 using System.Collections;
 using System.Collections.Generic;
-using UnityEngine.Pool;
 using UnityEngine;
 using NWaves.Signals;
 using System;
 using System.Threading;
 using NWaves.Utils;
 
-// buffer based on audioFeatures
+/// <summary>
+/// Analysis for a provided DiscreteSignal audio buffer, handling an AudioFeatureAnalyzer
+/// and providing APIs to access analysis data
+/// </summary>
 public class GranularBuffer {
     public AudioFeatureAnalyzer featureAnalyzer;
-    public PolyvoicePlayer player;
     public DiscreteSignal audioBuffer;
-    private ObjectPool<PlaybackEvent> playbackEventPool;
+
     public WindowTime[] WindowTimes {get {
         if (featureAnalyzer == null) {
             Debug.LogError("Feature analyzer has not been set yet, run ResetAnalysis() before accessing WindowTimes");
@@ -22,36 +23,23 @@ public class GranularBuffer {
     } }
 
     private Thread analyzerThread;
-    
-    public GranularBuffer(DiscreteSignal audioBuffer, PolyvoicePlayer player) {
+
+    public GranularBuffer(DiscreteSignal audioBuffer) {
         this.audioBuffer = audioBuffer;
-        this.player = player;
-        player.SetAudioBuffer(audioBuffer);
     }
 
     /// <summary>
     /// Initialize feature analyzer and compute features
     /// </summary>
-    public void Initialize(int windowSize, int hopSize, AudioFeature[] features, Action onComplete = null) {
-        ResetAnalysis(windowSize, hopSize, features, onComplete);
-    }
+    // public void Initialize(int windowSize, int hopSize, AudioFeature[] features, Action onComplete = null) {
+    //     ResetAnalysis(windowSize, hopSize, features, onComplete);
+    // }
 
     /// <summary>
     /// Set/reset feature analyzer, which will occur whenever there is a new window or hop size
     /// </summary>
     public void ResetAnalysis(int windowSize, int hopSize, AudioFeature[] features, Action onComplete = null) {
         featureAnalyzer = new AudioFeatureAnalyzer(windowSize, hopSize, audioBuffer);
-        playbackEventPool = new ObjectPool<PlaybackEvent>(
-            createFunc : () => {
-                var playbackEvent = new PlaybackEvent();
-                playbackEvent.onComplete += () => {
-                    playbackEventPool.Release(playbackEvent);
-                };
-                return playbackEvent;
-            }, 
-            // actionOnRelease : playbackEvent => playbackEvent.Reset(),
-            defaultCapacity : WindowTimes.Length
-        );
         RunBatchAnalysis(features, onComplete);
     }
 
@@ -73,21 +61,8 @@ public class GranularBuffer {
         analyzerThread.Start();
     }
 
-    /// <summary>
-    /// Plays a grain at a given index in the granular windows (grainID)
-    /// </summary>
-    public void PlayGrain(int grainID, float gain = 1f) {
-        if (grainID >= 0 && grainID < WindowTimes.Length)
-        {
-            PlaybackEvent playbackEvent = playbackEventPool.Get();
-            playbackEvent.Set(
-                gain, 
-                WindowTimes[grainID], 
-                GetFeatureValue(AudioFeature.RMS, grainID),
-                grainID
-            );
-            player.Play(playbackEvent);
-        }
+    public WindowTime GetWindowTime(int grainID) {
+        return WindowTimes[grainID];
     }
 
     /// <summary>
@@ -103,7 +78,6 @@ public class GranularBuffer {
     /// Stops all playback and audio processing workers
     /// </summary>
     public void Stop() {
-        player.StopAllCoroutines();
         analyzerThread?.Abort();
     }
 

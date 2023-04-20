@@ -4,13 +4,19 @@ using System;
 [Serializable]
 public class SequenceItem {
     public ISequenceable sequenceable;
+    // public Action onPlayStart;
+    // public Action onPlayEnd;
     public float gain;
     public bool isMuted;
-    public double startTime;
-    public double endTime;
+    public double scheduleTime;
 
-    public void SetSequenceTime(double startTime, double endTime) {
-        this.startTime = startTime;
-        this.endTime = endTime;
+    public void SetScheduleTime(double scheduleTime) {
+        this.scheduleTime = scheduleTime;
     }
+
+    // public double endTime;
+    // public void SetSequenceTime(double startTime, double endTime) {
+    //     this.scheduleTime = startTime;
+    //     this.endTime = endTime;
+    // }
 }

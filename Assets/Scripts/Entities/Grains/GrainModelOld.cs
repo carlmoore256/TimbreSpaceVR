@@ -32,7 +32,7 @@ public class GrainModelOld : MonoBehaviour
     public Color colorPositioning = new Color(255, 255, 255, 1f);
 
     private GranularParameterHandler parameterHandler;
-    private PolyvoicePlayer grainModelPlayback;
+    private InstantaneousPlayer grainModelPlayback;
     private AudioFeatureAnalyzer featureExtractor;
     private TransformCoroutineManager coroutineManager;
     private ConcurrentQueue<GrainAudioFeatures> computedFeatures = new ConcurrentQueue<GrainAudioFeatures>();
@@ -43,15 +43,15 @@ public class GrainModelOld : MonoBehaviour
     private void OnEnable() {
         Grains = new List<GrainOld>();
 
-        grainModelPlayback = gameObject.AddComponent<PolyvoicePlayer>();
+        grainModelPlayback = gameObject.AddComponent<InstantaneousPlayer>();
 
         coroutineManager = new TransformCoroutineManager(this, () => {
             TsvrApplication.DebugLogger.Log("Sending Spring Toggle broadcast message -> OFF", "[GrainModel]");
-            BroadcastMessage("ToggleReposition", true, SendMessageOptions.DontRequireReceiver);
+            BroadcastMessage("ToggleReposition", true, SendMessageOptions.RequireReceiver);
         }, () => {
             TsvrApplication.DebugLogger.Log("Sending Spring Toggle broadcast message -> ON", "[GrainModel]");
             if (HasBeenPlaced)
-                BroadcastMessage("ToggleReposition", false, SendMessageOptions.DontRequireReceiver);
+                BroadcastMessage("ToggleReposition", false, SendMessageOptions.RequireReceiver);
         });
 
         // Determine how grain parameter updates are handled
@@ -221,7 +221,7 @@ public class GrainModelOld : MonoBehaviour
     {
         GameObject grainObject = Instantiate(TsvrApplication.Config.grainPrefab, transform);
         GrainOld grain = grainObject.GetComponent<GrainOld>();
-        grain.Initialize(features, parameterHandler, grainModelPlayback.Play);
+        // grain.Initialize(features, parameterHandler, grainModelPlayback.Play);
         grain.TriggerPlayAnimation(); // make a nice animation when grain appears
         Grains.Add(grain);
     }

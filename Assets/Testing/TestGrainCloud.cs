@@ -18,7 +18,21 @@ public class TestGrainCloud : MonoBehaviour
         GrainCloudSpawner.SpawnFromMetadataURI(metadataURI).ContinueWith((task) => {
             grainCloud = task.Result;
             Debug.Log("GrainCloud Spawned");
+            grainCloud.OnCloudReset += () => {
+                Debug.Log("Cloud Reset!");
+                OnGrainCloudReset();
+            };
         });
+    }
+
+    void OnGrainCloudReset() {
+        sequence = grainCloud.CreateLinearSequence(bpm);
+        sequence.OnSequenceablePlayEnd += () => {
+            // grainCloud.ScheduleSequence();
+        };
+        grainCloud.Sequences.Add(sequence);
+        // grainCloud.Play(1.0f);
+        // grainCloud.ScheduleSequence();
     }
 
     void Update() {
@@ -31,7 +45,21 @@ public class TestGrainCloud : MonoBehaviour
         if (Input.GetKeyUp(KeyCode.Space)) {
             sequence = grainCloud.CreateLinearSequence(bpm);
             grainCloud.Sequences.Add(sequence);
-            grainCloud.Play(1.0f);
+
+            grainCloud.Schedule(new SequenceableScheduleParameters {
+                scheduleTime = AudioSettings.dspTime + 0.5d,
+                gain = 1.0f
+            });
+            
+            // grainCloud.Schedule(AudioSettings.dspTime + 0.5f, 1.0f, () => {
+            //     Debug.Log("GrainCloud Playing Sequence!");
+            // }, () => {
+            //     Debug.Log("GrainCloud Sequence Ended!");
+            // });
+
+
+            // grainCloud.Play(1.0f);
+            // grainCloud.ScheduleSequence();
             Debug.Log("GrainCloud Playing Sequence!");
         }
 

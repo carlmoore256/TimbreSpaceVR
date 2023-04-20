@@ -4,93 +4,35 @@ using System.Collections.Generic;
 using UnityEngine;
 using NWaves.Signals;
 
-public class Playhead {
-    public int startSample;
-    public int endSample;
-    public int windowSamples;
-    public int position;
-    public int startPad;
-    public PlaybackEvent playbackEvent = null;
-
-    
-    public Playhead(int startSample, int endSample) {
-        this.startSample = startSample;
-        this.endSample = endSample;
-        this.windowSamples = endSample - startSample;
-        this.position = startSample;
-        this.startPad = 0;
-    }
-
-    public Playhead() {
-        this.startSample = 0;
-        this.endSample = 0;
-        this.windowSamples = 0;
-        this.position = 0;
-        this.startPad = 0;
-    }
-
-    public void SetPlaybackEvent(PlaybackEvent playbackEvent, DiscreteSignal signal, int startPad=0) {
-        this.startSample = (int)Mathf.Floor((float)(playbackEvent.windowTime.startTime * signal.SamplingRate));
-        this.endSample = (int)Mathf.Floor((float)(playbackEvent.windowTime.endTime * signal.SamplingRate));
-        this.endSample = Mathf.Min(endSample, signal.Length);
-        this.position = startSample;
-        this.windowSamples = endSample - startSample;
-        this.playbackEvent = playbackEvent;
-        this.startPad = UnityEngine.Random.Range(0, this.windowSamples); // <- REMOVE ME
-        // this.startPad = startPad;
-    }
-
-    public float Score() {
-        // float score = endSample - playhead;
-        float score = endSample - position;
-        if (score == 0) return 0f;
-        score = score / (float)windowSamples;
-        return score * Mathf.Abs(playbackEvent.rms);
-    }
-
-    public int WindowIndex() {
-        return position - startSample;
-    }
-
-    public int SamplesRemaining() {
-        return endSample - position;
-    }
-
-    public bool IsFinished() {
-        return position >= endSample;
-    }
-
-    public void DebugMessage() {
-        Debug.Log($"PLAYHEAD: {position} | {startSample} -> {endSample} | Length: {windowSamples} | Current Index: {WindowIndex()}");
-    }
-}
-
 public class PlaybackVoice {
+    public string ID { get { return _ID; } }
+    private string _ID = Guid.NewGuid().ToString();
     private DiscreteSignal _signal;
     private Playhead playhead;
     private Mutex mut = new Mutex();
     private bool isProcessing = false;
-    private float[] window;
-    private double scheduledEndTime;
-    private PlaybackEvent playbackEvent;
-    private Action<PlaybackVoice, PlaybackEvent> onPlaybackComplete;
-    public bool IsPlaying { get; set; } = false;
+    // private float[] window;
 
-    public PlaybackVoice(Action<PlaybackVoice, PlaybackEvent> _onPlaybackComplete) {
-        window = new float[0];
+    public double ScheduledTime { get; set; } = -1;
+    // private double scheduledEndTime;
+    
+    private WindowedPlaybackEvent playbackEvent;
+    private Action<PlaybackVoice> onVoiceFree;
+    public bool IsPlaying { get; set; } = false;
+    private int sampleRate = AudioSettings.outputSampleRate;
+
+    public PlaybackVoice(Action<PlaybackVoice> onVoiceFree=null) {
         playhead = new Playhead();
-        onPlaybackComplete = _onPlaybackComplete;
+        this.onVoiceFree = onVoiceFree;
     }
 
-    public void Play(PlaybackEvent playbackEvent) {
+    public void Play(WindowedPlaybackEvent playbackEvent, double scheduledTime = -1d) {
         mut.WaitOne();
         IsPlaying = true;
-        this.playhead.SetPlaybackEvent(playbackEvent, _signal);
-        this.playbackEvent = playbackEvent;
 
-        if (window.Length != this.playhead.windowSamples) {
-            window = CosineWindow(this.playhead.windowSamples);
-        }
+        this.playhead.Set(playbackEvent.bufferWindow, _signal);
+        this.playbackEvent = playbackEvent;
+        this.ScheduledTime = scheduledTime;
 
         mut.ReleaseMutex();
     }
@@ -109,35 +51,88 @@ public class PlaybackVoice {
     /// lower score -> less priority, more likely to be stolen
     /// </summary>
     public float Score() {
-        return playhead.Score();
+        return playhead.Score() * Mathf.Abs(playbackEvent.rms);
     }
     
     public void SetSignal(DiscreteSignal signal) {
         _signal = signal;
     }
+    
 
+    // initialize variables in ProcessBlock to avoid GC allocs
+    private int destStartIdx = 0;
+    private int destEndIdx = 0; 
+    private int numSamples = 0;
+    private float blockGain = 1f;
+
+    /// <summary>
+    /// Audio process block where samples are added to the buffer
+    /// </summary>
     public void ProcessBlock(float[] buffer, int channels, float gain) {
-        mut.WaitOne(); // prevent monobehavior methods from changing playhead during process block
-        if (playhead.IsFinished()) {
-            IsPlaying = false;
+        // prevent monobehavior methods from changing playhead during process block
+        mut.WaitOne();
+
+        destStartIdx = 0; // cached for GC
+
+        // Check if the scheduled playback time has been reached within this block
+        if (ScheduledTime > 0d && AudioSettings.dspTime < ScheduledTime) {
+            // see how long it will be until the start sample
+            double timeUntilStart = ScheduledTime - AudioSettings.dspTime;
+            destStartIdx = (int)Mathf.Floor((float)(timeUntilStart * sampleRate));
+            if (destStartIdx > buffer.Length / channels) {
+                // in this case, the sampleStart is further than this block
+                // so return without playing
+                mut.ReleaseMutex();
+                return;
+            }
+        }
+
+        // calculate the number of samples to play
+        numSamples = (buffer.Length / channels) - destStartIdx;
+        numSamples = Mathf.Min(numSamples, playhead.SamplesRemaining());
+        
+        if (numSamples == 0) {
             mut.ReleaseMutex();
-            onPlaybackComplete?.Invoke(this, playbackEvent);
             return;
         }
 
-        int numSamples = buffer.Length / channels;
-        numSamples = Mathf.Min(numSamples, playhead.SamplesRemaining());
+        destEndIdx = destStartIdx + numSamples;
+        blockGain = playbackEvent.gain * gain;
 
-        for (int i = 0; i < numSamples; i++) {
-            float sample = _signal.Samples[playhead.position] * window[playhead.WindowIndex()];
-            for (int c = 0; c < channels; c++) {
-                buffer[i * channels + c] += sample * playbackEvent.gain * gain;
+        if (!playhead.hasAdvanced) {
+            // trigger onPlayStart events, flip the flag 
+            // this is all done manually to optimize GC
+            Dispatcher.RunOnMainThread(() => playbackEvent.onPlayStart?.Invoke());
+            playhead.hasAdvanced = true;
+        }
+
+        // add the result to the buffer (optimized to check useWindow once, check if it's worth it)
+        if (playbackEvent.window != null) {
+            for (int i = destStartIdx; i < destEndIdx; i++) {
+                float sample = _signal.Samples[playhead.position] * playbackEvent.window[playhead.WindowIndex()];
+                for (int c = 0; c < channels; c++) {
+                    buffer[i * channels + c] += sample * blockGain;
+                }
+                playhead.position++;
             }
+        } else {
+            for (int i = destStartIdx; i < destEndIdx; i++) {
+                float sample = _signal.Samples[playhead.position];
+                for (int c = 0; c < channels; c++) {
+                    buffer[i * channels + c] += sample * blockGain;
+                }
+                playhead.position++;
+            }
+        }
 
-            playhead.position++;
+        // check to see if this voice has finished playing
+        if (playhead.IsFinished() || !IsPlaying) { // never ~should~ be asked to play if !IsPlaying
+            // trigger onPlayEnd events and onVoiceFree (do before releasing)
+            Dispatcher.RunOnMainThread(() => playbackEvent.onPlayEnd?.Invoke());
+            Dispatcher.RunOnMainThread(() => onVoiceFree?.Invoke(this));
+            IsPlaying = false;
         }
         
         mut.ReleaseMutex();
     }
-
 }

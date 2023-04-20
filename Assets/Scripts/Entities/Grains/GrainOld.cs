@@ -21,9 +21,9 @@ public class GrainOld : MonoBehaviour
     private Color targetColor;
 
 
-    private Action<PlaybackEvent> onGrainActivated;
+    private Action<WindowedPlaybackEvent> onGrainActivated;
 
-    public PlaybackEvent PlaybackEvent { get; private set; }
+    public WindowedPlaybackEvent PlaybackEvent { get; private set; }
 
     public int GrainIndex { get; private set; }
 
@@ -46,7 +46,7 @@ public class GrainOld : MonoBehaviour
     }
 
 
-    public void Initialize(PlaybackEvent playbackEvent, int grainIndex) {
+    public void Initialize(WindowedPlaybackEvent playbackEvent, int grainIndex) {
         this.PlaybackEvent = playbackEvent; 
         this.GrainIndex = grainIndex;
     }
@@ -54,10 +54,10 @@ public class GrainOld : MonoBehaviour
     /// <summary>
     /// Initialize the grain with the given features and model parameters
     /// </summary>
-    public void Initialize(GrainAudioFeatures features, GranularParameterHandler modelParameters, Action<PlaybackEvent> onGrainActivated) {
+    public void Initialize(GrainAudioFeatures features, GranularParameterHandler modelParameters, Action<WindowedPlaybackEvent> onGrainActivated) {
         this.features = features;
         this.onGrainActivated = onGrainActivated;
-        PlaybackEvent = new PlaybackEvent(0f, features.WindowTime, features.Get(AudioFeature.RMS), gameObject.GetInstanceID());
+        // PlaybackEvent = new PlaybackEvent(0f, features.WindowTime, features.Get(AudioFeature.RMS), gameObject.GetInstanceID());
 
         playTimeout = modelParameters.WindowSize / (double)AudioManager.Instance.SampleRate;
         playTimeout /= 4d;

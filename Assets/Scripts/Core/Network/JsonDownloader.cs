@@ -26,8 +26,6 @@ public class JsonDownloader : MonoBehaviour
         }
 
         string json = webRequest.downloadHandler.text;
-        // Debug.Log("GOT JSON: " + json);
-        // T result = JsonUtility.FromJson<T>(json);
         T result = JsonHelper.FromJson<T>(json);
         return result;
     }

@@ -44,14 +44,19 @@ public class GrainModel : MonoBehaviour, IInspectable
     # region Lifecycle
     private void OnEnable() {
         coroutineManager = new TransformCoroutineManager(this, () => {
-            TsvrApplication.DebugLogger.Log("Sending Spring Toggle broadcast message -> OFF", "[GrainModel]");
-            OnRepositionStartEvent?.Invoke();
+            Debug.Log("GrainModel ON COROUTINE START");
+            // TsvrApplication.DebugLogger.Log("Sending Spring Toggle broadcast message -> OFF", "[GrainModel]");
             // BroadcastMessage("ToggleReposition", true, SendMessageOptions.DontRequireReceiver);
+            BroadcastMessage("ChangePositioningState", Grain.GrainState.Repositioning, SendMessageOptions.DontRequireReceiver);
+            // OnRepositionStartEvent?.Invoke();
         }, () => {
+            Debug.Log("GrainModel ON COROUTINE END");
             TsvrApplication.DebugLogger.Log("Sending Spring Toggle broadcast message -> ON", "[GrainModel]");
-            if (HasBeenPlaced)
-                OnRepositionEndEvent?.Invoke();
+            if (HasBeenPlaced) {
+                BroadcastMessage("ChangePositioningState", Grain.GrainState.Idle, SendMessageOptions.DontRequireReceiver);
                 // BroadcastMessage("ToggleReposition", false, SendMessageOptions.DontRequireReceiver);
+                // OnRepositionEndEvent?.Invoke();
+            }
         });
     }
 
@@ -85,6 +90,21 @@ public class GrainModel : MonoBehaviour, IInspectable
     public void Reposition(Vector3 position, float duration = 0.5f) {
         coroutineManager.MoveTo(position, duration);
     }
+
+    public void Rotate(Quaternion rotation, float duration = 0.5f) {
+        coroutineManager.RotateTo(rotation, duration);
+    }
+
+    public void RotateAngle(Vector3 angles, float duration = 0.5f) {
+        coroutineManager.RotateTo(Quaternion.Euler(angles), duration);
+    }
+
+    // public void AddRotation()
+
+    public void Scale(Vector3 scale, float duration = 0.5f) {
+        coroutineManager.ScaleTo(scale, duration);
+    }
+
 
     # endregion
 

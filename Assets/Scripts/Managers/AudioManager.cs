@@ -61,6 +61,7 @@ public class AudioManager : ScriptableObject
 
     // eventually make into a flexible dictionary that can patch
     public void ConnectGrainModelAudioSource(AudioSource source) {
+        Debug.Log("Trying to connect grainModelAudioSource~!");
         source.outputAudioMixerGroup = grainModelAudioMixer.FindMatchingGroups("Dry")[0];
     }
 }

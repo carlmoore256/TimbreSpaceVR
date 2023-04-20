@@ -75,6 +75,10 @@ public class AudioIO {
 
     public static async Task<DiscreteSignal> LoadAudioFromURI(string path)
     {
+        // if system is not windows, prefix with file://	
+        if (Application.platform != RuntimePlatform.WindowsEditor && Application.platform != RuntimePlatform.WindowsPlayer) {	
+            path = "file://" + path;	
+        }
         UnityWebRequest webRequest = UnityWebRequest.Get(path);
         webRequest.timeout = 160;
         var operation = webRequest.SendWebRequest();

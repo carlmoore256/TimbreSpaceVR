@@ -164,7 +164,6 @@ public class AudioFeatureAnalyzer
                 });
 
             case FeatureExtractorType.Spectral:
-                // Debug.Log("We might have an issue, Alias: " + featureKey.alias + " | Feature: " + featureKey.feature);
                 return new SpectralFeaturesExtractor(new MultiFeatureOptions
                 {
                     SamplingRate = Signal.SamplingRate,

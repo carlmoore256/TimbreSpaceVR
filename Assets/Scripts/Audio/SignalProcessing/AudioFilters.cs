@@ -1,37 +1,9 @@
 using System;
-using System.Collections.Generic;
 using NWaves.Signals;
-using NWaves.Audio;
-using NWaves.FeatureExtractors.Multi;
-using NWaves.FeatureExtractors.Options;
-using NWaves.FeatureExtractors;
-using NWaves.FeatureExtractors.Base;
-using NWaves.Windows;
-using NWaves.Filters.Base;
-using System.Linq;
 using UnityEngine;
-using System.Threading;
 using System.Threading.Tasks;
 
 public static class AudioFilters {
-
-    // public static DiscreteSignal FilterSignalRMS(DiscreteSignal signal, float thresholdDb, int _windowSize) {
-    //     var currentTime = AudioSettings.dspTime;
-    //     float[] windowSamples = Window.OfType(WindowTypes.Hamming, _windowSize);
-    //     List<float> filteredSignal = new List<float>();
-    //     float[] _window = new float[_windowSize];
-    //     float threshold = DBToRMS(thresholdDb);
-    //     for (int i = 0; i < signal.Length / _windowSize; i++) {
-    //         float rms = signal.Rms(i * _windowSize, (i * _windowSize) +  _windowSize);
-    //         if (rms > threshold)
-    //             filteredSignal.AddRange(signal.Samples.Skip(i * _windowSize).Take(_windowSize));
-    //     }
-
-    //     var newSignal = new DiscreteSignal(signal.SamplingRate, filteredSignal.ToArray());
-    //     var elapsedTime = AudioSettings.dspTime - currentTime;
-    //     Debug.Log($"Finished filtering audio RMS in {elapsedTime} s");
-    //     return newSignal;
-    // }
 
     public static DiscreteSignal StripSilence(DiscreteSignal signal, float thresholdDb, int windowSize) {
         var currentTime = AudioSettings.dspTime;
@@ -92,8 +64,3 @@ public static class AudioFilters {
         return (float)Math.Pow(10, db / 20);
     }
 }
-
-
-// DiscreteSignal x = signal[i * windowSize, (i * windowSize) +  windowSize].Copy();
-// WindowExtensions.ApplyWindow(x, windowSamples);
-// float rms = x.Rms();

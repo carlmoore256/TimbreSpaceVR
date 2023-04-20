@@ -26,6 +26,12 @@ public class Grain : MonoBehaviour, IPositionedSequenceable
     private float activatedDuration = 1f;
     private bool isActivated = false;
 
+    public enum GrainState {
+        Idle,
+        Repositioning
+    }
+
+    private GrainState currentState = GrainState.Idle;
 
     public enum ActivationAction {
         Play,
@@ -36,9 +42,13 @@ public class Grain : MonoBehaviour, IPositionedSequenceable
     // public delegate void OnSelect(Grain grain, object caller);
     // public event OnSelect OnSelectEvent;
 
-    public delegate void OnActivate(Grain grain, float value, ActivationAction activationAction);
-    public event OnActivate OnActivateEvent;
-    
+    // public delegate void OnActivate(Grain grain, float value, ActivationAction activationAction);
+    // public event OnActivate OnActivateEvent;
+
+    public Action<Grain, float, ActivationAction> OnActivate;
+
+    // public Action<int, double> OnSchedule;
+
 
     public void Initialize(int grainID) {
         ID = grainID;
@@ -74,36 +84,39 @@ public class Grain : MonoBehaviour, IPositionedSequenceable
 
     public int ID { get; private set; }
     public Vector3 Position { get => transform.position; }
-    public void Play(float gain) {
-        Activate(gain, ActivationAction.Play);
+    public event EventHandler<SequenceableScheduleParameters> OnSchedule;
+    public event Action OnSequenceablePlayStart;
+    public event Action OnSequenceablePlayEnd;
+
+    public void Schedule(SequenceableScheduleParameters parameters) {
+        OnSchedule?.Invoke(this, parameters);
+    }
+
+    public void SequenceablePlayStart() {
+        PlayActivatedAnimation(Color.green, 1.8f, 10f);
+        OnSequenceablePlayStart?.Invoke();
+    }
+
+    public void SequenceablePlayEnd() {
+        OnSequenceablePlayEnd?.Invoke();
     }
 
     # endregion
 
     # region Public Methods
 
-    // /// <summary>
-    // /// Generic event that can be called by tools and other interface elements
-    // /// For instance, if this is invoked by the wand select tool,
-    // /// the grain cloud that owns it should be subscribed to OnSelectEvent, and
-    // /// should be able to add this grain to the selection
-    // /// </summary>
-    // public void Select(object caller) {
-    //     OnSelectEvent?.Invoke(this, caller);
-    // }
-
     /// <summary>
     /// Notifies listeners of attempt to activate, with self, value, and delta time since last activated
     /// </summary>
     public void Activate(float value, ActivationAction activationAction) {
-        OnActivateEvent?.Invoke(this, value, activationAction);
+        OnActivate?.Invoke(this, value, activationAction);
     }
 
 
     /// <summary>
     /// Play an activated animation
     /// </summary>
-    public void Play(Color color, float radiusMultiplier = 1.2f, float duration = 1f) {
+    public void PlayActivatedAnimation(Color color, float radiusMultiplier = 1.2f, float duration = 1f) {
         isActivated = true;
         activateEnd = Time.time + duration;
         lastActivated = Time.timeAsDouble;
@@ -112,7 +125,7 @@ public class Grain : MonoBehaviour, IPositionedSequenceable
         activatedDuration = duration;
         if (playCoroutine != null)
             StopCoroutine(playCoroutine);
-        playCoroutine = StartCoroutine(PlayCoroutine(color, radiusMultiplier));
+        playCoroutine = StartCoroutine(PlayCoroutine(color, radiusMultiplier, duration));
     }
 
     public void Delete() {
@@ -165,6 +178,20 @@ public class Grain : MonoBehaviour, IPositionedSequenceable
         colorCoroutine = StartCoroutine(ColorCoroutine(targetColor, duration));
     }
 
+    # endregion
+
+    public void ChangePositioningState(GrainState state) {
+        currentState = state;
+        switch (state) {
+            case GrainState.Idle:
+                ToggleSpring(true);
+                break;
+            case GrainState.Repositioning:
+                ToggleSpring(false);
+                break;
+        }
+    }
+
     public void ToggleReposition(bool enable) {
         if (enable) {
             isRepositioning = true;
@@ -175,16 +202,15 @@ public class Grain : MonoBehaviour, IPositionedSequenceable
         }
     }
 
-    # endregion
-
-
-
     private void ToggleSpring(bool enable) {
         if (enable) {
-            if (isRepositioning) return;
+            // turn spring on
+            // if (isRepositioning) return;
+            if (currentState == GrainState.Repositioning) return;
             joint.connectedAnchor = transform.position;
             GetComponent<Rigidbody>().isKinematic = false;
         } else {
+            // turn spring off
             GetComponent<Rigidbody>().isKinematic = true;
         }
     }
@@ -197,9 +223,10 @@ public class Grain : MonoBehaviour, IPositionedSequenceable
         lodRenderer.ChangeColor(color);
         transform.localScale = targetTransform.scale * radiusMultiplier;
         float time = 0f;        
-        while (time < activateEnd) {
-            lodRenderer.ChangeColor(Color.Lerp(lodRenderer.GetColor(), targetColor, time/activateEnd));
-            transform.localScale = Vector3.Lerp(transform.localScale, targetTransform.scale, time/activateEnd);
+        // while (time < activateEnd) {
+        while (time < duration) {
+            lodRenderer.ChangeColor(Color.Lerp(lodRenderer.GetColor(), targetColor, time/duration));
+            transform.localScale = Vector3.Lerp(transform.localScale, targetTransform.scale, time/duration);
             time += Time.deltaTime;
             yield return null;
         }
@@ -231,7 +258,8 @@ public class Grain : MonoBehaviour, IPositionedSequenceable
             yield return null;
         }
         transform.localPosition = targetPosition;
-        ToggleSpring(true);
+        // ToggleSpring(true);
+        currentState = GrainState.Idle;
     }
 
     private Coroutine rotateCoroutine;
