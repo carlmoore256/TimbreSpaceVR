@@ -19,11 +19,17 @@ public class ScheduledPlayer : PolyvoicePlayer
 
     private Guid _id = Guid.NewGuid();
 
+    private DSPScheduler _scheduler;
+
 
     // private List<(WindowedPlaybackEvent playbackEvent, double scheduleTime)> scheduledEvents = new List<(WindowedPlaybackEvent playbackEvent, double scheduleTime)>();
     
     void OnEnable()
     {
+        Dispatcher.RunOnMainThread(() => {
+            _scheduler = DSPScheduler.CreateScheduler(_id);
+        });
+
         audioSource = gameObject.GetComponent<AudioSource>();
         TsvrApplication.AudioManager.ConnectGrainModelAudioSource(audioSource);
         playbackVoices = new PlaybackVoice[NumVoices];
@@ -96,9 +102,10 @@ public class ScheduledPlayer : PolyvoicePlayer
                     scheduleTime
                 );
                 _ringBufferIndex = (_ringBufferIndex + 1) % playbackVoices.Length;
-            }
+            },
+            cancellationToken: playbackEvent.CancellationToken
         );
-        DSPScheduler.Schedule(scheduledEvent);
+        _scheduler.Schedule(scheduledEvent);
         return scheduledEvent;
     }
 }

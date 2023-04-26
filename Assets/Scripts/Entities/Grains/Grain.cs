@@ -81,12 +81,14 @@ public class Grain : MonoBehaviour, IPositionedSequenceable
 
     public Guid Id { get; private set; }
     public Vector3 Position { get => transform.position; }
-    public event EventHandler<(double, SequenceableParameters)> OnSchedule;
+    public event EventHandler<(double, SequenceableParameters, ScheduleCancellationToken)> OnSchedule;
     public event Action OnSequenceablePlayStart;
     public event Action OnSequenceablePlayEnd;
 
-    public void Schedule(double time, SequenceableParameters parameters) {
-        OnSchedule?.Invoke(this, (time, parameters));
+    public ScheduleCancellationToken Schedule(double time, SequenceableParameters parameters) {
+        var token = new ScheduleCancellationToken();
+        OnSchedule?.Invoke(this, (time, parameters, token));
+        return token;
     }
 
     public void SequenceablePlayStart() {

@@ -111,7 +111,7 @@ public class GrainOld : MonoBehaviour
         playEnd = Time.time + totalPlayDuration;
         transform.localScale = targetScale * 1.5f;
         lodRenderer.ChangeColor(Color.red);      
-        PlaybackEvent.gain = gain;
+        PlaybackEvent.Gain = gain;
         lastPlayTime = Time.timeAsDouble;
         onGrainActivated?.Invoke(PlaybackEvent);
     }

@@ -28,10 +28,12 @@ public class ScheduledEvent
     // ability to have things occur at sample level
     event Action OnSchedule;
 
-    public bool IsScheduled { get; set; }
+    public bool IsCancelled { get => CancellationToken.IsCancelled; }
     private double _scheduledTime;
 
     public double ScheduleTime => _scheduledTime;
+
+    public ScheduleCancellationToken CancellationToken { get; private set; }
 
     public ScheduledEvent(double scheduleTime)
     {
@@ -43,33 +45,38 @@ public class ScheduledEvent
         OnSchedule = onSchedule;
     }
 
+    public ScheduledEvent(double scheduleTime, Action onSchedule, ScheduleCancellationToken cancellationToken) : this(scheduleTime, onSchedule)
+    {
+        CancellationToken = cancellationToken;
+    }
+
     public void Schedule(double dspTime)
     {
         _scheduledTime = dspTime;
-        IsScheduled = true;
     }
     public void Cancel()
     {
-        IsScheduled = false;
+        // IsCancelled = true;
+        CancellationToken.Cancel();
     }
 
     public bool OccursBetween(double startTime, double endTime)
     {
-        if (IsScheduled)
+        if (!IsCancelled)
             return _scheduledTime >= startTime && _scheduledTime <= endTime;
         return false;
     }
 
     public bool OccursBefore(double time)
     {
-        if (IsScheduled)
+        if (!IsCancelled)
             return _scheduledTime < time;
         return false;
     }
 
     public bool OccursAfter(double time)
     {
-        if (IsScheduled)
+        if (!IsCancelled)
             return _scheduledTime > time;
         return false;
     }
@@ -84,7 +91,6 @@ public class ScheduledEvent
     public void Invoke()
     {
         OnSchedule?.Invoke();
-        IsScheduled = false;
     }
 }
 

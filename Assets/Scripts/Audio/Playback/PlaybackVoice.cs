@@ -30,7 +30,7 @@ public class PlaybackVoice {
         mut.WaitOne();
         IsPlaying = true;
 
-        this.playhead.Set(playbackEvent.bufferWindow, _signal);
+        this.playhead.Set(playbackEvent.BufferWindow, _signal);
         this.playbackEvent = playbackEvent;
         this.ScheduledTime = scheduledTime;
 
@@ -51,7 +51,7 @@ public class PlaybackVoice {
     /// lower score -> less priority, more likely to be stolen
     /// </summary>
     public float Score() {
-        return playhead.Score() * Mathf.Abs(playbackEvent.rms);
+        return playhead.Score() * Mathf.Abs(playbackEvent.RMS);
     }
     
     public void SetSignal(DiscreteSignal signal) {
@@ -97,7 +97,7 @@ public class PlaybackVoice {
         }
 
         destEndIdx = destStartIdx + numSamples;
-        blockGain = playbackEvent.gain * gain;
+        blockGain = playbackEvent.Gain * gain;
 
         if (!playhead.hasAdvanced) {
             // trigger onPlayStart events, flip the flag 
@@ -107,9 +107,9 @@ public class PlaybackVoice {
         }
 
         // add the result to the buffer (optimized to check useWindow once, check if it's worth it)
-        if (playbackEvent.window != null) {
+        if (playbackEvent.Window != null) {
             for (int i = destStartIdx; i < destEndIdx; i++) {
-                float sample = _signal.Samples[playhead.position] * playbackEvent.window[playhead.WindowIndex()];
+                float sample = _signal.Samples[playhead.position] * playbackEvent.Window[playhead.WindowIndex()];
                 for (int c = 0; c < channels; c++) {
                     buffer[i * channels + c] += sample * blockGain;
                 }

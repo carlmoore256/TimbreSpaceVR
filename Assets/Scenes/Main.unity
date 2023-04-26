@@ -172,7 +172,7 @@ MonoBehaviour:
   NonXRPlayer: {fileID: 2061457987}
   useOrthographicCamera: 0
   skyboxColorTop: {r: 0, g: 0, b: 0, a: 1}
-  skyboxColorMiddle: {r: 0, g: 0, b: 0, a: 1}
+  skyboxColorMiddle: {r: 0.21622464, g: 0.27643487, b: 0.4056604, a: 1}
   skyboxColorBottom: {r: 0, g: 0, b: 0, a: 1}
   skyboxMaterial: {fileID: 2100000, guid: 5e689839123d7f34891e38d8eb07870b, type: 2}
 --- !u!4 &97606010 stripped
@@ -383,10 +383,11 @@ MonoBehaviour:
     ID: ca448cfb-fd34-4d1d-b061-57b116c289ed
     windowType: 4
   patterns:
-  - x-x-x-x-x-x-x-x-
+  - x-x-x-x
   - x-------x-------
   - x-----x-xx---x-x-
-  - ---x---x---x---x
+  - --x---x---x---x-
+  - ----------------------------xxxx
 --- !u!4 &400334311
 Transform:
   m_ObjectHideFlags: 0

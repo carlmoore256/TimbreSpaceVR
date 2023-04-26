@@ -5,8 +5,9 @@ using NWaves.Windows;
 public class PlaybackEvent
 {
     public Guid Id = Guid.NewGuid();
-    public Guid submitterId;
-    public float gain;
+    public Guid SubmitterId { get; set; }
+    public float Gain { get; set; }
+    public ScheduleCancellationToken CancellationToken { get; set; } = new ScheduleCancellationToken();
 
     public Action onPlayStart = null;
     public Action onPlayEnd = null;
@@ -15,15 +16,17 @@ public class PlaybackEvent
 
     public PlaybackEvent(float gain, Guid submitterID)
     {
-        this.gain = gain;
-        this.submitterId = submitterID;
+        this.Gain = gain;
+        this.SubmitterId = submitterID;
     }
 
-    public PlaybackEvent(float gain, string submitterID)
+    public PlaybackEvent(float gain, Guid submitterID, ScheduleCancellationToken cancellationToken) : this(gain, submitterID)
     {
-        this.gain = gain;
-        this.submitterId = Guid.Parse(submitterID);
+        if (cancellationToken != null)
+            this.CancellationToken = cancellationToken;
     }
+    
+
 }
 
 /// a playbackEvent may or may not relate to an ISequenceable, 
@@ -31,10 +34,10 @@ public class PlaybackEvent
 /// maybe should be renamed to WindowedPlaybackEvent, and inherit from a generic playback event
 public class WindowedPlaybackEvent : PlaybackEvent
 {
-    public float rms = 1f;
-    public WindowTime bufferWindow;
-    public float[] window;
-    public DateTime createdAt;
+    public float RMS { get; set; } = 1f;
+    public WindowTime BufferWindow { get; set; }
+    public float[] Window { get; set; }
+    public DateTime CreatedAt { get; set; }
 
     public WindowedPlaybackEvent() : base() {}
 
@@ -44,7 +47,8 @@ public class WindowedPlaybackEvent : PlaybackEvent
             float gain,
             Guid submitterId,
             Action onPlayStart = null,
-            Action onPlayEnd = null) : base(gain, submitterId) {
+            Action onPlayEnd = null,
+            ScheduleCancellationToken cancellationToken=null) : base(gain, submitterId, cancellationToken) {
 
         Initialize(bufferWindow, windowType, gain, submitterId);
     }
@@ -55,18 +59,18 @@ public class WindowedPlaybackEvent : PlaybackEvent
             float gain,
             Guid submitterID) {
 
-        this.bufferWindow = bufferWindow;
+        this.BufferWindow = bufferWindow;
 
         // don't bother allocating new memory for rect window
         if (windowType == WindowTypes.Rectangular) {
-            this.window = null;
+            this.Window = null;
         } else {
-            this.window = Windowing.Instance.GetWindow(windowType, bufferWindow.numSamples); // retrieves a cached version
+            this.Window = Windowing.Instance.GetWindow(windowType, bufferWindow.numSamples); // retrieves a cached version
         }
 
-        this.gain = gain;
-        this.submitterId = submitterID;
-        this.createdAt = DateTime.Now;
+        this.Gain = gain;
+        this.SubmitterId = submitterID;
+        this.CreatedAt = DateTime.Now;
 
         // Set these to null, and subscribe/unsubscribe later
         onPlayStart = null;
@@ -75,12 +79,12 @@ public class WindowedPlaybackEvent : PlaybackEvent
 
     public bool IsExpired(float expirationTime=5f)
     {
-        return DateTime.Now.Subtract(this.createdAt).TotalSeconds > expirationTime;
+        return DateTime.Now.Subtract(this.CreatedAt).TotalSeconds > expirationTime;
     }
 
     public bool IsExpired(DateTime expirationTime)
     {
-        return DateTime.Now.Subtract(this.createdAt).TotalSeconds > expirationTime.Subtract(this.createdAt).TotalSeconds;
+        return DateTime.Now.Subtract(this.CreatedAt).TotalSeconds > expirationTime.Subtract(this.CreatedAt).TotalSeconds;
     }
 
     public void RegisterSequenceableEvents(ISequenceable sequenceable)

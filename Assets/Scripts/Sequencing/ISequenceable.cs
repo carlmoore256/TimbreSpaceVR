@@ -1,10 +1,6 @@
 using UnityEngine;
 using System;
 
-public class ScheduleParameters {
-    public double scheduleTime;
-    public float gain;
-}
 
 public class SequenceableParameters
 {
@@ -20,10 +16,25 @@ public class SequenceableParameters
     }
 }
 
+public class ScheduleCancellationToken
+{
+    public bool IsCancelled { get; set; } = false;
+    public Action OnCancel { get; set; }
+    public void Cancel() {
+        IsCancelled = true;
+        OnCancel?.Invoke();
+    }
+
+    public ScheduleCancellationToken() { }
+    public ScheduleCancellationToken(Action onCancel) {
+        OnCancel = onCancel;
+    }
+}
+
 public interface ISequenceable 
 {
-    void Schedule(double scheduleTime, SequenceableParameters parameters);
-    event EventHandler<(double, SequenceableParameters)> OnSchedule;
+    ScheduleCancellationToken Schedule(double scheduleTime, SequenceableParameters parameters); // RETURN A CANCELLATION TOKEN
+    event EventHandler<(double, SequenceableParameters, ScheduleCancellationToken)> OnSchedule;
 
     // would it be a good idea to add a List<ISequenceable> SubSequences to make it recursive?
     // esentially the subSequences could be scheduled along with the main? Maybe nah

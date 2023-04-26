@@ -3,33 +3,36 @@ using System.Collections.Generic;
 using System;
 using System.Linq;
 
-public class DSPScheduler : MonoBehaviour
+public class DSPSchedulerSingleton : MonoBehaviour
 {
-    public Guid OwnerId { get; private set; }
-    private AudioSource _audioSource;
-    private int _sampleRate;
-    private List<ScheduledEvent> _schedulables = new List<ScheduledEvent>();
+    private static AudioSource _audioSource;
+    private static int _sampleRate = AudioSettings.outputSampleRate;
+    private static List<ScheduledEvent> _schedulables = new List<ScheduledEvent>();
+
     private List<int> _indicesToRemove = new List<int>();
 
-    public void Initialize(Guid ownerId)
-    {
-        OwnerId = ownerId;
-        _audioSource = gameObject.AddComponent<AudioSource>();
-        _audioSource.Play();
-        _sampleRate = AudioSettings.outputSampleRate;
-    }
+    private static DSPSchedulerSingleton _instance;
 
-    public static DSPScheduler CreateScheduler(Guid ownerId)
+    // public static DSPScheduler CreateScheduler(Guid ownerId)
+    // {
+
+    // }
+
+    [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.BeforeSceneLoad)]
+    private static void Initialize()
     {
-        var go = new GameObject("DSPScheduler");
-        var scheduler = go.AddComponent<DSPScheduler>();
-        scheduler.Initialize(ownerId);
-        DontDestroyOnLoad(go);
-        return scheduler;
+        if(_instance == null) {
+            var go = new GameObject("DSPScheduler");
+            _instance = go.AddComponent<DSPSchedulerSingleton>();
+            _audioSource = go.AddComponent<AudioSource>();
+            _audioSource.Play();
+            _sampleRate = AudioSettings.outputSampleRate;
+            DontDestroyOnLoad(_instance.gameObject);
+        }
     }
 
     int scheduleIdx = 0;
-    public void Schedule(ScheduledEvent scheduable)
+    public static void Schedule(ScheduledEvent scheduable)
     {
         lock(_schedulables) {
             // Debug.Log("Adding schedulable " + scheduable.ScheduleTime);
@@ -37,7 +40,7 @@ public class DSPScheduler : MonoBehaviour
         }
     }
 
-    public void Unschedule(ScheduledEvent scheduable)
+    public static void Unschedule(ScheduledEvent scheduable)
     {
         if (!_schedulables.Contains(scheduable)) {
             throw new ArgumentException("Scheduable not found");
@@ -59,23 +62,25 @@ public class DSPScheduler : MonoBehaviour
         // if any of the Scheduables are within the next block
         // we can schedule them to be played in the next block
         lock(_schedulables) {
-            _indicesToRemove.Clear();
+            // _indicesToRemove.Clear();
             var scheduablesToDispatch = _schedulables.Where(s => s.OccursBefore(bufferEndTime));
             // var scheduablesToDispatch = _schedulables.Where(s => s.OccursBetween(bufferStartTime, bufferEndTime));
             
             if (scheduablesToDispatch.Count() == 0) return;
 
             foreach(var scheduable in scheduablesToDispatch) {
-                // dispatcher.Dispatch(scheduable);
+                if (scheduable.IsCancelled) continue;
                 Dispatcher.RunOnMainThread(() => scheduable.Invoke());
-                _indicesToRemove.Add(_schedulables.IndexOf(scheduable));
+                // _indicesToRemove.Add(_schedulables.IndexOf(scheduable));
             }
 
+            _schedulables.RemoveAll(s => s.OccursBefore(bufferEndTime));
+            
             // remove the scheduables that have been dispatched
-            foreach(var index in _indicesToRemove.OrderByDescending(v => v)) {
-                // Debug.Log("Removing scheduable at index " + index + " length of schedulables is " + _schedulables.Count);
-                _schedulables.RemoveAt(index);
-            }
+            // foreach(var index in _indicesToRemove.OrderByDescending(v => v)) {
+            //     // Debug.Log("Removing scheduable at index " + index + " length of schedulables is " + _schedulables.Count);
+            //     _schedulables.RemoveAt(index);
+            // }
         }
     }
 

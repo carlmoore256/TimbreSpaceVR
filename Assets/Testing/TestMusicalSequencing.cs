@@ -12,8 +12,6 @@ public class TestMusicalSequencing : MonoBehaviour {
  
     int numBars = 100;
 
-    public Sequence sequence;
-
     private Quaternion modelRotationTarget = Quaternion.identity;
 
     public List<string> patterns = new List<string> {
@@ -31,6 +29,79 @@ public class TestMusicalSequencing : MonoBehaviour {
         });
     }
 
+    private void AddStringPatterns(GrainCloud cloud, Sequence sequence, List<string> patterns, int numBars) {
+        int i = 0;
+        int[] indices = cloud.GranularBuffer.SortedGrainIndices(AudioFeatureUtils.RandomAudioFeature(), true);
+        BeatGenerator beatGenerator = new BeatGenerator(sequence.Clock);
+
+        foreach (string pattern in patterns) {
+            // int randIdx = UnityEngine.Random.Range(0, cloud.GranularBuffer.NumWindows);
+            int randIdx = UnityEngine.Random.Range(0 , indices.Length);
+            foreach (BeatIndex beatIndex in beatGenerator.RepeatPattern(beatGenerator.BeatPatternFromString(pattern), numBars))
+            {
+                sequence.AddSequenceableAtBeatIndex(
+                    cloud.Grains[indices[randIdx]], 
+                    beatIndex, 
+                    new SequenceableParameters { Gain = 0.25f }
+                );
+                i++;
+            }
+        }
+    }
+
+
+    /// <summary>
+    /// Demo of how to construct drum patterns with the BeatGenerator
+    /// </summary>
+    private void AddDrumPatterns(GrainCloud cloud, Sequence sequence, int numBars)
+    {
+        BeatGenerator beatGenerator = new BeatGenerator(sequence.Clock);
+        
+        List<BeatIndex> hhPattern = beatGenerator.GenerateHiHatPattern(numBars, 1);
+        var RMS = cloud.GranularBuffer.SortedGrainIndicesWithValues(AudioFeature.RMS, false);
+        var noiseness = cloud.GranularBuffer.SortedGrainIndicesWithValues(AudioFeature.Noiseness, false);
+        // sort based on 2 criteria - RMS and noiseness
+        var bestIndexes = CollectionHelpers.ArgsortTopPairs(RMS, noiseness, 10, (a, b) => a * b).ToArray();
+
+        int hh = 0;
+        foreach (BeatIndex beatIndex in hhPattern)
+        {
+            int rndFeatureIdx = UnityEngine.Random.Range(0, (int)(bestIndexes.Length));
+            cloud.GranularBuffer.GetFeatureValue(AudioFeature.RMS, bestIndexes[rndFeatureIdx]);
+            sequence.AddSequenceableAtBeatIndex(cloud.Grains[bestIndexes[hh%8]], beatIndex, new SequenceableParameters { Gain = 0.025f });
+            hh++;
+        }
+
+        List<BeatIndex> kickPattern = beatGenerator.GenerateKickPattern(numBars, 1);
+        int[] kickIndices = cloud.GranularBuffer.SortedGrainIndices(AudioFeature.Centroid, true);
+        int k = 0;
+        foreach (BeatIndex beatIndex in kickPattern)
+        {
+            sequence.AddSequenceableAtBeatIndex(cloud.Grains[kickIndices[2]], beatIndex);
+            k++;
+        }
+
+
+        List<BeatIndex> snarePattern = beatGenerator.GenerateSnarePattern(numBars, 1);
+        int[] snareIndices = cloud.GranularBuffer.SortedGrainIndices(AudioFeature.Crest, true);
+        int s = 0;
+        foreach (BeatIndex beatIndex in snarePattern)
+        {
+            sequence.AddSequenceableAtBeatIndex(cloud.Grains[snareIndices[s%4]], beatIndex, new SequenceableParameters { Gain = 0.325f });
+            s++;
+        }
+
+
+        List<BeatIndex> pattern = beatGenerator.GenerateAlgorithmicPattern(numBars);
+        int[] indices = cloud.GranularBuffer.SortedGrainIndices(AudioFeatureUtils.RandomAudioFeature(), true);
+        int i = 0;
+        foreach (BeatIndex beatIndex in pattern)
+        {
+            sequence.AddSequenceableAtBeatIndex(cloud.Grains[indices[i%sequence.Clock.TimeSignature.BeatsPerBar]], beatIndex, new SequenceableParameters { Gain = 0.245f });
+            i++;
+        }
+    }
+
     private void SetupSequence(GrainCloud cloud) {
         grainCloud = cloud;
 
@@ -46,84 +117,22 @@ public class TestMusicalSequencing : MonoBehaviour {
             renderer.SetSequence(sequence);
             BeatGenerator beatGenerator = new BeatGenerator(sequence.Clock);
 
-            // List<BeatIndex> pattern = beatGenerator.GeneratePolyrhythmPattern(numBars, new List<NoteValue> { NoteValue.Quarter, NoteValue.Eighth });
-            // List<BeatIndex> pattern = beatGenerator.GenerateSyncopatedPattern(numBars, new List<NoteValue> { NoteValue.Quarter, NoteValue.Eighth, NoteValue.Sixteenth }, 1);
-            // List<BeatIndex> pattern = beatGenerator.GenerateAlgorithmicPattern(numBars);
-            // List<BeatIndex> hhPattern = beatGenerator.GenerateHiHatPattern(numBars, 1);
-
-            // var RMS = cloud.GranularBuffer.SortedGrainIndicesWithValues(AudioFeature.RMS, false);
-            // var noiseness = cloud.GranularBuffer.SortedGrainIndicesWithValues(AudioFeature.Noiseness, false);
-
-            // // var bestIndexes = CollectionHelpers.ArgsortTopPairs(RMS, noiseness, 10, (a, b) => a * b);
-            // var bestIndexes = cloud.GranularBuffer.SortedGrainIndices(AudioFeature.Centroid, false);
-
-            // int hh = 0;
-            // foreach (BeatIndex beatIndex in hhPattern)
-            // {
-            //     int rndFeatureIdx = UnityEngine.Random.Range(0, (int)(bestIndexes.Length));
-            //     cloud.GranularBuffer.GetFeatureValue(AudioFeature.RMS, bestIndexes[rndFeatureIdx]);
-            //     sequence.AddSequenceableAtBeatIndex(cloud.Grains[bestIndexes[hh%8]], beatIndex, new SequenceableParameters { Gain = 0.025f });
-            //     hh++;
-            // }
-            
-
-            // List<BeatIndex> kickPattern = beatGenerator.GenerateKickPattern(numBars, 1);
-
-            // int[] kickIndices = cloud.GranularBuffer.SortedGrainIndices(AudioFeature.Centroid, true);
-
-            // int k = 0;
-            // foreach (BeatIndex beatIndex in kickPattern)
-            // {
-            //     sequence.AddSequenceableAtBeatIndex(cloud.Grains[kickIndices[2]], beatIndex);
-            //     k++;
-            // }
-
-
-            // List<BeatIndex> snarePattern = beatGenerator.GenerateSnarePattern(numBars, 1);
-
-            // int[] snareIndices = cloud.GranularBuffer.SortedGrainIndices(AudioFeature.Crest, true);
-
-            // int s = 0;
-            // foreach (BeatIndex beatIndex in snarePattern)
-            // {
-            //     sequence.AddSequenceableAtBeatIndex(cloud.Grains[snareIndices[s%4]], beatIndex, new SequenceableParameters { Gain = 0.325f });
-            //     s++;
-            // }
-
-
-            // List<BeatIndex> pattern = beatGenerator.GenerateAlgorithmicPattern(numBars);
-
-            // int[] indices = cloud.GranularBuffer.SortedGrainIndices(AudioFeatureUtils.RandomAudioFeature(), true);
-            
-            // int i = 0;
-            // foreach (BeatIndex beatIndex in pattern)
-            // {
-            //     sequence.AddSequenceableAtBeatIndex(cloud.Grains[indices[i%sequence.Clock.TimeSignature.BeatsPerBar]], beatIndex, new SequenceableParameters { Gain = 0.245f });
-            //     i++;
-            // }
-            
-
-            int i = 0;
-            int[] indices = cloud.GranularBuffer.SortedGrainIndices(AudioFeatureUtils.RandomAudioFeature(), true);
-
-            foreach (string pattern in patterns) {
-                // int randIdx = UnityEngine.Random.Range(0, cloud.GranularBuffer.NumWindows);
-                int randIdx = UnityEngine.Random.Range(0 , indices.Length);
-                foreach (BeatIndex beatIndex in beatGenerator.RepeatPattern(beatGenerator.BeatPatternFromString(pattern), numBars))
-                {
-                    sequence.AddSequenceableAtBeatIndex(
-                        cloud.Grains[indices[randIdx]], 
-                        beatIndex, 
-                        new SequenceableParameters { Gain = 0.245f }
-                    );
-                    i++;
-                }
-            }
-
+            AddStringPatterns(cloud, sequence, patterns, numBars);
 
 
             sequence.Play();
+
+            StartCoroutine(CancelSequence(sequence));
+
+
         };
+    }
+
+    private IEnumerator CancelSequence(Sequence sequence)
+    {
+        Debug.Log("Waiting for 5 seconds...");
+        yield return new WaitForSeconds(5f);
+        sequence.Stop();
     }
 
 
@@ -136,13 +145,13 @@ public class TestMusicalSequencing : MonoBehaviour {
         }
 
 
-        if (sequence != null) {
-            if (lastBPM != bpm) {
-                Debug.Log("Setting BPM to " + bpm);
-                lastBPM = bpm;
-                sequence.SetBPM(bpm);
-            }
-        }
+        // if (sequence != null) {
+        //     if (lastBPM != bpm) {
+        //         Debug.Log("Setting BPM to " + bpm);
+        //         lastBPM = bpm;
+        //         // sequence.SetBPM(bpm);
+        //     }
+        // }
 
         if (grainCloud != null && grainCloud.GrainModel != null) {
             

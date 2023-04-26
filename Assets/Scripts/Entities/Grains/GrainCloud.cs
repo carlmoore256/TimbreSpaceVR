@@ -118,11 +118,11 @@ public class GrainCloud : MonoBehaviour, IPositionedSequenceable
 
     public Vector3 Position { get => transform.position; }
 
-    public event EventHandler<(double, SequenceableParameters)> OnSchedule;
+    public event EventHandler<(double, SequenceableParameters, ScheduleCancellationToken)> OnSchedule;
     public event Action OnSequenceablePlayStart;
     public event Action OnSequenceablePlayEnd;
 
-    public void Schedule(double time, SequenceableParameters parameters) {
+    public ScheduleCancellationToken Schedule(double time, SequenceableParameters parameters) {
         Debug.Log("Scheduling GrainCloud as Sequenceable, Num Sequences: " + Sequences.Count);
         // play through the subsequence set for this cloud
         if (Sequences.Count > 0) {
@@ -130,6 +130,12 @@ public class GrainCloud : MonoBehaviour, IPositionedSequenceable
                 sequence.Schedule(time, parameters);
             }
         }
+
+        return new ScheduleCancellationToken(() => {
+            foreach(Sequence sequence in Sequences) {
+                sequence.Stop();
+            }
+        });
     }
 
     public void SequenceablePlayStart() {
@@ -161,7 +167,7 @@ public class GrainCloud : MonoBehaviour, IPositionedSequenceable
         SequenceRenderer renderer = gameObject.AddComponent<SequenceRenderer>();
         renderer.SetSequence(sequence);
         sequence.AddSequenceableRange(Grains);
-        sequence.SetBPM(bpm);
+        // sequence.SetBPM(bpm);
         return sequence;
     }
 
@@ -267,7 +273,10 @@ public class GrainCloud : MonoBehaviour, IPositionedSequenceable
         _playbackHandler.PlayNow(playbackEvent);
     }
 
-    private void OnGrainScheduled(object sender, (double time, SequenceableParameters parameters) schedule) {
+    private void OnGrainScheduled(
+            object sender, 
+            (double time, SequenceableParameters parameters, ScheduleCancellationToken token) schedule)
+    {
         Grain grain = (Grain)sender;
 
         // Debug.Log($"Scheduling grain {grain.Id} at DSP time " + parameters.scheduleTime);
@@ -279,7 +288,9 @@ public class GrainCloud : MonoBehaviour, IPositionedSequenceable
             gain: schedule.parameters.Gain,
             submitterId: grain.Id,
             onPlayStart: grain.SequenceablePlayStart,
-            onPlayEnd: grain.SequenceablePlayEnd);
+            onPlayEnd: grain.SequenceablePlayEnd,
+            cancellationToken: schedule.token
+        );
 
         playbackEvent.RegisterSequenceableEvents(grain);
 

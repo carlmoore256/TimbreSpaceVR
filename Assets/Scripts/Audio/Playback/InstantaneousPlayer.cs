@@ -58,13 +58,13 @@ public class InstantaneousPlayer : PolyvoicePlayer
     private void ExecuteEvent(float score, WindowedPlaybackEvent e, PlaybackVoice v) {
         smaScore.Add(score);
         v.Play(e);
-        if (!requestCounts.ContainsKey(e.submitterId))
-            requestCounts[e.submitterId] = new List<DateTime>();
-        requestCounts[e.submitterId].Add(e.createdAt);
+        if (!requestCounts.ContainsKey(e.SubmitterId))
+            requestCounts[e.SubmitterId] = new List<DateTime>();
+        requestCounts[e.SubmitterId].Add(e.CreatedAt);
 
-        for (int i = requestCounts[e.submitterId].Count - 1; i >= 0; i--) {
-            if (DateTime.Now - requestCounts[e.submitterId][i] > timeWindow) {
-                requestCounts[e.submitterId].RemoveAt(i);
+        for (int i = requestCounts[e.SubmitterId].Count - 1; i >= 0; i--) {
+            if (DateTime.Now - requestCounts[e.SubmitterId][i] > timeWindow) {
+                requestCounts[e.SubmitterId].RemoveAt(i);
             }
         }
     }

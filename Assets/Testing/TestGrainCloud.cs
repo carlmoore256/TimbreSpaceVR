@@ -39,7 +39,7 @@ public class TestGrainCloud : MonoBehaviour
 
         if (lastBPM != bpm && sequence != null) {
             lastBPM = bpm;
-            sequence.SetBPM(bpm);
+            // sequence.SetBPM(bpm);
             Debug.Log("BPM: " + bpm);
         }
         if (Input.GetKeyUp(KeyCode.Space)) {
