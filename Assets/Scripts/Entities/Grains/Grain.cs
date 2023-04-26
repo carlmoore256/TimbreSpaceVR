@@ -9,6 +9,7 @@ using System.Collections.Generic;
 public class Grain : MonoBehaviour, IPositionedSequenceable
 {
     public Material material;
+    public int GrainIndex { get; set; }
 
     private LODRenderer lodRenderer;
     private SpringJoint joint;
@@ -39,20 +40,16 @@ public class Grain : MonoBehaviour, IPositionedSequenceable
         Delete
     }
 
-    // public delegate void OnSelect(Grain grain, object caller);
-    // public event OnSelect OnSelectEvent;
-
-    // public delegate void OnActivate(Grain grain, float value, ActivationAction activationAction);
-    // public event OnActivate OnActivateEvent;
-
     public Action<Grain, float, ActivationAction> OnActivate;
 
-    // public Action<int, double> OnSchedule;
-
-
-    public void Initialize(int grainID) {
-        ID = grainID;
+    // as long as the parent has a guid, we don't need a guid to locate the item under 
+    // the parent if the collection is of a fixed size that generates deterministically
+    // maybe if guids need to be set manually they can be done so outside of this class
+    public void Initialize(int grainIndex) {
+        GrainIndex = grainIndex;
+        Id = Guid.NewGuid();
     }
+
 
     # region MonoBehaviours
 
@@ -82,18 +79,18 @@ public class Grain : MonoBehaviour, IPositionedSequenceable
 
     # region ISequenceable
 
-    public int ID { get; private set; }
+    public Guid Id { get; private set; }
     public Vector3 Position { get => transform.position; }
-    public event EventHandler<SequenceableScheduleParameters> OnSchedule;
+    public event EventHandler<(double, SequenceableParameters)> OnSchedule;
     public event Action OnSequenceablePlayStart;
     public event Action OnSequenceablePlayEnd;
 
-    public void Schedule(SequenceableScheduleParameters parameters) {
-        OnSchedule?.Invoke(this, parameters);
+    public void Schedule(double time, SequenceableParameters parameters) {
+        OnSchedule?.Invoke(this, (time, parameters));
     }
 
     public void SequenceablePlayStart() {
-        PlayActivatedAnimation(Color.green, 1.8f, 10f);
+        PlayActivatedAnimation(Color.red, 1.8f, 10f);
         OnSequenceablePlayStart?.Invoke();
     }
 

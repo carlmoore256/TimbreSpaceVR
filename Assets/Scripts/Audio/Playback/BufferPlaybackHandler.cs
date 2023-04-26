@@ -58,8 +58,8 @@ public class BufferPlaybackHandler : MonoBehaviour
     /// <summary>
     /// Play buffer in the future given a WindowedPlaybackEvent using the scheduled player
     /// </summary>
-    public void PlayScheduled(WindowedPlaybackEvent playbackEvent, double scheduleTime = 0d) {
-        scheduledPlayer.SchedulePlay(playbackEvent, scheduleTime);
+    public ScheduledEvent PlayScheduled(WindowedPlaybackEvent playbackEvent, double scheduleTime = 0d) {
+        return scheduledPlayer.SchedulePlay(playbackEvent, scheduleTime);
     }
 
     public void Stop() {

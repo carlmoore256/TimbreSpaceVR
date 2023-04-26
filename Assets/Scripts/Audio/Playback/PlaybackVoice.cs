@@ -5,8 +5,8 @@ using UnityEngine;
 using NWaves.Signals;
 
 public class PlaybackVoice {
-    public string ID { get { return _ID; } }
-    private string _ID = Guid.NewGuid().ToString();
+    public string Id { get { return _id; } }
+    private string _id = Guid.NewGuid().ToString();
     private DiscreteSignal _signal;
     private Playhead playhead;
     private Mutex mut = new Mutex();

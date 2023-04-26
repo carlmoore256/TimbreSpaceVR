@@ -46,10 +46,10 @@ public class GrainModelOld : MonoBehaviour
         grainModelPlayback = gameObject.AddComponent<InstantaneousPlayer>();
 
         coroutineManager = new TransformCoroutineManager(this, () => {
-            TsvrApplication.DebugLogger.Log("Sending Spring Toggle broadcast message -> OFF", "[GrainModel]");
+            DebugLogger.Log("Sending Spring Toggle broadcast message -> OFF", "[GrainModel]");
             BroadcastMessage("ToggleReposition", true, SendMessageOptions.RequireReceiver);
         }, () => {
-            TsvrApplication.DebugLogger.Log("Sending Spring Toggle broadcast message -> ON", "[GrainModel]");
+            DebugLogger.Log("Sending Spring Toggle broadcast message -> ON", "[GrainModel]");
             if (HasBeenPlaced)
                 BroadcastMessage("ToggleReposition", false, SendMessageOptions.RequireReceiver);
         });
@@ -78,7 +78,7 @@ public class GrainModelOld : MonoBehaviour
     # region Event Handlers
     private void OnPositionParameterUpdate(AudioFeature[] posFeatures, float[] axisScale) {
         if (this.AudioBuffer == null) return;
-        TsvrApplication.DebugLogger.Log("Position Parameters changed " + posFeatures[0].ToString() + " " + posFeatures[1].ToString() + " " + posFeatures[2].ToString(), "[GrainModel]");
+        DebugLogger.Log("Position Parameters changed " + posFeatures[0].ToString() + " " + posFeatures[1].ToString() + " " + posFeatures[2].ToString(), "[GrainModel]");
         featureExtractor.BatchComputeFeatures(posFeatures, () => { // make sure we compute any features that need to be computed
             foreach(GrainOld grain in Grains)
                 grain.UpdatePosition(posFeatures[0], posFeatures[1], posFeatures[2], axisScale);
@@ -87,7 +87,7 @@ public class GrainModelOld : MonoBehaviour
 
     private void OnColorParameterUpdate(AudioFeature[] colFeatures, bool useHSV) {
         if (this.AudioBuffer == null) return;
-        TsvrApplication.DebugLogger.Log("Color Parameters changed " + colFeatures[0].ToString() + " " + colFeatures[1].ToString() + " " + colFeatures[2].ToString(), "[GrainModel]");
+        DebugLogger.Log("Color Parameters changed " + colFeatures[0].ToString() + " " + colFeatures[1].ToString() + " " + colFeatures[2].ToString(), "[GrainModel]");
         featureExtractor.BatchComputeFeatures(colFeatures, () => {
             foreach(GrainOld grain in Grains)
                 grain.UpdateColor(colFeatures[0], colFeatures[1], colFeatures[2], useHSV);
@@ -96,7 +96,7 @@ public class GrainModelOld : MonoBehaviour
 
     private void OnScaleParameterUpdate(AudioFeature sclFeature, float scaleMult, float scaleExp) {
         if (this.AudioBuffer == null) return;
-        TsvrApplication.DebugLogger.Log("Scale Parameters changed " + sclFeature.ToString(), "[GrainModel]");
+        DebugLogger.Log("Scale Parameters changed " + sclFeature.ToString(), "[GrainModel]");
         featureExtractor.BatchComputeFeatures(new AudioFeature[] {sclFeature}, () => {
             foreach(GrainOld grain in Grains)
                 grain.UpdateScale(sclFeature, scaleMult, scaleExp);
@@ -105,7 +105,7 @@ public class GrainModelOld : MonoBehaviour
 
     private void OnWindowParameterUpdate(int windowSize, int hopSize) {
         if (this.AudioBuffer == null) return;
-        TsvrApplication.DebugLogger.Log("Window Parameters changed " + windowSize.ToString() + " | Hop Size: " + hopSize.ToString(), "[GrainModel]");
+        DebugLogger.Log("Window Parameters changed " + windowSize.ToString() + " | Hop Size: " + hopSize.ToString(), "[GrainModel]");
         // window size or hop size has been changed, so all features need to be recalculated
         featureExtractor = new AudioFeatureAnalyzer(this.parameterHandler.WindowSize, this.parameterHandler.HopSize);
         ClearGrains(); // <- instead, consider using pool, and returning to pool

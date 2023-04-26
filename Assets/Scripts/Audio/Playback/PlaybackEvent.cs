@@ -4,8 +4,8 @@ using NWaves.Windows;
 
 public class PlaybackEvent
 {
-    public string ID = Guid.NewGuid().ToString();
-    public int submitterID;
+    public Guid Id = Guid.NewGuid();
+    public Guid submitterId;
     public float gain;
 
     public Action onPlayStart = null;
@@ -13,10 +13,16 @@ public class PlaybackEvent
 
     public PlaybackEvent() {}
 
-    public PlaybackEvent(float gain, int submitterID)
+    public PlaybackEvent(float gain, Guid submitterID)
     {
         this.gain = gain;
-        this.submitterID = submitterID;
+        this.submitterId = submitterID;
+    }
+
+    public PlaybackEvent(float gain, string submitterID)
+    {
+        this.gain = gain;
+        this.submitterId = Guid.Parse(submitterID);
     }
 }
 
@@ -36,18 +42,18 @@ public class WindowedPlaybackEvent : PlaybackEvent
             WindowTime bufferWindow,
             WindowTypes windowType,
             float gain,
-            int submitterID,
+            Guid submitterId,
             Action onPlayStart = null,
-            Action onPlayEnd = null) : base(gain, submitterID) {
+            Action onPlayEnd = null) : base(gain, submitterId) {
 
-        Initialize(bufferWindow, windowType, gain, submitterID);
+        Initialize(bufferWindow, windowType, gain, submitterId);
     }
 
     public void Initialize(
             WindowTime bufferWindow,
             WindowTypes windowType,
             float gain,
-            int submitterID) {
+            Guid submitterID) {
 
         this.bufferWindow = bufferWindow;
 
@@ -59,7 +65,7 @@ public class WindowedPlaybackEvent : PlaybackEvent
         }
 
         this.gain = gain;
-        this.submitterID = submitterID;
+        this.submitterId = submitterID;
         this.createdAt = DateTime.Now;
 
         // Set these to null, and subscribe/unsubscribe later
@@ -82,14 +88,6 @@ public class WindowedPlaybackEvent : PlaybackEvent
         onPlayStart += sequenceable.SequenceablePlayStart;
         onPlayEnd += sequenceable.SequenceablePlayEnd;
     }
-
-    // public void Set(float gain, WindowTime windowTime, float rms=1f, int submitterID=0) 
-    // {
-    //     this.gain = gain;
-    //     this.bufferWindow = windowTime;
-    //     this.submitterID = submitterID;
-    //     this.createdAt = DateTime.Now;
-    // }
 }
 
 

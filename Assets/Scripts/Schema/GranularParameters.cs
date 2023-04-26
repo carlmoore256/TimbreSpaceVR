@@ -1,3 +1,5 @@
+using System;
+using NWaves.Windows;
 [System.Serializable]
 public class GranularParameters {
     public AudioFeature xFeature = AudioFeature.MFCC_0;
@@ -13,7 +15,9 @@ public class GranularParameters {
     public float scaleExp = 0.1f;
     public bool useHSV = false;
     public float[] posAxisScale = { 0f,0f,0f }; // scale x,y,z axis
-    public int ID = 0;
+    public string ID = System.Guid.NewGuid().ToString();
+
+    public WindowTypes windowType = WindowTypes.Hann;
 
     public GranularParameters Copy() {
         GranularParameters copy = new GranularParameters();

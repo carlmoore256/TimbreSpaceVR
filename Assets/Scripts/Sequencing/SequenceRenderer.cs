@@ -2,61 +2,113 @@ using UnityEngine;
 using System.Collections;
 using System.Collections.Generic;
 using System.Linq;
+using System;
+
 /// <summary>
 /// Manages rendering trails between sequence items
 /// </summary>
-public class SequenceRenderer : MonoBehaviour, ISequenceObserver {
-    public ManagedLineRenderer lineRenderer;
-    private IEnumerable<SequenceItem> sequenceItems;
+public class SequenceRenderer : MonoBehaviour {
+    public int MaxLines = 10;
+    public float bezierSmoothness = 10f;
+    public ManagedLineRenderer LineRenderer { get; private set; }
+    private Sequence _sequence;
+    private Action _lineUpdate;
+    private List<Vector3> _positions = new List<Vector3>();
 
+    private List<SequenceItem> _recentSequenceItems = new List<SequenceItem>();
 
     private void OnEnable() {
-        // SequenceManager.Instance.AddObserver(this); <- hmm maybe 
-        lineRenderer = new ManagedLineRenderer(new LineRendererOptions {
-            startColor = Color.red,
-            endColor = Color.white,
+        LineRenderer = new ManagedLineRenderer(new LineRendererOptions {
+            startColor = new Color(1, 1, 1, 0.0f),
+            endColor = new Color(1, 1, 1, 1.0f),
             startWidth = 0.01f,
             endWidth = 0.01f
         }, "SequenceRenderer");
+
+        //_lineUpdate = ConnectSequenceablesBezier;
+        _lineUpdate = ConnectRecentSequenceables;
+        // _lineUpdate = ConnectAllSequenceables;
     }
 
-    public void OnSequenceUpdated(IEnumerable<SequenceItem> sequenceItems)
-    {
-        Debug.Log("Called onSequenceUpdated, num items " + sequenceItems.Count());
-        this.sequenceItems = sequenceItems;
+    public void SetSequence(Sequence sequence) {
+        _sequence = sequence;
+        _sequence.OnSequenceAdvance += OnSequenceAdvance;
     }
+
+
+    private void OnSequenceAdvance(SequenceItem sequenceItem) {
+        if (sequenceItem.Sequenceable is IPositionedSequenceable)
+        {
+            _recentSequenceItems.Add(sequenceItem);
+            
+            // if (_recentSequenceItems.Count > MaxLines) {
+            //     Debug.Log("LENGTH OF RECENT SEQUENCE ITEMS " + _recentSequenceItems.Count);
+            //     _recentSequenceItems.RemoveAt(0);
+            // }
+            while (_recentSequenceItems.Count > MaxLines) {
+                // Debug.Log("Removing old sequence item " + sequenceItem.RelativePlayTime);
+                _recentSequenceItems.RemoveAt(0);
+            }
+
+        }
+    }
+
 
     void Update() {
-        UpdateLineRenderer();
-    }
-
-    private void UpdateLineRenderer() {
-        if (sequenceItems == null || sequenceItems.Count() < 2) {
-            if (lineRenderer.Enabled) {
-                lineRenderer.Enabled = false;
+        if (_sequence.Count < 2) {
+            if (LineRenderer.Enabled) {
+                LineRenderer.Enabled = false;
             }
             return;
-        };
-
-        if (!lineRenderer.Enabled) {
-            lineRenderer.Enabled = true;
+        } else {
+            if (!LineRenderer.Enabled) {
+                LineRenderer.Enabled = true;
+            }
         }
-        // Filter IPositionedSequenceable items from the sequenceItems list
-        // var positionedSequenceables = sequenceItems
-        //     .Where(item => item.sequenceable is IPositionedSequenceable)
-        //     .Select(item => (IPositionedSequenceable)item.sequenceable);
 
-        // Obtain positions of the IPositionedSequenceable objects
-        List<Vector3> positions = new List<Vector3>();
-        foreach (var sequenceItem in sequenceItems)
+        _lineUpdate?.Invoke();
+    }
+
+    int _renderIndex = 0;
+
+    private void ConnectAllSequenceables() {
+        _positions.Clear();
+        foreach (var sequenceItem in _sequence)
         {
-            if (sequenceItem.sequenceable is IPositionedSequenceable)
-                positions.Add(((IPositionedSequenceable)sequenceItem.sequenceable).Position);
+            if (sequenceItem.Sequenceable is IPositionedSequenceable) {
+                _positions.Add(((IPositionedSequenceable)sequenceItem.Sequenceable).Position);
+            }
         }
-
         // VectorHelpers.GenerateBezierPoints(positions, 10);
+        LineRenderer.SetPositions(_positions);
+    }
 
-        // Update the line positions
-        lineRenderer.SetPositions(positions);
+    private void UpdatePositionsFromRecent()
+    {
+        _positions.Clear();
+        foreach (var sequenceItem in _recentSequenceItems)
+        {
+            if (sequenceItem.Sequenceable is IPositionedSequenceable)
+            {
+                _positions.Add(((IPositionedSequenceable)sequenceItem.Sequenceable).Position);
+            }
+        }
+    }
+
+    /// <summary>
+    /// Draw a line between the sequence items that have already played
+    /// </summary>
+    private void ConnectRecentSequenceablesBezier() {
+        UpdatePositionsFromRecent();
+        LineRenderer.SetPositions(VectorHelpers.GenerateBezierPoints(_positions, bezierSmoothness));
+    }
+
+    /// <summary>
+    /// Draw a line between the most recently played sequenceables
+    /// </summary>
+    private void ConnectRecentSequenceables() {
+        _positions.Clear();
+        UpdatePositionsFromRecent();
+        LineRenderer.SetPositions(_positions);
     }
 }

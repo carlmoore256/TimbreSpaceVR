@@ -46,9 +46,8 @@ public class TestGrainCloud : MonoBehaviour
             sequence = grainCloud.CreateLinearSequence(bpm);
             grainCloud.Sequences.Add(sequence);
 
-            grainCloud.Schedule(new SequenceableScheduleParameters {
-                scheduleTime = AudioSettings.dspTime + 0.5d,
-                gain = 1.0f
+            grainCloud.Schedule(AudioSettings.dspTime + 0.5d, new SequenceableParameters {
+                Gain = 1.0f
             });
             
             // grainCloud.Schedule(AudioSettings.dspTime + 0.5f, 1.0f, () => {

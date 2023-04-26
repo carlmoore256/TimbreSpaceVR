@@ -38,7 +38,7 @@ RenderSettings:
   m_ReflectionIntensity: 1
   m_CustomReflection: {fileID: 0}
   m_Sun: {fileID: 0}
-  m_IndirectSpecularColor: {r: 0.031271454, g: 0.03943447, b: 0.06840527, a: 1}
+  m_IndirectSpecularColor: {r: 0.034763705, g: 0.034763705, b: 0.034763705, a: 1}
   m_UseRadianceAmbientProbe: 0
 --- !u!157 &3
 LightmapSettings:
@@ -168,11 +168,13 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   masterManager: {fileID: 11400000, guid: 6ff26babf2693cc428b062ad747367ba, type: 2}
-  xrPlayer: {fileID: 1932637444}
-  nonXRPlayer: {fileID: 2061457987}
+  XRPlayer: {fileID: 1932637444}
+  NonXRPlayer: {fileID: 2061457987}
+  useOrthographicCamera: 0
   skyboxColorTop: {r: 0, g: 0, b: 0, a: 1}
   skyboxColorMiddle: {r: 0, g: 0, b: 0, a: 1}
   skyboxColorBottom: {r: 0, g: 0, b: 0, a: 1}
+  skyboxMaterial: {fileID: 2100000, guid: 5e689839123d7f34891e38d8eb07870b, type: 2}
 --- !u!4 &97606010 stripped
 Transform:
   m_CorrespondingSourceObject: {fileID: 6768700354464914481, guid: fe23510c161267e4fba2b4ae814d01dd, type: 3}
@@ -266,6 +268,10 @@ PrefabInstance:
       propertyPath: m_Name
       value: GrainCloudTester
       objectReference: {fileID: 0}
+    - target: {fileID: 2203850073860361105, guid: 42c965f993e8e4c4d8302a26c6202fc3, type: 3}
+      propertyPath: m_IsActive
+      value: 0
+      objectReference: {fileID: 0}
     - target: {fileID: 6640833133853474832, guid: 42c965f993e8e4c4d8302a26c6202fc3, type: 3}
       propertyPath: m_RootOrder
       value: 7
@@ -326,6 +332,76 @@ PrefabInstance:
       insertIndex: -1
       addedObject: {fileID: 1529067716}
   m_SourcePrefab: {fileID: 100100000, guid: 42c965f993e8e4c4d8302a26c6202fc3, type: 3}
+--- !u!1 &400334309
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 400334311}
+  - component: {fileID: 400334310}
+  m_Layer: 0
+  m_Name: GameObject
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!114 &400334310
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 400334309}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: c94b0d8662a33c14cb34e2a65b2a5691, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  metadataURI: https://timbrespace.s3.amazonaws.com/tmpm9qa0u2c.json
+  bpm: 120
+  parameterValues:
+    xFeature: 11
+    yFeature: 12
+    zFeature: 13
+    rFeature: 14
+    gFeature: 15
+    bFeature: 16
+    scaleFeature: 9
+    windowSize: 8192
+    hopSize: 8192
+    scaleMult: 0.01
+    scaleExp: 0.1
+    useHSV: 0
+    posAxisScale:
+    - 0
+    - 0
+    - 0
+    ID: ca448cfb-fd34-4d1d-b061-57b116c289ed
+    windowType: 4
+  patterns:
+  - x-x-x-x-x-x-x-x-
+  - x-------x-------
+  - x-----x-xx---x-x-
+  - ---x---x---x---x
+--- !u!4 &400334311
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 400334309}
+  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalPosition: {x: 0, y: 0, z: 0}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children: []
+  m_Father: {fileID: 0}
+  m_RootOrder: 11
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!1 &495631270
 GameObject:
   m_ObjectHideFlags: 0
@@ -454,6 +530,266 @@ AudioSource:
     m_PreInfinity: 2
     m_PostInfinity: 2
     m_RotationOrder: 4
+--- !u!1001 &747340645
+PrefabInstance:
+  m_ObjectHideFlags: 0
+  serializedVersion: 2
+  m_Modification:
+    serializedVersion: 3
+    m_TransformParent: {fileID: 0}
+    m_Modifications:
+    - target: {fileID: 2203850073860361105, guid: 42c965f993e8e4c4d8302a26c6202fc3, type: 3}
+      propertyPath: m_Name
+      value: GrainCloudTester (3)
+      objectReference: {fileID: 0}
+    - target: {fileID: 2203850073860361105, guid: 42c965f993e8e4c4d8302a26c6202fc3, type: 3}
+      propertyPath: m_IsActive
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 6640833133853474832, guid: 42c965f993e8e4c4d8302a26c6202fc3, type: 3}
+      propertyPath: m_RootOrder
+      value: 10
+      objectReference: {fileID: 0}
+    - target: {fileID: 6640833133853474832, guid: 42c965f993e8e4c4d8302a26c6202fc3, type: 3}
+      propertyPath: m_LocalPosition.x
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 6640833133853474832, guid: 42c965f993e8e4c4d8302a26c6202fc3, type: 3}
+      propertyPath: m_LocalPosition.y
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 6640833133853474832, guid: 42c965f993e8e4c4d8302a26c6202fc3, type: 3}
+      propertyPath: m_LocalPosition.z
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 6640833133853474832, guid: 42c965f993e8e4c4d8302a26c6202fc3, type: 3}
+      propertyPath: m_LocalRotation.w
+      value: 1
+      objectReference: {fileID: 0}
+    - target: {fileID: 6640833133853474832, guid: 42c965f993e8e4c4d8302a26c6202fc3, type: 3}
+      propertyPath: m_LocalRotation.x
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 6640833133853474832, guid: 42c965f993e8e4c4d8302a26c6202fc3, type: 3}
+      propertyPath: m_LocalRotation.y
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 6640833133853474832, guid: 42c965f993e8e4c4d8302a26c6202fc3, type: 3}
+      propertyPath: m_LocalRotation.z
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 6640833133853474832, guid: 42c965f993e8e4c4d8302a26c6202fc3, type: 3}
+      propertyPath: m_LocalEulerAnglesHint.x
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 6640833133853474832, guid: 42c965f993e8e4c4d8302a26c6202fc3, type: 3}
+      propertyPath: m_LocalEulerAnglesHint.y
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 6640833133853474832, guid: 42c965f993e8e4c4d8302a26c6202fc3, type: 3}
+      propertyPath: m_LocalEulerAnglesHint.z
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 8027904651155486539, guid: 42c965f993e8e4c4d8302a26c6202fc3, type: 3}
+      propertyPath: bpm
+      value: 393.4
+      objectReference: {fileID: 0}
+    m_RemovedComponents:
+    - {fileID: 8027904651155486539, guid: 42c965f993e8e4c4d8302a26c6202fc3, type: 3}
+    m_RemovedGameObjects: []
+    m_AddedGameObjects: []
+    m_AddedComponents:
+    - targetCorrespondingSourceObject: {fileID: 2203850073860361105, guid: 42c965f993e8e4c4d8302a26c6202fc3, type: 3}
+      insertIndex: -1
+      addedObject: {fileID: 747340648}
+    - targetCorrespondingSourceObject: {fileID: 2203850073860361105, guid: 42c965f993e8e4c4d8302a26c6202fc3, type: 3}
+      insertIndex: -1
+      addedObject: {fileID: 747340647}
+  m_SourcePrefab: {fileID: 100100000, guid: 42c965f993e8e4c4d8302a26c6202fc3, type: 3}
+--- !u!1 &747340646 stripped
+GameObject:
+  m_CorrespondingSourceObject: {fileID: 2203850073860361105, guid: 42c965f993e8e4c4d8302a26c6202fc3, type: 3}
+  m_PrefabInstance: {fileID: 747340645}
+  m_PrefabAsset: {fileID: 0}
+--- !u!114 &747340647
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 747340646}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 72c8c9c5897aa4f4c9753b3a99c56d7c, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  metadataURI: https://timbrespace.s3.amazonaws.com/tmp84z9nksu.json
+  featureChangeInterval: 100000
+  bpm: 200
+  parameterValues:
+    xFeature: 12
+    yFeature: 13
+    zFeature: 14
+    rFeature: 15
+    gFeature: 16
+    bFeature: 17
+    scaleFeature: 9
+    windowSize: 8192
+    hopSize: 8192
+    scaleMult: 0.01
+    scaleExp: 0.1
+    useHSV: 0
+    posAxisScale:
+    - 0
+    - 0
+    - 0
+    ID: 
+    windowType: 4
+--- !u!114 &747340648
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 747340646}
+  m_Enabled: 0
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: c1b8640baa3a0e24791f29d7cd83a289, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  metadataURI: https://timbrespace.s3.amazonaws.com/tmpynh_q9b9.json
+  grainCloud: {fileID: 0}
+  bpm: 120
+--- !u!1001 &796520689
+PrefabInstance:
+  m_ObjectHideFlags: 0
+  serializedVersion: 2
+  m_Modification:
+    serializedVersion: 3
+    m_TransformParent: {fileID: 0}
+    m_Modifications:
+    - target: {fileID: 2203850073860361105, guid: 42c965f993e8e4c4d8302a26c6202fc3, type: 3}
+      propertyPath: m_Name
+      value: GrainCloudTester (2)
+      objectReference: {fileID: 0}
+    - target: {fileID: 2203850073860361105, guid: 42c965f993e8e4c4d8302a26c6202fc3, type: 3}
+      propertyPath: m_IsActive
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 6640833133853474832, guid: 42c965f993e8e4c4d8302a26c6202fc3, type: 3}
+      propertyPath: m_RootOrder
+      value: 9
+      objectReference: {fileID: 0}
+    - target: {fileID: 6640833133853474832, guid: 42c965f993e8e4c4d8302a26c6202fc3, type: 3}
+      propertyPath: m_LocalPosition.x
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 6640833133853474832, guid: 42c965f993e8e4c4d8302a26c6202fc3, type: 3}
+      propertyPath: m_LocalPosition.y
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 6640833133853474832, guid: 42c965f993e8e4c4d8302a26c6202fc3, type: 3}
+      propertyPath: m_LocalPosition.z
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 6640833133853474832, guid: 42c965f993e8e4c4d8302a26c6202fc3, type: 3}
+      propertyPath: m_LocalRotation.w
+      value: 1
+      objectReference: {fileID: 0}
+    - target: {fileID: 6640833133853474832, guid: 42c965f993e8e4c4d8302a26c6202fc3, type: 3}
+      propertyPath: m_LocalRotation.x
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 6640833133853474832, guid: 42c965f993e8e4c4d8302a26c6202fc3, type: 3}
+      propertyPath: m_LocalRotation.y
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 6640833133853474832, guid: 42c965f993e8e4c4d8302a26c6202fc3, type: 3}
+      propertyPath: m_LocalRotation.z
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 6640833133853474832, guid: 42c965f993e8e4c4d8302a26c6202fc3, type: 3}
+      propertyPath: m_LocalEulerAnglesHint.x
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 6640833133853474832, guid: 42c965f993e8e4c4d8302a26c6202fc3, type: 3}
+      propertyPath: m_LocalEulerAnglesHint.y
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 6640833133853474832, guid: 42c965f993e8e4c4d8302a26c6202fc3, type: 3}
+      propertyPath: m_LocalEulerAnglesHint.z
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 8027904651155486539, guid: 42c965f993e8e4c4d8302a26c6202fc3, type: 3}
+      propertyPath: bpm
+      value: 393.4
+      objectReference: {fileID: 0}
+    m_RemovedComponents:
+    - {fileID: 8027904651155486539, guid: 42c965f993e8e4c4d8302a26c6202fc3, type: 3}
+    m_RemovedGameObjects: []
+    m_AddedGameObjects: []
+    m_AddedComponents:
+    - targetCorrespondingSourceObject: {fileID: 2203850073860361105, guid: 42c965f993e8e4c4d8302a26c6202fc3, type: 3}
+      insertIndex: -1
+      addedObject: {fileID: 796520692}
+    - targetCorrespondingSourceObject: {fileID: 2203850073860361105, guid: 42c965f993e8e4c4d8302a26c6202fc3, type: 3}
+      insertIndex: -1
+      addedObject: {fileID: 796520691}
+  m_SourcePrefab: {fileID: 100100000, guid: 42c965f993e8e4c4d8302a26c6202fc3, type: 3}
+--- !u!1 &796520690 stripped
+GameObject:
+  m_CorrespondingSourceObject: {fileID: 2203850073860361105, guid: 42c965f993e8e4c4d8302a26c6202fc3, type: 3}
+  m_PrefabInstance: {fileID: 796520689}
+  m_PrefabAsset: {fileID: 0}
+--- !u!114 &796520691
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 796520690}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 72c8c9c5897aa4f4c9753b3a99c56d7c, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  metadataURI: https://timbrespace.s3.amazonaws.com/tmplv_wzcoo.json
+  featureChangeInterval: 100000
+  bpm: 100
+  parameterValues:
+    xFeature: 12
+    yFeature: 13
+    zFeature: 14
+    rFeature: 15
+    gFeature: 16
+    bFeature: 17
+    scaleFeature: 9
+    windowSize: 8192
+    hopSize: 8192
+    scaleMult: 0.01
+    scaleExp: 0.1
+    useHSV: 0
+    posAxisScale:
+    - 0
+    - 0
+    - 0
+    ID: 
+    windowType: 4
+--- !u!114 &796520692
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 796520690}
+  m_Enabled: 0
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: c1b8640baa3a0e24791f29d7cd83a289, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  metadataURI: https://timbrespace.s3.amazonaws.com/tmpynh_q9b9.json
+  grainCloud: {fileID: 0}
+  bpm: 120
 --- !u!1 &880192831
 GameObject:
   m_ObjectHideFlags: 0
@@ -639,7 +975,7 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 5884836012591945629, guid: 617b7960b7a266744959cd27fdd8091a, type: 3}
       propertyPath: m_IsActive
-      value: 1
+      value: 0
       objectReference: {fileID: 0}
     m_RemovedComponents: []
     m_RemovedGameObjects: []
@@ -673,14 +1009,14 @@ MonoBehaviour:
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 1529067712}
-  m_Enabled: 1
+  m_Enabled: 0
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 72c8c9c5897aa4f4c9753b3a99c56d7c, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  metadataURI: https://timbrespace.s3.amazonaws.com/tmp56xoj0rc.json
-  featureChangeInterval: 5
-  bpm: 1000
+  metadataURI: https://timbrespace.s3.amazonaws.com/tmp66aycpky.json
+  featureChangeInterval: 100000
+  bpm: 120
   parameterValues:
     xFeature: 12
     yFeature: 13
@@ -698,7 +1034,8 @@ MonoBehaviour:
     - 0
     - 0
     - 0
-    ID: 0
+    ID: 
+    windowType: 4
 --- !u!1 &1726958731
 GameObject:
   m_ObjectHideFlags: 0
@@ -822,6 +1159,118 @@ GameObject:
   m_CorrespondingSourceObject: {fileID: 6768700354465267729, guid: fe23510c161267e4fba2b4ae814d01dd, type: 3}
   m_PrefabInstance: {fileID: 294184481}
   m_PrefabAsset: {fileID: 0}
+--- !u!1001 &1939355931
+PrefabInstance:
+  m_ObjectHideFlags: 0
+  serializedVersion: 2
+  m_Modification:
+    serializedVersion: 3
+    m_TransformParent: {fileID: 0}
+    m_Modifications:
+    - target: {fileID: 2203850073860361105, guid: 42c965f993e8e4c4d8302a26c6202fc3, type: 3}
+      propertyPath: m_Name
+      value: GrainCloudTester (1)
+      objectReference: {fileID: 0}
+    - target: {fileID: 2203850073860361105, guid: 42c965f993e8e4c4d8302a26c6202fc3, type: 3}
+      propertyPath: m_IsActive
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 6640833133853474832, guid: 42c965f993e8e4c4d8302a26c6202fc3, type: 3}
+      propertyPath: m_RootOrder
+      value: 8
+      objectReference: {fileID: 0}
+    - target: {fileID: 6640833133853474832, guid: 42c965f993e8e4c4d8302a26c6202fc3, type: 3}
+      propertyPath: m_LocalPosition.x
+      value: 0.57
+      objectReference: {fileID: 0}
+    - target: {fileID: 6640833133853474832, guid: 42c965f993e8e4c4d8302a26c6202fc3, type: 3}
+      propertyPath: m_LocalPosition.y
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 6640833133853474832, guid: 42c965f993e8e4c4d8302a26c6202fc3, type: 3}
+      propertyPath: m_LocalPosition.z
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 6640833133853474832, guid: 42c965f993e8e4c4d8302a26c6202fc3, type: 3}
+      propertyPath: m_LocalRotation.w
+      value: 1
+      objectReference: {fileID: 0}
+    - target: {fileID: 6640833133853474832, guid: 42c965f993e8e4c4d8302a26c6202fc3, type: 3}
+      propertyPath: m_LocalRotation.x
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 6640833133853474832, guid: 42c965f993e8e4c4d8302a26c6202fc3, type: 3}
+      propertyPath: m_LocalRotation.y
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 6640833133853474832, guid: 42c965f993e8e4c4d8302a26c6202fc3, type: 3}
+      propertyPath: m_LocalRotation.z
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 6640833133853474832, guid: 42c965f993e8e4c4d8302a26c6202fc3, type: 3}
+      propertyPath: m_LocalEulerAnglesHint.x
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 6640833133853474832, guid: 42c965f993e8e4c4d8302a26c6202fc3, type: 3}
+      propertyPath: m_LocalEulerAnglesHint.y
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 6640833133853474832, guid: 42c965f993e8e4c4d8302a26c6202fc3, type: 3}
+      propertyPath: m_LocalEulerAnglesHint.z
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 8027904651155486539, guid: 42c965f993e8e4c4d8302a26c6202fc3, type: 3}
+      propertyPath: bpm
+      value: 393.4
+      objectReference: {fileID: 0}
+    m_RemovedComponents:
+    - {fileID: 8027904651155486539, guid: 42c965f993e8e4c4d8302a26c6202fc3, type: 3}
+    m_RemovedGameObjects: []
+    m_AddedGameObjects: []
+    m_AddedComponents:
+    - targetCorrespondingSourceObject: {fileID: 2203850073860361105, guid: 42c965f993e8e4c4d8302a26c6202fc3, type: 3}
+      insertIndex: -1
+      addedObject: {fileID: 1939355933}
+  m_SourcePrefab: {fileID: 100100000, guid: 42c965f993e8e4c4d8302a26c6202fc3, type: 3}
+--- !u!1 &1939355932 stripped
+GameObject:
+  m_CorrespondingSourceObject: {fileID: 2203850073860361105, guid: 42c965f993e8e4c4d8302a26c6202fc3, type: 3}
+  m_PrefabInstance: {fileID: 1939355931}
+  m_PrefabAsset: {fileID: 0}
+--- !u!114 &1939355933
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1939355932}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 72c8c9c5897aa4f4c9753b3a99c56d7c, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  metadataURI: https://timbrespace.s3.amazonaws.com/tmplv_wzcoo.json
+  featureChangeInterval: 5
+  bpm: 100
+  parameterValues:
+    xFeature: 12
+    yFeature: 13
+    zFeature: 14
+    rFeature: 15
+    gFeature: 16
+    bFeature: 17
+    scaleFeature: 9
+    windowSize: 8192
+    hopSize: 8192
+    scaleMult: 0.01
+    scaleExp: 0.1
+    useHSV: 0
+    posAxisScale:
+    - 0
+    - 0
+    - 0
+    ID: 
+    windowType: 4
 --- !u!1 &2061457987
 GameObject:
   m_ObjectHideFlags: 0
@@ -935,7 +1384,7 @@ Camera:
   far clip plane: 1000
   field of view: 60
   orthographic: 0
-  orthographic size: 5
+  orthographic size: 1.53
   m_Depth: 0
   m_CullingMask:
     serializedVersion: 2

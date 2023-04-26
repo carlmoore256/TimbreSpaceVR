@@ -135,7 +135,7 @@ public class GrainCloudSpawner : MonoBehaviour {
 
     public static GrainCloud MergeClouds(GrainCloud cloud1, GrainCloud cloud2) {
         // DiscreteSignal concatenatedBuffer = DiscreteSignalExtensions.Concatenate(cloud1.granularBuffer.audioBuffer, cloud2.granularBuffer.audioBuffer);
-        DiscreteSignal concatenatedBuffer = cloud1.granularBuffer.ConcatenateBuffer(cloud2.granularBuffer);
+        DiscreteSignal concatenatedBuffer = cloud1.GranularBuffer.ConcatenateBuffer(cloud2.GranularBuffer);
         GrainCloud mergedCloud = Spawn(concatenatedBuffer);
         Destroy(cloud1.gameObject);
         Destroy(cloud2.gameObject);

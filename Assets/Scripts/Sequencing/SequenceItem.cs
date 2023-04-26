@@ -1,22 +1,14 @@
 using UnityEngine;
 using System;
 
+
 [Serializable]
 public class SequenceItem {
-    public ISequenceable sequenceable;
-    // public Action onPlayStart;
-    // public Action onPlayEnd;
-    public float gain;
-    public bool isMuted;
-    public double scheduleTime;
+    public ISequenceable Sequenceable { get; set; }
 
-    public void SetScheduleTime(double scheduleTime) {
-        this.scheduleTime = scheduleTime;
-    }
+    public SequenceableParameters Parameters { get; set; } = new SequenceableParameters();
 
-    // public double endTime;
-    // public void SetSequenceTime(double startTime, double endTime) {
-    //     this.scheduleTime = startTime;
-    //     this.endTime = endTime;
-    // }
+    public double RelativePlayTime { get; set; } = -1d; // sequenceEditor/scheduler will compute these
+
+    public BeatIndex BeatIndex { get; set; } // if null, rescheduling bpm will ignore this sequenceable
 }

@@ -51,7 +51,7 @@ public class GrainModel : MonoBehaviour, IInspectable
             // OnRepositionStartEvent?.Invoke();
         }, () => {
             Debug.Log("GrainModel ON COROUTINE END");
-            TsvrApplication.DebugLogger.Log("Sending Spring Toggle broadcast message -> ON", "[GrainModel]");
+            DebugLogger.Log("Sending Spring Toggle broadcast message -> ON", "[GrainModel]");
             if (HasBeenPlaced) {
                 BroadcastMessage("ChangePositioningState", Grain.GrainState.Idle, SendMessageOptions.DontRequireReceiver);
                 // BroadcastMessage("ToggleReposition", false, SendMessageOptions.DontRequireReceiver);

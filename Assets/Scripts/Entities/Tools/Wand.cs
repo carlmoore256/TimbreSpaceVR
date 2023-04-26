@@ -51,7 +51,7 @@ public class Wand : TsvrTool {
 
         triggerValueHandler.AddObserver(FloatInputActionHandler.ActionType.Value, (value) => {
             Collider[] hitColliders = Physics.OverlapSphere(wandTip.transform.position, wandTip.transform.localScale.x * 0.51f, 1<<7);
-            ArrayHelpers.Shuffle<Collider>(hitColliders);
+            CollectionHelpers.Shuffle<Collider>(hitColliders);
             foreach (Collider hitCollider in hitColliders) {
                 // hitCollider.GetComponent<GrainOld>().PlayGrain(value * value);
                 hitCollider.GetComponent<Grain>().Activate(value * value, Grain.ActivationAction.Play);
@@ -91,7 +91,7 @@ public class Wand : TsvrTool {
         );
 
         if (animations != null) {
-            TsvrApplication.DebugLogger.Log("Playing equip animation");
+            DebugLogger.Log("Playing equip animation");
             animations.Play("EquipPlayWand");
         }
     }
@@ -99,7 +99,7 @@ public class Wand : TsvrTool {
 
     public void OnDisable() {
         if (animations != null) {
-            TsvrApplication.DebugLogger.Log("Playing unequip animation");
+            DebugLogger.Log("Playing unequip animation");
             animations.Play("UnequipPlayWand");
         }
         wandDistanceTwistLock.UnsubscribeActions();

@@ -24,4 +24,23 @@ public static class ObjectHelpers
         }
         return component;
     }
+
+    public static GameObject FindOrCreate(GameObject prefab, string name, string id=null, Transform parent=null) {
+        if (id != null) {
+            name = $"{name}_{id}";
+        }
+        var go = GameObject.Find(name);
+        if (go == null) {
+            if (prefab != null) {
+                go = GameObject.Instantiate(prefab);
+            } else {
+                go = new GameObject(name);
+            }
+            go.name = name;
+        }
+        if (parent != null) {
+            go.transform.SetParent(parent);
+        }
+        return go;
+    }
 }

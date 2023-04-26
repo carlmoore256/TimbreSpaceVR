@@ -1,5 +1,6 @@
 using System;
 using UnityEngine;
+using NWaves.Windows;
 
 /// <summary>
 /// State manager for GrainModel parameters, invoking callbacks when parameters are changed
@@ -103,7 +104,12 @@ public class GranularParameterHandler {
         onFeaturePositionUpdate?.Invoke(PositionFeatures, value);
     } }
 
-    public int ID { get => parameters.ID; set => parameters.ID = value; }
+    public Guid Id { get => Guid.Parse(parameters.ID); set => parameters.ID = value.ToString(); }
+    
+    public WindowTypes WindowType { get => parameters.windowType; set {
+        parameters.windowType = value;
+        onWindowUpdate?.Invoke(parameters.windowSize, parameters.hopSize);
+    } }
 
     /** Set window size by the number of hops per window */
     public void SetWindowByHops(int hopCount) {

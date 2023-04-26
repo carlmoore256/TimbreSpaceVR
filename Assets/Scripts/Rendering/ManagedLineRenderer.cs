@@ -8,6 +8,7 @@ public class ManagedLineRenderer
     public GameObject gameObject;
     private LineRendererOptions options;
     private LineRenderer lineRenderer;
+    private const string objectName = "WorldSpaceLineRenderer";
 
     private bool _enabled;
     public bool Enabled {
@@ -17,16 +18,16 @@ public class ManagedLineRenderer
 
     public ManagedLineRenderer(LineRendererOptions options, string id = null) {
         this.options = options;
-        string objectName = "WorldSpaceLineRenderer";
-        if (id != null) {
-            objectName += "_" + id;
-        }
-        var _gameObject = GameObject.Find(objectName);
-        if (_gameObject == null) {
-            _gameObject = GameObject.Instantiate(TsvrApplication.Config.worldSpaceLinePrefab);
-            _gameObject.name = objectName;
-        }
-        this.gameObject = _gameObject;
+        // if (id != null) {
+        //     objectName += "_" + id;
+        // }
+        // var _gameObject = GameObject.Find(objectName);
+        // if (_gameObject == null) {
+        //     _gameObject = GameObject.Instantiate(TsvrApplication.Config.worldSpaceLinePrefab);
+        //     _gameObject.name = objectName;
+        // }
+        
+        this.gameObject = ObjectHelpers.FindOrCreate(TsvrApplication.Config.worldSpaceLinePrefab, objectName, id);
         lineRenderer = this.gameObject.GetComponent<LineRenderer>();
         ApplyOptions(options);
         SetEnabled(false);

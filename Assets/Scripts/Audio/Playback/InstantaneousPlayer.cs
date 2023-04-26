@@ -12,7 +12,7 @@ public class InstantaneousPlayer : PolyvoicePlayer
 {
     private Queue<PlaybackVoice> availableVoices = new Queue<PlaybackVoice>();
     private SMABuffer smaScore = new SMABuffer(10);
-    Dictionary<int, List<DateTime>> requestCounts = new Dictionary<int, List<DateTime>>();
+    Dictionary<Guid, List<DateTime>> requestCounts = new Dictionary<Guid, List<DateTime>>();
     private readonly TimeSpan timeWindow = TimeSpan.FromSeconds(3); // adjust this time window based on your needs
 
     
@@ -58,13 +58,13 @@ public class InstantaneousPlayer : PolyvoicePlayer
     private void ExecuteEvent(float score, WindowedPlaybackEvent e, PlaybackVoice v) {
         smaScore.Add(score);
         v.Play(e);
-        if (!requestCounts.ContainsKey(e.submitterID))
-            requestCounts[e.submitterID] = new List<DateTime>();
-        requestCounts[e.submitterID].Add(e.createdAt);
+        if (!requestCounts.ContainsKey(e.submitterId))
+            requestCounts[e.submitterId] = new List<DateTime>();
+        requestCounts[e.submitterId].Add(e.createdAt);
 
-        for (int i = requestCounts[e.submitterID].Count - 1; i >= 0; i--) {
-            if (DateTime.Now - requestCounts[e.submitterID][i] > timeWindow) {
-                requestCounts[e.submitterID].RemoveAt(i);
+        for (int i = requestCounts[e.submitterId].Count - 1; i >= 0; i--) {
+            if (DateTime.Now - requestCounts[e.submitterId][i] > timeWindow) {
+                requestCounts[e.submitterId].RemoveAt(i);
             }
         }
     }

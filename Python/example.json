@@ -43,7 +43,12 @@
             "bytes": 7001658
         }
     ],
-    "session": {
-        "sequences": []
-    }
+    "session": [
+        {
+            "id" : "some-guid-999", 
+            "version" : "0.0.1",
+            "type" : "sequence",
+            "resourceHash": "aed81f0321367154fd9e2477713741cea5eeb62b96c69ec8e47c1b3dcc5e27b4"
+        }
+    ]
 }

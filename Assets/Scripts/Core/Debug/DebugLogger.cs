@@ -6,7 +6,7 @@ using UnityEngine;
 public class DebugLogger : ScriptableObject
 {
     public GameObject XRDebugConsole;
-    private bool isEnabled = false;
+    private static bool isEnabled = false;
     void OnEnable() {
         // isEnabled = TsvrApplication.Settings.EnableXRLogger;
         // Debug.Log("SETTING XRDebugConsole to " + isEnabled.ToString(), XRDebugConsole);
@@ -26,7 +26,7 @@ public class DebugLogger : ScriptableObject
         // }
     }
 
-    public void Log(string message, string category="", GameObject context=null) {
+    public static void Log(string message, string category="", GameObject context=null) {
         if (!isEnabled) return;
 
         if (category != "") {

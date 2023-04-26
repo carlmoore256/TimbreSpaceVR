@@ -1,6 +1,9 @@
 using UnityEngine;
+using System.Collections.Generic;
+using System.Linq;
+using System;
 
-public static class ArrayHelpers {
+public static class CollectionHelpers {
     public static void Shuffle<T>(T[] array) {
         int n = array.Length;
         for (int i = 0; i < n; i++) {
@@ -33,5 +36,25 @@ public static class ArrayHelpers {
         }
 
         return result;
+    }
+
+    public static List<int> ArgsortTopPairs(Dictionary<int, float> dict1, Dictionary<int, float> dict2, int topN, Func<float, float, float> combineFunc)
+    {
+        var combinedDict = new Dictionary<int, float>();
+
+        foreach (var kvp in dict1)
+        {
+            int index = kvp.Key;
+            float value1 = kvp.Value;
+
+            if (dict2.TryGetValue(index, out float value2))
+            {
+                float combinedValue = combineFunc(value1, value2);
+                combinedDict[index] = combinedValue;
+            }
+        }
+
+        var sortedIndexes = combinedDict.OrderByDescending(kvp => kvp.Value).Take(topN).Select(kvp => kvp.Key).ToList();
+        return sortedIndexes;
     }
 }

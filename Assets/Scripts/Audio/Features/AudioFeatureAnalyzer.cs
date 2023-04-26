@@ -13,34 +13,6 @@ using System.Linq;
 using UnityEngine;
 
 
-
-public class FeatureVector
-{
-    public AudioFeature feature;
-    public float[] values;
-    public float min;
-    public float max;
-    public int Length { get { return values.Length; } }
-    public FeatureVector(float[] values, AudioFeature feature)
-    {
-        this.values = values;
-        this.feature = feature;
-        this.min = values.Min();
-        this.max = values.Max();
-    }
-
-    public float GetNormalized(int index, float rangeLow = 0, float rangeHigh = 1)
-    {
-        return (((values[index] - min) / (max - min)) * (rangeHigh - rangeLow)) + rangeLow;
-    }
-
-    public float this[int index]
-    {
-        get { return values[index]; }
-        set { values[index] = value; }
-    }
-}
-
 /// <summary>
 /// Handles audio feature analysis on a given DiscreteSignal, given WindowSize (samples) and HopSize (samples).
 /// Provides APIs to retrieve a FeatureVector for a given AudioFeature, and computations are cached to to avoid recomputing.
