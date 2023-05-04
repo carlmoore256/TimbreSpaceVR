@@ -256,7 +256,7 @@ public class AudioFeatureAnalyzer
     {
         List<float[]> vectors = extractor.ParallelComputeFrom(Signal);
         FeaturePostProcessing.NormalizeMean(vectors);
-        if (WindowTimes == null) CalculateWindowTimes();
+        // if (WindowTimes == null) CalculateWindowTimes();
         var names = extractor.FeatureDescriptions;    
         var namesJoined = string.Join(",", names);
         Debug.Log("Running feature extraction on " + names.Count + " " + namesJoined + " features");

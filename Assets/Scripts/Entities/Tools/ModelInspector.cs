@@ -26,7 +26,7 @@ public class ModelInspector : TsvrTool
     public Color lineUnassignedHoverColor;
     public Color linePositioningColor;
 
-    private GrainModelOld selectedModel;
+    private InteractableObject _selectedObject;
     private RaycastHit raycastHit;
 
     private float modelScale;
@@ -55,24 +55,24 @@ public class ModelInspector : TsvrTool
         ControllerActions.RemoveListener(ControllerActions.toolAxis2D, OnAxis2D, InputActionPhase.Performed);
         ControllerActions.RemoveListener(ControllerActions.uiSelect, OnSubmit, InputActionPhase.Performed);
         Destroy(lineRenderer.gameObject);
-        if (selectedModel != null && !selectedModel.HasBeenPlaced) {
-            Debug.Log($"Selected model not placed, destroying {selectedModel}");
-            Destroy(selectedModel.gameObject);
+        if (_selectedObject != null && !_selectedObject.PlacementState.Equals(PlacementState.Placed)) {
+            Debug.Log($"Selected model not placed, destroying {_selectedObject}");
+            Destroy(_selectedObject.gameObject);
         }
     }
 
     void Update()
     {
         var lineEndPosition = lineStart.position + lineStart.forward * 100f;
-        if (selectedModel != null) {
-            lineEndPosition = selectedModel.transform.position + selectedModel.transform.forward * selectedModel.transform.localScale.z;
+        if (_selectedObject != null) {
+            lineEndPosition = _selectedObject.transform.position + _selectedObject.transform.forward * _selectedObject.transform.localScale.z;
         }
         
         switch(state) {
             case ModelMultitoolState.Inspecting:
-                if (selectedModel != null) {
-                    UpdateLine(selectedModel.transform.position, lineInspectColor);
-                    selectedModel.Inspect();
+                if (_selectedObject != null) {
+                    UpdateLine(_selectedObject.transform.position, lineInspectColor);
+                    _selectedObject.Inspect();
                 }
                 break;
             case ModelMultitoolState.Positioning:
@@ -80,11 +80,13 @@ public class ModelInspector : TsvrTool
                 //     lineRenderer.gameObject.SetActive(false);
                 // }
                 UpdateLine(lineEndPosition, lineInspectColor);
-                if (selectedModel != null) {
-                    selectedModel.Reposition(
-                        ToolController.transform.position + ToolController.transform.forward * modelDist,
-                        modelRotationTarget,
-                        new Vector3(modelScale, modelScale, modelScale),
+                if (_selectedObject != null) {
+                    _selectedObject.MoveTo(
+                        new TransformSnapshot(
+                            ToolController.transform.position + ToolController.transform.forward * modelDist,
+                            modelRotationTarget,
+                            new Vector3(modelScale, modelScale, modelScale)
+                        ),
                         0.5f
                     );
                 }
@@ -95,13 +97,13 @@ public class ModelInspector : TsvrTool
                 // }
                 // make line end position stop at the size of the grainModel
                 UpdateLine(lineEndPosition, lineInspectColor);
-                if (selectedModel != null) {
-                    selectedModel.Reposition(
-                        selectedModel.transform.position,
-                        selectedModel.transform.rotation,
-                        new Vector3(modelScale, modelScale, modelScale),
-                        0.5f
-                    );
+                if (_selectedObject != null) {
+                    // _selectedObject.Reposition(
+                    //     _selectedObject.transform.position,
+                    //     _selectedObject.transform.rotation,
+                    //     new Vector3(modelScale, modelScale, modelScale),
+                    //     0.5f
+                    // );
                 }
                 break;
             case ModelMultitoolState.Unassigned:
@@ -112,9 +114,9 @@ public class ModelInspector : TsvrTool
 
     private void DisplayMainMenu() {
         scrollableListUI.ClearItems();
-        if (selectedModel == null) return;
+        if (_selectedObject == null) return;
         // scrollableListUI.SetHeader("Grain Model Inspector", $"{selectedModel.name} | {selectedModel.}");
-        scrollableListUI.SetHeader("Inspector", $"{selectedModel.name}");
+        scrollableListUI.SetHeader("Inspector", $"{_selectedObject.name}");
         
         scrollableListUI.AddItem(this, (item, content) => {
             content.header.text = "Reposition";
@@ -156,9 +158,9 @@ public class ModelInspector : TsvrTool
             content.subheader.text = "Delete the selected model";
         }, (item) => {
             Debug.Log("Deleting Current Model!");
-            if (selectedModel != null) {
-                Destroy(selectedModel.gameObject);
-                selectedModel = null;
+            if (_selectedObject != null) {
+                Destroy(_selectedObject.gameObject);
+                _selectedObject = null;
             }
         });
 
@@ -166,13 +168,13 @@ public class ModelInspector : TsvrTool
             content.header.text = "Cancel";
             content.subheader.text = "Cancel the current action";
         }, (item) => {
-            selectedModel = null;
+            _selectedObject = null;
             state = ModelMultitoolState.Unassigned;
         });
     }
 
-    public void SetSelectedModel(GrainModelOld model) {
-        selectedModel = model;
+    public void SetSelectedModel(InteractableObject model) {
+        _selectedObject = model;
         state = ModelMultitoolState.Positioning;
         modelDist = Vector3.Distance(ToolController.transform.position, model.transform.position);
         modelScale = model.transform.localScale.x;
@@ -180,27 +182,27 @@ public class ModelInspector : TsvrTool
     }
 
     private void InspectCurrentModel() {
-        if (selectedModel == null) return;
-        selectedModel.Inspect();
+        if (_selectedObject == null) return;
+        _selectedObject.Inspect();
         lineRenderer.SetPosition(0, lineStart.position);
-        lineRenderer.SetPosition(1, selectedModel.transform.position);
+        lineRenderer.SetPosition(1, _selectedObject.transform.position);
     }
 
     private void RaycastTarget() {
         if (Physics.Raycast(lineStart.position, lineStart.forward, out raycastHit, Mathf.Infinity, grainLayerMask))
         {
             GameObject hitObject = raycastHit.collider.gameObject;
-            GrainModelOld grainModel = hitObject.transform.parent.GetComponent<GrainModelOld>();
+            InteractableObject grainModel = hitObject.transform.parent.GetComponent<InteractableObject>();
             if (grainModel != null)
             {
-                selectedModel = grainModel;
-                selectedModel.Inspect();
+                _selectedObject = grainModel;
+                _selectedObject.Inspect();
                 UpdateLine(raycastHit.point, lineUnassignedHoverColor);
                 return;
             }
         } else {
             UpdateLine(lineStart.position + lineStart.forward * 10f, lineUnassignedColor);
-            selectedModel = null;
+            _selectedObject = null;
         }
     }
 
@@ -223,14 +225,14 @@ public class ModelInspector : TsvrTool
                 scrollableListUI.ScrollValue(value.y);
                 break;
             case ModelMultitoolState.Positioning:
-                if (selectedModel != null) {
+                if (_selectedObject != null) {
                     modelDist += value.y * 0.1f;
                     modelRotationTarget *= Quaternion.Euler(Vector3.up * value.x * 2f);
                     // modelScale += value.y * 0.1f;
                 }
                 break;
             case ModelMultitoolState.Resizing:
-                if (selectedModel != null) {
+                if (_selectedObject != null) {
                     modelScale += value.y * 0.1f;
                 }
                 break;
@@ -244,7 +246,7 @@ public class ModelInspector : TsvrTool
                 break;
             case ModelMultitoolState.Positioning:
                 state = ModelMultitoolState.Inspecting;
-                selectedModel.Place();
+                // _selectedObject.Place();
                 DisplayMainMenu();
                 // if (selectedModel != null) {
                 //     selectedModel.Place();
@@ -254,11 +256,11 @@ public class ModelInspector : TsvrTool
                 break;
             case ModelMultitoolState.Resizing:
                 state = ModelMultitoolState.Inspecting;
-                selectedModel.Place();
+                // _selectedObject.Place();
                 DisplayMainMenu();
                 break;
             case ModelMultitoolState.Unassigned:
-                if (selectedModel != null) {
+                if (_selectedObject != null) {
                     state = ModelMultitoolState.Inspecting;   
                     DisplayMainMenu();
                 }

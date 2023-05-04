@@ -31,62 +31,65 @@ public class Wand : TsvrTool {
     [SerializeField] protected Image distanceIndicator;
     [SerializeField] protected Image radiusIndicator;
 
-    private Vector3[] linePositions;
-    private TwistLockAction wandDistanceTwistLock;
-    private TwistLockAction wandRadiusTwistLock;
-    private FlexibleLine wandLine;
+    private TwistLockAction _wandDistanceTwistLock;
+    private TwistLockAction _wandRadiusTwistLock;
+    private FlexibleLine _wandLine;
 
-    private FloatInputActionHandler triggerValueHandler;
-    private FloatInputActionHandler gripValueHandler;
+    private FloatInputActionHandler _triggerValueHandler;
+    private FloatInputActionHandler _gripValueHandler;
 
-    private float distanceCurrent = 1f;
-    private float radiusCurrent = 1f;
+    private float _distanceCurrent = 1f;
+    private float _radiusCurrent = 1f;
 
     public void OnEnable() {
-        wandLine = GetComponent<FlexibleLine>();
-        wandLine.enabled = true;
-        wandLine.Initialize(wandBase, wandTip, wandTipTarget);
+        _wandLine = GetComponent<FlexibleLine>();
+        _wandLine.enabled = true;
+        _wandLine.Initialize(wandBase, wandTip, wandTipTarget);
 
-        triggerValueHandler = new FloatInputActionHandler(ControllerActions.TriggerValue, this);
+        _triggerValueHandler = new FloatInputActionHandler(ControllerActions.TriggerValue, this);
 
-        triggerValueHandler.AddObserver(FloatInputActionHandler.ActionType.Value, (value) => {
+        _triggerValueHandler.AddObserver(FloatInputActionHandler.ActionType.Value, (value) => {
             Collider[] hitColliders = Physics.OverlapSphere(wandTip.transform.position, wandTip.transform.localScale.x * 0.51f, 1<<7);
             CollectionHelpers.Shuffle<Collider>(hitColliders);
             foreach (Collider hitCollider in hitColliders) {
-                // hitCollider.GetComponent<GrainOld>().PlayGrain(value * value);
-                hitCollider.GetComponent<Grain>().Activate(value * value, Grain.ActivationAction.Play);
+                hitCollider.GetComponent<Grain>().DoWandInteraction(
+                    new WandInteraction() { 
+                        ActionType = WandInteractionType.Play, 
+                        Value = value * value 
+                    }
+                );
             }
         });
 
         ControllerActions.AddListener(ControllerActions.toolAxis2D, ChangeWandAxis2D, InputActionPhase.Performed);
 
-        wandDistanceTwistLock = new TwistLockAction(
+        _wandDistanceTwistLock = new TwistLockAction(
             new TwistLockOptions(minAngle: -180f, maxAngle: 180f, reverse: ControllerActions.Hand == ControllerHand.Left),
             ControllerActions, 
             ControllerActions.twistLock, 
             (value) => {
-                float newDistance = distanceCurrent + (value * TsvrApplication.Settings.WandDistIncrement);
+                float newDistance = _distanceCurrent + (value * TsvrApplication.Settings.WandDistIncrement);
                 newDistance = Mathf.Clamp(newDistance, TsvrApplication.Settings.WandMinDist, TsvrApplication.Settings.WandMaxDist);
                 ChangeWandDistance(newDistance);
             },
             (value) => {
-                float newDistance = distanceCurrent + (value * TsvrApplication.Settings.WandDistIncrement);
-                distanceCurrent = Mathf.Clamp(newDistance, TsvrApplication.Settings.WandMinDist, TsvrApplication.Settings.WandMaxDist);
+                float newDistance = _distanceCurrent + (value * TsvrApplication.Settings.WandDistIncrement);
+                _distanceCurrent = Mathf.Clamp(newDistance, TsvrApplication.Settings.WandMinDist, TsvrApplication.Settings.WandMaxDist);
             }
         );
 
-        wandRadiusTwistLock = new TwistLockAction(
+        _wandRadiusTwistLock = new TwistLockAction(
             new TwistLockOptions(minAngle: -180f, maxAngle: 180f, reverse: ControllerActions.Hand == ControllerHand.Right),
             ControllerActions, 
             ControllerActions.toolOption, 
             (value) => {
-                float newRadius = radiusCurrent + (value * TsvrApplication.Settings.WandSizeIncrement);
+                float newRadius = _radiusCurrent + (value * TsvrApplication.Settings.WandSizeIncrement);
                 newRadius = Mathf.Clamp(newRadius, TsvrApplication.Settings.WandMinRadius, TsvrApplication.Settings.WandMaxRadius);
                 ChangeWandSize(newRadius);
             },
             (value) => {
-                float newRadius = radiusCurrent + (value * TsvrApplication.Settings.WandSizeIncrement);
-                radiusCurrent = Mathf.Clamp(newRadius, TsvrApplication.Settings.WandMinRadius, TsvrApplication.Settings.WandMaxRadius);
+                float newRadius = _radiusCurrent + (value * TsvrApplication.Settings.WandSizeIncrement);
+                _radiusCurrent = Mathf.Clamp(newRadius, TsvrApplication.Settings.WandMinRadius, TsvrApplication.Settings.WandMaxRadius);
             }
         );
 
@@ -102,13 +105,13 @@ public class Wand : TsvrTool {
             DebugLogger.Log("Playing unequip animation");
             animations.Play("UnequipPlayWand");
         }
-        wandDistanceTwistLock.UnsubscribeActions();
-        wandRadiusTwistLock.UnsubscribeActions();  
+        _wandDistanceTwistLock.UnsubscribeActions();
+        _wandRadiusTwistLock.UnsubscribeActions();  
         // Destroy(wandLine);
-        wandLine.enabled = false;
+        _wandLine.enabled = false;
         ControllerActions.RemoveListener(ControllerActions.toolAxis2D, ChangeWandAxis2D, InputActionPhase.Performed);
 
-        triggerValueHandler.Disable();
+        _triggerValueHandler.Disable();
     }
 
     protected virtual void WandUpdate() {}
@@ -116,10 +119,10 @@ public class Wand : TsvrTool {
     protected virtual void ChangeWandAxis2D(InputAction.CallbackContext context) {
         // change wand distance based on vector 2 y, and size based on vector 2 x
         Vector2 value = context.ReadValue<Vector2>();
-        distanceCurrent = Mathf.Clamp(distanceCurrent + (value.y * TsvrApplication.Settings.WandDistIncrement * 0.1f), TsvrApplication.Settings.WandMinDist, TsvrApplication.Settings.WandMaxDist);
-        radiusCurrent = Mathf.Clamp(radiusCurrent + (value.x * TsvrApplication.Settings.WandSizeIncrement * 0.1f), TsvrApplication.Settings.WandMinRadius, TsvrApplication.Settings.WandMaxRadius);
-        ChangeWandDistance(distanceCurrent);
-        ChangeWandSize(radiusCurrent);
+        _distanceCurrent = Mathf.Clamp(_distanceCurrent + (value.y * TsvrApplication.Settings.WandDistIncrement * 0.1f), TsvrApplication.Settings.WandMinDist, TsvrApplication.Settings.WandMaxDist);
+        _radiusCurrent = Mathf.Clamp(_radiusCurrent + (value.x * TsvrApplication.Settings.WandSizeIncrement * 0.1f), TsvrApplication.Settings.WandMinRadius, TsvrApplication.Settings.WandMaxRadius);
+        ChangeWandDistance(_distanceCurrent);
+        ChangeWandSize(_radiusCurrent);
     }
 
     protected virtual void ChangeWandDistance(float value) {
@@ -153,6 +156,6 @@ public class Wand : TsvrTool {
             (TsvrApplication.Settings.WandMaxRadius - TsvrApplication.Settings.WandMinRadius
         );
 
-        wandLine.SetEndWidth(value * 0.5f);
+        _wandLine.SetEndWidth(value * 0.5f);
     }
 }

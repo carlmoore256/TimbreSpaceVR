@@ -6,17 +6,11 @@ using System.Linq;
 public class DSPSchedulerSingleton : MonoBehaviour
 {
     private static AudioSource _audioSource;
-    private static int _sampleRate = AudioSettings.outputSampleRate;
-    private static List<ScheduledEvent> _schedulables = new List<ScheduledEvent>();
-
+    private static int _sampleRate;
+    private static List<ScheduledEvent> _scheduledEvents = new List<ScheduledEvent>();
     private List<int> _indicesToRemove = new List<int>();
-
     private static DSPSchedulerSingleton _instance;
 
-    // public static DSPScheduler CreateScheduler(Guid ownerId)
-    // {
-
-    // }
 
     [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.BeforeSceneLoad)]
     private static void Initialize()
@@ -31,29 +25,28 @@ public class DSPSchedulerSingleton : MonoBehaviour
         }
     }
 
-    int scheduleIdx = 0;
-    public static void Schedule(ScheduledEvent scheduable)
+    public static void Schedule(ScheduledEvent scheduledEvent)
     {
-        lock(_schedulables) {
-            // Debug.Log("Adding schedulable " + scheduable.ScheduleTime);
-            _schedulables.Add(scheduable);
+        lock(_scheduledEvents) {
+            // Debug.Log("Adding schedulable with id " + scheduledEvent.Id + " to the scheduler");
+            _scheduledEvents.Add(scheduledEvent);
         }
     }
 
     public static void Unschedule(ScheduledEvent scheduable)
     {
-        if (!_schedulables.Contains(scheduable)) {
+        if (!_scheduledEvents.Contains(scheduable)) {
             throw new ArgumentException("Scheduable not found");
         }
-        lock(_schedulables) {
-            _schedulables.Remove(scheduable);
+        lock(_scheduledEvents) {
+            _scheduledEvents.Remove(scheduable);
         }
 
     }
 
     private void OnAudioFilterRead(float[] data, int channels) {
 
-        if (_schedulables.Count == 0) return;
+        if (_scheduledEvents.Count == 0) return;
 
         // schedule any events at least 1 block ahead of time
         double bufferStartTime = AudioSettings.dspTime;
@@ -61,27 +54,31 @@ public class DSPSchedulerSingleton : MonoBehaviour
 
         // if any of the Scheduables are within the next block
         // we can schedule them to be played in the next block
-        lock(_schedulables) {
-            // _indicesToRemove.Clear();
-            var scheduablesToDispatch = _schedulables.Where(s => s.OccursBefore(bufferEndTime));
-            // var scheduablesToDispatch = _schedulables.Where(s => s.OccursBetween(bufferStartTime, bufferEndTime));
+        lock(_scheduledEvents) {
+            _indicesToRemove.Clear();
+
+            // _scheduledEvents = _scheduledEvents.RemoveAll(s => s.IsCancelled);
+
+            var scheduablesToDispatch = _scheduledEvents.Where(s => s.OccursBefore(bufferEndTime));
+
+            // Debug.Log("Number of scheduled events: " + _schedulables.Count());
             
             if (scheduablesToDispatch.Count() == 0) return;
 
-            foreach(var scheduable in scheduablesToDispatch) {
-                if (scheduable.IsCancelled) continue;
-                Dispatcher.RunOnMainThread(() => scheduable.Invoke());
-                // _indicesToRemove.Add(_schedulables.IndexOf(scheduable));
+            foreach(var scheduledEvent in scheduablesToDispatch) {
+                if (!scheduledEvent.IsCancelled) {
+                    Dispatcher.RunOnMainThread(() => scheduledEvent.Invoke());
+                }
+                _indicesToRemove.Add(_scheduledEvents.IndexOf(scheduledEvent));
             }
 
-            _schedulables.RemoveAll(s => s.OccursBefore(bufferEndTime));
+            // _scheduledEvents.RemoveAll(s => s.OccursBefore(bufferEndTime));
             
             // remove the scheduables that have been dispatched
-            // foreach(var index in _indicesToRemove.OrderByDescending(v => v)) {
-            //     // Debug.Log("Removing scheduable at index " + index + " length of schedulables is " + _schedulables.Count);
-            //     _schedulables.RemoveAt(index);
-            // }
+            foreach(var index in _indicesToRemove.OrderByDescending(v => v)) {
+                // Debug.Log("Removing scheduable at index " + index + " length of schedulables is " + _schedulables.Count);
+                _scheduledEvents.RemoveAt(index);
+            }
         }
     }
-
 }

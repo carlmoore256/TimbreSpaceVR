@@ -2,6 +2,7 @@ using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 using System.Linq;
+using UnityEngine.UI;
 
 // Editor accessible configuration for the application
 [CreateAssetMenu(fileName = "TSVR/AppConfig", menuName = "App Config (Singleton)")]
@@ -23,4 +24,7 @@ public class AppConfig : SingletonScriptableObject<AudioManager>
         return toolPrefabs.FirstOrDefault(x => x.GetComponent<TsvrTool>().ToolType == toolType);
 
     }
+
+    [Header("UI")]
+    public Image grainSequenceableIcon;
 }

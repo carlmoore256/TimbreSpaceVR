@@ -10,43 +10,38 @@ using System;
 /// </summary>
 public class InstantaneousPlayer : PolyvoicePlayer
 {
-    private Queue<PlaybackVoice> availableVoices = new Queue<PlaybackVoice>();
-    private SMABuffer smaScore = new SMABuffer(10);
-    Dictionary<Guid, List<DateTime>> requestCounts = new Dictionary<Guid, List<DateTime>>();
-    private readonly TimeSpan timeWindow = TimeSpan.FromSeconds(3); // adjust this time window based on your needs
+    private Queue<PlaybackVoice> _availableVoices = new Queue<PlaybackVoice>();
+    private SMABuffer _movingAvgScore = new SMABuffer(10);
+    Dictionary<Guid, List<DateTime>> _requestLog = new Dictionary<Guid, List<DateTime>>();
+    private readonly TimeSpan _requestLogExpiration = TimeSpan.FromSeconds(3); // adjust this time window based on your needs
 
     
-    void OnEnable()
+   protected override void InitializePlaybackVoices()
     {
-        audioSource = gameObject.GetComponent<AudioSource>();
-        TsvrApplication.AudioManager.ConnectGrainModelAudioSource(audioSource);
-        playbackVoices = new PlaybackVoice[NumVoices];
-
-        
-        for(int i = 0; i < NumVoices; i++) {
-            playbackVoices[i] = new PlaybackVoice(voice => {
-                // Debug.Log("Voice has become available " + voice.GetHashCode());
-                availableVoices.Enqueue(voice);
-            });
-            availableVoices.Enqueue(playbackVoices[i]);
+        base.InitializePlaybackVoices();
+        foreach(var voice in _playbackVoices)
+        {
+            _availableVoices.Enqueue(voice);
         }
     }
 
+    protected override void OnPlaybackVoiceReleased(PlaybackVoice voice)
+    {
+        _availableVoices.Enqueue(voice);
+    }
 
-    private void OnAudioFilterRead(float[] data, int channels) {
-        // float gain = 1f/NumVoices;
-        float gain = 0.1f;
-        // don't even hop into the playback voices that aren't active
-        for(int i = 0; i < playbackVoices.Length; i++) {
-            if (playbackVoices[i].IsPlaying)
-                playbackVoices[i].ProcessBlock(data, channels, gain);
-        }
+    private struct PlaybackVoiceScore
+    {
+        public PlaybackVoice PlaybackVoice { get; set; }
+
+        public float Score { get; set; }
+
     }
 
     private (float score, PlaybackVoice voice) LowestScoreVoice() {
-        PlaybackVoice lowestScoreVoice = playbackVoices[0];
+        PlaybackVoice lowestScoreVoice = _playbackVoices[0];
         float score = Mathf.Infinity;
-        foreach(PlaybackVoice v in playbackVoices) {
+        foreach(PlaybackVoice v in _playbackVoices) {
             score = v.Score();
             if (score < lowestScoreVoice.Score()) {
                 lowestScoreVoice = v;
@@ -56,15 +51,15 @@ public class InstantaneousPlayer : PolyvoicePlayer
     }
 
     private void ExecuteEvent(float score, WindowedPlaybackEvent e, PlaybackVoice v) {
-        smaScore.Add(score);
+        _movingAvgScore.Add(score);
         v.Play(e);
-        if (!requestCounts.ContainsKey(e.SubmitterId))
-            requestCounts[e.SubmitterId] = new List<DateTime>();
-        requestCounts[e.SubmitterId].Add(e.CreatedAt);
+        if (!_requestLog.ContainsKey(e.SubmitterId))
+            _requestLog[e.SubmitterId] = new List<DateTime>();
+        _requestLog[e.SubmitterId].Add(e.CreatedAt);
 
-        for (int i = requestCounts[e.SubmitterId].Count - 1; i >= 0; i--) {
-            if (DateTime.Now - requestCounts[e.SubmitterId][i] > timeWindow) {
-                requestCounts[e.SubmitterId].RemoveAt(i);
+        for (int i = _requestLog[e.SubmitterId].Count - 1; i >= 0; i--) {
+            if (DateTime.Now - _requestLog[e.SubmitterId][i] > _requestLogExpiration) {
+                _requestLog[e.SubmitterId].RemoveAt(i);
             }
         }
     }
@@ -74,7 +69,7 @@ public class InstantaneousPlayer : PolyvoicePlayer
     /// </summary>
     public void Play(WindowedPlaybackEvent playbackEvent) {
         PlaybackVoice voice = null;
-        availableVoices.TryDequeue(out voice);
+        _availableVoices.TryDequeue(out voice);
         if (voice != null) {
             // Debug.Log("Taking free voice!");
             ExecuteEvent(0f, playbackEvent, voice);
@@ -82,7 +77,7 @@ public class InstantaneousPlayer : PolyvoicePlayer
         }
 
         // here we can determine if the playback event has had many repeated plays
-        var avgScore = smaScore.Average();
+        var avgScore = _movingAvgScore.Average();
         if (avgScore > Mathf.Pow(UnityEngine.Random.Range(0.0f, 1.0f), 0.5f)) {
             // Debug.Log($"Randomly not playing event with score {avgScore}");
             return;

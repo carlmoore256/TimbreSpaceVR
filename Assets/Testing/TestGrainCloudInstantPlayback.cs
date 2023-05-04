@@ -4,7 +4,7 @@ using System;
 
 public class TestGrainCloudInstantPlayback : MonoBehaviour {
 
-    GrainModel grainModel;
+    BoundingBoxRenderer grainModel;
 
     void Start() {}
  

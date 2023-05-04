@@ -245,15 +245,15 @@ public class TransformCoroutineManager : CoroutineManager {
     }
 
     public void TransformTo(TransformSnapshot snapshot, float duration = 1f) {
-        MoveTo(snapshot.position, duration);
-        RotateTo(snapshot.rotation, duration);
-        ScaleTo(snapshot.scale, duration);
+        MoveTo(snapshot.Position, duration);
+        RotateTo(snapshot.Rotation, duration);
+        ScaleTo(snapshot.Scale, duration);
     }
 
     public void SetTargetTransform(TransformSnapshot snapshot) {
-        targetTransform.targetPosition = snapshot.position;
-        targetTransform.targetRotation = snapshot.rotation;
-        targetTransform.targetScale = snapshot.scale;
+        targetTransform.targetPosition = snapshot.Position;
+        targetTransform.targetRotation = snapshot.Rotation;
+        targetTransform.targetScale = snapshot.Scale;
     }
 
     public void Freeze(TransformType? transformType = null) {

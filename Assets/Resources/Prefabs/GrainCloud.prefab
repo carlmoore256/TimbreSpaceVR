@@ -10,7 +10,8 @@ GameObject:
   m_Component:
   - component: {fileID: 3360398663443515610}
   - component: {fileID: 8857840446769843070}
-  - component: {fileID: 281332511835408017}
+  - component: {fileID: 5493197797594381025}
+  - component: {fileID: 3112992560796959728}
   m_Layer: 0
   m_Name: GrainCloud
   m_TagString: Untagged
@@ -130,7 +131,7 @@ AudioSource:
     m_PreInfinity: 2
     m_PostInfinity: 2
     m_RotationOrder: 4
---- !u!114 &281332511835408017
+--- !u!114 &5493197797594381025
 MonoBehaviour:
   m_ObjectHideFlags: 0
   m_CorrespondingSourceObject: {fileID: 0}
@@ -139,14 +140,23 @@ MonoBehaviour:
   m_GameObject: {fileID: 3360398663443515609}
   m_Enabled: 1
   m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 248c95617971e884ebb6f3dc9dc419fe, type: 3}
+  m_Script: {fileID: 11500000, guid: 54f9fd4cf342dc6409a7f78c006adc91, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
   boundingBox: {fileID: 8143741633814947547}
-  colorPlayable: {r: 255, g: 255, b: 255, a: 0}
-  colorInspecting: {r: 255, g: 255, b: 255, a: 1}
-  colorPositioning: {r: 255, g: 255, b: 255, a: 1}
-  seqPlayRate: 0.1
+--- !u!114 &3112992560796959728
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 3360398663443515609}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 16f101594dbb892429a55ccebcaf3df3, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  _box: {fileID: 5493197797594381025}
 --- !u!1 &8143741633814947547
 GameObject:
   m_ObjectHideFlags: 0

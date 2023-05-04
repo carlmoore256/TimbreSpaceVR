@@ -5,36 +5,33 @@ using UnityEngine;
 using NWaves.Signals;
 
 public class PlaybackVoice {
-    public string Id { get { return _id; } }
-    private string _id = Guid.NewGuid().ToString();
-    private DiscreteSignal _signal;
-    private Playhead playhead;
-    private Mutex mut = new Mutex();
-    private bool isProcessing = false;
-    // private float[] window;
-
+    public Guid Id { get; set; } = Guid.NewGuid();
     public double ScheduledTime { get; set; } = -1;
-    // private double scheduledEndTime;
-    
-    private WindowedPlaybackEvent playbackEvent;
-    private Action<PlaybackVoice> onVoiceFree;
     public bool IsPlaying { get; set; } = false;
-    private int sampleRate = AudioSettings.outputSampleRate;
 
-    public PlaybackVoice(Action<PlaybackVoice> onVoiceFree=null) {
-        playhead = new Playhead();
-        this.onVoiceFree = onVoiceFree;
+    private Playhead _playhead;
+    private DiscreteSignal _signal;
+    private Mutex _playbackEventLock = new Mutex();
+    private WindowedPlaybackEvent _playbackEvent;
+    private Action<PlaybackVoice> _onVoiceRelease;
+    private int _sampleRate;
+
+    public PlaybackVoice(Action<PlaybackVoice> onVoiceRelease=null) {
+        _playhead = new Playhead();
+        _sampleRate = AudioSettings.outputSampleRate;
+        _onVoiceRelease = onVoiceRelease;
     }
 
     public void Play(WindowedPlaybackEvent playbackEvent, double scheduledTime = -1d) {
-        mut.WaitOne();
+        _playbackEventLock.WaitOne();
+        
         IsPlaying = true;
+        ScheduledTime = scheduledTime;
+        
+        _playhead.Set(playbackEvent.BufferWindow, _signal);
+        _playbackEvent = playbackEvent;
 
-        this.playhead.Set(playbackEvent.BufferWindow, _signal);
-        this.playbackEvent = playbackEvent;
-        this.ScheduledTime = scheduledTime;
-
-        mut.ReleaseMutex();
+        _playbackEventLock.ReleaseMutex();
     }
 
     private static float[] CosineWindow(int windowSamples) {
@@ -51,88 +48,88 @@ public class PlaybackVoice {
     /// lower score -> less priority, more likely to be stolen
     /// </summary>
     public float Score() {
-        return playhead.Score() * Mathf.Abs(playbackEvent.RMS);
+        return _playhead.Score() * Mathf.Abs(_playbackEvent.RMS);
     }
     
     public void SetSignal(DiscreteSignal signal) {
         _signal = signal;
     }
     
-
     // initialize variables in ProcessBlock to avoid GC allocs
-    private int destStartIdx = 0;
-    private int destEndIdx = 0; 
-    private int numSamples = 0;
-    private float blockGain = 1f;
+    private int _destStartIdx = 0;
+    private int _destEndIdx = 0; 
+    private int _numSamples = 0;
+    private float _blockGain = 1f;
 
     /// <summary>
     /// Audio process block where samples are added to the buffer
     /// </summary>
     public void ProcessBlock(float[] buffer, int channels, float gain) {
         // prevent monobehavior methods from changing playhead during process block
-        mut.WaitOne();
+        _playbackEventLock.WaitOne();
 
-        destStartIdx = 0; // cached for GC
+        _destStartIdx = 0; // cached for GC
 
         // Check if the scheduled playback time has been reached within this block
         if (ScheduledTime > 0d && AudioSettings.dspTime < ScheduledTime) {
             // see how long it will be until the start sample
             double timeUntilStart = ScheduledTime - AudioSettings.dspTime;
-            destStartIdx = (int)Mathf.Floor((float)(timeUntilStart * sampleRate));
-            if (destStartIdx > buffer.Length / channels) {
+            _destStartIdx = (int)Mathf.Floor((float)(timeUntilStart * _sampleRate));
+            if (_destStartIdx > buffer.Length / channels) {
                 // in this case, the sampleStart is further than this block
                 // so return without playing
-                mut.ReleaseMutex();
+                _playbackEventLock.ReleaseMutex();
                 return;
             }
         }
 
         // calculate the number of samples to play
-        numSamples = (buffer.Length / channels) - destStartIdx;
-        numSamples = Mathf.Min(numSamples, playhead.SamplesRemaining());
+        _numSamples = (buffer.Length / channels) - _destStartIdx;
+        _numSamples = Mathf.Min(_numSamples, _playhead.SamplesRemaining());
         
-        if (numSamples == 0) {
-            mut.ReleaseMutex();
+        if (_numSamples == 0) {
+            _playbackEventLock.ReleaseMutex();
             return;
         }
 
-        destEndIdx = destStartIdx + numSamples;
-        blockGain = playbackEvent.Gain * gain;
+        _destEndIdx = _destStartIdx + _numSamples;
+        _blockGain = _playbackEvent.Gain * gain;
 
-        if (!playhead.hasAdvanced) {
+        if (!_playhead.HasAdvanced) {
             // trigger onPlayStart events, flip the flag 
             // this is all done manually to optimize GC
-            Dispatcher.RunOnMainThread(() => playbackEvent.onPlayStart?.Invoke());
-            playhead.hasAdvanced = true;
+            // Debug.Log("ADVANCING PLAYHEAD " + _playhead.Position + " numSamples: " + _numSamples + " NUM SUBSCRIBERS " + _playbackEvent.onPlayStart.GetInvocationList().Length);
+            Dispatcher.RunOnMainThread(() => _playbackEvent.onPlayStart?.Invoke());
+            _playhead.HasAdvanced = true;
         }
 
         // add the result to the buffer (optimized to check useWindow once, check if it's worth it)
-        if (playbackEvent.Window != null) {
-            for (int i = destStartIdx; i < destEndIdx; i++) {
-                float sample = _signal.Samples[playhead.position] * playbackEvent.Window[playhead.WindowIndex()];
+        if (_playbackEvent.Window != null) {
+            for (int i = _destStartIdx; i < _destEndIdx; i++) {
+                float sample = _signal.Samples[_playhead.Position] * _playbackEvent.Window[_playhead.WindowIndex()];
                 for (int c = 0; c < channels; c++) {
-                    buffer[i * channels + c] += sample * blockGain;
+                    buffer[i * channels + c] += sample * _blockGain;
                 }
-                playhead.position++;
+                _playhead.Position++;
             }
         } else {
-            for (int i = destStartIdx; i < destEndIdx; i++) {
-                float sample = _signal.Samples[playhead.position];
+            for (int i = _destStartIdx; i < _destEndIdx; i++) {
+                float sample = _signal.Samples[_playhead.Position];
                 for (int c = 0; c < channels; c++) {
-                    buffer[i * channels + c] += sample * blockGain;
+                    buffer[i * channels + c] += sample * _blockGain;
                 }
-                playhead.position++;
+                _playhead.Position++;
             }
         }
 
         // check to see if this voice has finished playing
-        if (playhead.IsFinished() || !IsPlaying) { // never ~should~ be asked to play if !IsPlaying
+        if (_playhead.IsFinished() || !IsPlaying) { // never ~should~ be asked to play if !IsPlaying
             // trigger onPlayEnd events and onVoiceFree (do before releasing)
-            Dispatcher.RunOnMainThread(() => playbackEvent.onPlayEnd?.Invoke());
-            Dispatcher.RunOnMainThread(() => onVoiceFree?.Invoke(this));
+            Dispatcher.RunOnMainThread(() => _playbackEvent.onPlayEnd?.Invoke());
+            Dispatcher.RunOnMainThread(() => _onVoiceRelease?.Invoke(this));
             IsPlaying = false;
         }
         
-        mut.ReleaseMutex();
+        _playbackEventLock.ReleaseMutex();
     }
 }

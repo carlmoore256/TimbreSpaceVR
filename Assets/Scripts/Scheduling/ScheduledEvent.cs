@@ -21,12 +21,14 @@ public enum ScheduablePriority
 
 public class ScheduledEvent
 {
+
+    public Guid Id { get; set; } = Guid.NewGuid();
     // if we want to have an audio event occur, we can have
     // an IScheduable wrap around another ISchedulable. The first fires
     // an audio block before so that the block dispatcher can send off
     // the wrapped Scheduable to the audio sequencer, which has better
     // ability to have things occur at sample level
-    event Action OnSchedule;
+    public event Action OnSchedule;
 
     public bool IsCancelled { get => CancellationToken.IsCancelled; }
     private double _scheduledTime;
@@ -48,6 +50,20 @@ public class ScheduledEvent
     public ScheduledEvent(double scheduleTime, Action onSchedule, ScheduleCancellationToken cancellationToken) : this(scheduleTime, onSchedule)
     {
         CancellationToken = cancellationToken;
+    }
+
+    public static ScheduledEvent CreateAndSchedule(double scheduleTime, Action onSchedule)
+    {
+        var scheduledEvent = new ScheduledEvent(scheduleTime, onSchedule);
+        scheduledEvent.Schedule();
+        return scheduledEvent;
+    }
+
+    public static ScheduledEvent CreateAndSchedule(double scheduleTime, Action onSchedule, ScheduleCancellationToken cancellationToken)
+    {
+        var scheduledEvent = new ScheduledEvent(scheduleTime, onSchedule, cancellationToken);
+        scheduledEvent.Schedule();
+        return scheduledEvent;
     }
 
     public void Schedule(double dspTime)
@@ -91,6 +107,12 @@ public class ScheduledEvent
     public void Invoke()
     {
         OnSchedule?.Invoke();
+    }
+
+
+    public void Schedule()
+    {
+        DSPSchedulerSingleton.Schedule(this);
     }
 }
 

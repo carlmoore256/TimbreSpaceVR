@@ -19,15 +19,15 @@ public class SequenceRenderer : MonoBehaviour {
 
     private void OnEnable() {
         LineRenderer = new ManagedLineRenderer(new LineRendererOptions {
-            startColor = new Color(1, 1, 1, 0.0f),
+            startColor = new Color(1, 1, 1, 1.0f),
             endColor = new Color(1, 1, 1, 1.0f),
             startWidth = 0.01f,
             endWidth = 0.01f
         }, "SequenceRenderer");
 
         //_lineUpdate = ConnectSequenceablesBezier;
-        _lineUpdate = ConnectRecentSequenceables;
-        // _lineUpdate = ConnectAllSequenceables;
+        // _lineUpdate = ConnectRecentSequenceables;
+        _lineUpdate = ConnectAllSequenceables;
     }
 
     public void SetSequence(Sequence sequence) {
@@ -37,7 +37,7 @@ public class SequenceRenderer : MonoBehaviour {
 
 
     private void OnSequenceAdvance(SequenceItem sequenceItem) {
-        if (sequenceItem.Sequenceable is IPositionedSequenceable)
+        if (sequenceItem.Sequenceable is IInteractableSequenceable)
         {
             _recentSequenceItems.Add(sequenceItem);
             
@@ -55,6 +55,7 @@ public class SequenceRenderer : MonoBehaviour {
 
 
     void Update() {
+        if (_sequence == null) return;
         if (_sequence.Count < 2) {
             if (LineRenderer.Enabled) {
                 LineRenderer.Enabled = false;
@@ -75,8 +76,8 @@ public class SequenceRenderer : MonoBehaviour {
         _positions.Clear();
         foreach (var sequenceItem in _sequence)
         {
-            if (sequenceItem.Sequenceable is IPositionedSequenceable) {
-                _positions.Add(((IPositionedSequenceable)sequenceItem.Sequenceable).Position);
+            if (sequenceItem.Sequenceable is IInteractableSequenceable) {
+                _positions.Add(((IInteractableSequenceable)sequenceItem.Sequenceable).Position);
             }
         }
         // VectorHelpers.GenerateBezierPoints(positions, 10);
@@ -88,9 +89,9 @@ public class SequenceRenderer : MonoBehaviour {
         _positions.Clear();
         foreach (var sequenceItem in _recentSequenceItems)
         {
-            if (sequenceItem.Sequenceable is IPositionedSequenceable)
+            if (sequenceItem.Sequenceable is IInteractableSequenceable)
             {
-                _positions.Add(((IPositionedSequenceable)sequenceItem.Sequenceable).Position);
+                _positions.Add(((IInteractableSequenceable)sequenceItem.Sequenceable).Position);
             }
         }
     }

@@ -21,7 +21,7 @@ public class FeatureVector
     public float min;
     public float max;
     public int Length { get { return values.Length; } }
-    public FeatureVector(float[] values, AudioFeature feature)
+    public FeatureVector(float[] values, AudioFeature feature)//, int windowSize)
     {
         this.values = values;
         this.feature = feature;

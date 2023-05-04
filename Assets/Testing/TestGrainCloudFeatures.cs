@@ -3,69 +3,51 @@ using System.Collections;
 using System;
 
 public class TestGrainCloudFeatures : MonoBehaviour {
-    public string metadataURI;
+
+
     public float featureChangeInterval = 5.0f;
-    public float bpm = 120;
-    public GranularParameters parameterValues;
-    private GrainCloud grainCloud;
-    int numFeatures = Enum.GetNames(typeof(AudioFeature)).Length;
+    private Coroutine _featureUpdateCoroutine;
+
+    public TestGrainCloud testGrainCloud;
 
 
-    public Sequence sequence;
 
-    private Quaternion modelRotationTarget = Quaternion.identity;
-
-    void Start() 
+    private void OnEnable()
     {
-        GrainCloudSpawner.SpawnFromMetadataURI(metadataURI).ContinueWith((task) => {
-            SetupSequence(task.Result);
-        });
+        testGrainCloud = GetComponent<TestGrainCloud>();
+        // testGrainCloud.OnGrainCloudResetEvent += () => {
+        //     if (_featureUpdateCoroutine != null) {
+        //         StopCoroutine(_featureUpdateCoroutine);
+        //     }
+        //     _featureUpdateCoroutine = StartCoroutine(UpdateGrainCloudFeatures(testGrainCloud.GrainCloud, featureChangeInterval));
+        // };
+        // testGrainCloud.OnGrainCloudSpawnEvent += OnGrainCloudSpawn;
     }
 
-    private void SetupSequence(GrainCloud cloud) {
-        grainCloud = cloud;
-
-        cloud.OnCloudReset += () => {
-            Debug.Log("Cloud Reset!");
-            sequence = cloud.CreateLinearSequence(bpm);
-            cloud.Sequences.Add(sequence);
-            
-            // ----- How to Schedule -----------------
-
-            // We could take advantage of the fact that GrainCloud is
-            // itself an ISequentiable:
-            // grainCloud.Schedule(new SequenceableScheduleParameters {
-            //     scheduleTime = AudioSettings.dspTime + 0.5d,
-            //     gain = 1.0f
-            // });
-
-            // OR we can schedule the sequence itself
-            sequence.Schedule(AudioSettings.dspTime + 0.5d, new SequenceableParameters {
-                Gain = 1.0f
-            });
-
-            sequence.Loop();
-
-            // sequence.OnSequenceablePlayEnd += () => {
-            //     Debug.Log("Sequence ended, looping...");
-            //     sequence.Schedule(new SequenceableScheduleParameters {
-            //         scheduleTime = AudioSettings.dspTime,
-            //         gain = 1.0f
-            //     });
-            // };
-
-            // in either case, GrainCould has a private void OnGrainScheduled(), which
-            // reports any new scheduling events to the playbackHandler
-            // which will then dilligently wait for the right time to play the event
-
-
-            // IDEA - make snake like sequence that evolves over time
-
-            StartCoroutine(UpdateGrainCloudFeatures(cloud, featureChangeInterval));
-        };
+    public void UpdateFeatureRandom(string axis)
+    {
+        var featureType = AudioFeatureUtils.RandomAudioFeature();
+        if (testGrainCloud == null || testGrainCloud.GrainCloud == null) return;
+        if (axis == "x")
+        {
+            testGrainCloud.GrainCloud.ParameterHandler.XFeature = featureType;
+        }
+        else if (axis == "y")
+        {
+            testGrainCloud.GrainCloud.ParameterHandler.YFeature = featureType;
+        }
+        else if (axis == "z")
+        {
+            testGrainCloud.GrainCloud.ParameterHandler.ZFeature = featureType;
+        }
     }
 
-    private static IEnumerator UpdateGrainCloudFeatures(GrainCloud grainCloud, float featureChangeInterval) {
+    // public void UpdateAllFeatures()
+    // {
+    //     StartCoroutine(UpdateGrainCloudFeatures(testGrainCloud.GrainCloud, featureChangeInterval));
+    // }
+
+    private IEnumerator UpdateGrainCloudFeatures(GrainCloud grainCloud, float featureChangeInterval) {
         Debug.Log("GrainCloud Playing Sequence!");
         while (true) {
             yield return new WaitForSeconds(featureChangeInterval);
@@ -77,28 +59,6 @@ public class TestGrainCloudFeatures : MonoBehaviour {
             grainCloud.ParameterHandler.YFeature = y;
             grainCloud.ParameterHandler.ZFeature = z;
             Debug.Log("Updating features: X: " + x + ", Y: " + y + ", Z: " + z);
-            grainCloud.GrainModel.RotateAngle(new Vector3(0, 100, 100), 0.5f);
-        }
-    }
-
-    float lastTime = 0;
-    void Update() {
-        if (Time.time - lastTime > 1.0f) {
-            Debug.Log("Current DSP TIME: " + AudioSettings.dspTime);
-            lastTime = Time.time;
-        }
-
-
-        if (grainCloud != null && grainCloud.GrainModel != null) {
-            
-            modelRotationTarget *= Quaternion.Euler(Vector3.up * Time.deltaTime * 10f);
-            Vector3 currentScale = grainCloud.GrainModel.transform.localScale;
-            grainCloud.GrainModel.Reposition(
-                        grainCloud.transform.position,
-                        modelRotationTarget,
-                        currentScale,
-                        0.5f
-                    );
         }
     }
 }

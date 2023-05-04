@@ -137,6 +137,7 @@ public class AppSettings : ScriptableObject
     public Setting<bool> GrainUseHSV = new Setting<bool>("Use HSV Color", false, "Grains");
     public Setting<bool> DebugLogging = new Setting<bool>("Enable Debug Logs", true, "Developer");
     public Setting<bool> EnableXRLogger = new Setting<bool>("Enable XR Debug Logger", true, "Developer");
+    public Setting<bool> EnableGrainDebugGizmos = new Setting<bool>("Enable Grain Debug Gizmos", true, "Developer");
     
     public Setting<float> AudioDbThreshold = new Setting<float>("Audio Db Threshold", -30f, "Audio/Analysis");
     public Setting<int> AudioDbThresholdWindow = new Setting<int>("Audio Db Threshold Window Size", 1024, "Audio/Analysis");

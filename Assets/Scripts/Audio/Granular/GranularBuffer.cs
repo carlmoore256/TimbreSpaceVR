@@ -21,9 +21,9 @@ using System.Linq;
 /// </summary>
 public class GranularBuffer
 {    
-    public int NumWindows { get { return WindowTimes.Length; } }
+    public int NumWindows { get { return Windows.Length; } }
     
-    public WindowTime[] WindowTimes
+    public WindowTime[] Windows
     {
         get
         {
@@ -94,7 +94,7 @@ public class GranularBuffer
         {
             throw new ArgumentException(string.Format(ErrorInvalidGrainIndex, NumWindows));
         }
-        var windowTime = WindowTimes[grainIndex];
+        var windowTime = Windows[grainIndex];
         var (startSample, endSample, _) = windowTime.GetSampleRange(_audioBuffer.SamplingRate);
         return _audioBuffer[startSample, endSample];
     }
@@ -116,7 +116,7 @@ public class GranularBuffer
         {
             throw new ArgumentException(string.Format(ErrorInvalidGrainIndex, NumWindows));
         }
-        return WindowTimes[grainIndex];
+        return Windows[grainIndex];
     }
 
     /// <summary>
@@ -151,7 +151,7 @@ public class GranularBuffer
             return null;
         }
 
-        return WindowTimes.Skip(grainStart).Take(grainEnd - grainStart).ToArray();
+        return Windows.Skip(grainStart).Take(grainEnd - grainStart).ToArray();
     }
 
 
@@ -162,6 +162,13 @@ public class GranularBuffer
     {
         var featureVector = _featureAnalyzer.GetFeatureVector(feature);
         return normalized ? featureVector.GetNormalized(grainIndex, normalizedHi, normalizedLo) : featureVector[grainIndex];
+    }
+
+    public float GetFeatureValue(AudioFeature feature, WindowTime window, bool normalized=true, float normalizedHi=1f, float normalizedLo=-1f)
+    {
+        // here we can looked at all cached windowTimes, and if it hasn't yet been calculated we can do so
+        // for now just return the index of the window
+        return GetFeatureValue(feature, Windows.ToList().IndexOf(window), normalized, normalizedHi, normalizedLo);
     }
 
     /// <summary>
@@ -181,11 +188,11 @@ public class GranularBuffer
     /// </summary>
     public DiscreteSignal GetCroppedBuffer(int[] grainIds)
     {
-        int newLength = (int)Mathf.Ceil((float)grainIds.Length * (float)WindowTimes[0].duration * (float)_audioBuffer.SamplingRate);
+        int newLength = (int)Mathf.Ceil((float)grainIds.Length * (float)Windows[0].duration * (float)_audioBuffer.SamplingRate);
         float[] newSamples = new float[0];
         foreach (int grainID in grainIds)
         {
-            var windowTime = WindowTimes[grainID];
+            var windowTime = Windows[grainID];
             var sampleRange = windowTime.GetSampleRange(_audioBuffer.SamplingRate);
             newSamples = MemoryOperationExtensions.MergeWithArray(
                 newSamples,
@@ -193,6 +200,12 @@ public class GranularBuffer
             );
         }
         return new DiscreteSignal(_audioBuffer.SamplingRate, newSamples);
+    }
+
+
+    public DiscreteSignal GetCroppedBuffer(WindowTime[] windows)
+    {
+        return GetCroppedBuffer(windows.Select(window => Windows.ToList().IndexOf(window)).ToArray());
     }
 
     /// <summary>
@@ -205,8 +218,8 @@ public class GranularBuffer
             Debug.LogError("grainEnd must be greater than grainStart");
             return null;
         }
-        var sampleRange = WindowTimes[grainStart].GetSampleRange(_audioBuffer.SamplingRate);
-        var endSampleRange = WindowTimes[grainEnd].GetSampleRange(_audioBuffer.SamplingRate);
+        var sampleRange = Windows[grainStart].GetSampleRange(_audioBuffer.SamplingRate);
+        var endSampleRange = Windows[grainEnd].GetSampleRange(_audioBuffer.SamplingRate);
         return _audioBuffer[sampleRange.start, endSampleRange.end];
     }
 

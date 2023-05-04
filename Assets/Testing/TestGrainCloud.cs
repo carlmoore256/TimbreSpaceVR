@@ -1,67 +1,56 @@
 using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
+using System;
 
 public class TestGrainCloud : MonoBehaviour 
 {
-    public string metadataURI = "E:/UnityProjects/TimbreSpaceVR/Python/data/metadata/jazzGuitar.json";
-    public GrainCloud grainCloud;
+    public string MetadataURI = "E:/UnityProjects/TimbreSpaceVR/Python/data/metadata/jazzGuitar.json";
+    public GrainCloud GrainCloud { get; private set; }
+    private TransformSnapshot _modelTransformTarget;
 
-    public Sequence sequence;
+    public event Action OnGrainCloudResetEvent;
+    public event Action OnGrainCloudSpawnEvent; 
 
-    public float bpm = 120;
-    private float lastBPM = 0;
+    private bool _enableRotation = false;
 
     void Start() 
     {
         Debug.Log("TestGrainCloud Start");
-        GrainCloudSpawner.SpawnFromMetadataURI(metadataURI).ContinueWith((task) => {
-            grainCloud = task.Result;
+        GrainCloudSpawner.SpawnFromMetadataURI(MetadataURI).ContinueWith((task) => {
+            GrainCloud = task.Result;
+            
             Debug.Log("GrainCloud Spawned");
-            grainCloud.OnCloudReset += () => {
-                Debug.Log("Cloud Reset!");
-                OnGrainCloudReset();
-            };
+            GrainCloud.OnCloudReset += OnGrainCloudReset;
+            // OnGrainCloudReset();
         });
     }
 
-    void OnGrainCloudReset() {
-        sequence = grainCloud.CreateLinearSequence(bpm);
-        sequence.OnSequenceablePlayEnd += () => {
-            // grainCloud.ScheduleSequence();
-        };
-        grainCloud.Sequences.Add(sequence);
-        // grainCloud.Play(1.0f);
-        // grainCloud.ScheduleSequence();
+    public virtual void OnGrainCloudSpawn()
+    {
+        Debug.Log("GrainCloud Spawned!");
+        OnGrainCloudSpawnEvent?.Invoke();
     }
 
-    void Update() {
+    public virtual void OnGrainCloudReset() {
+        _enableRotation = true;
+        Debug.Log("GrainCloud Reset!");
+        _modelTransformTarget = new TransformSnapshot(GrainCloud.transform);
+        OnGrainCloudResetEvent?.Invoke();
+    }
 
-        if (lastBPM != bpm && sequence != null) {
-            lastBPM = bpm;
-            // sequence.SetBPM(bpm);
-            Debug.Log("BPM: " + bpm);
-        }
-        if (Input.GetKeyUp(KeyCode.Space)) {
-            sequence = grainCloud.CreateLinearSequence(bpm);
-            grainCloud.Sequences.Add(sequence);
-
-            grainCloud.Schedule(AudioSettings.dspTime + 0.5d, new SequenceableParameters {
-                Gain = 1.0f
-            });
-            
-            // grainCloud.Schedule(AudioSettings.dspTime + 0.5f, 1.0f, () => {
-            //     Debug.Log("GrainCloud Playing Sequence!");
-            // }, () => {
-            //     Debug.Log("GrainCloud Sequence Ended!");
-            // });
+    public void ZoomInOut(float speed=10f)
+    {
+        if(!_enableRotation || GrainCloud == null) return;
+        _modelTransformTarget.Position += Vector3.forward * Time.deltaTime * speed;
+        GrainCloud.MoveTo(_modelTransformTarget);
+    }
 
 
-            // grainCloud.Play(1.0f);
-            // grainCloud.ScheduleSequence();
-            Debug.Log("GrainCloud Playing Sequence!");
-        }
-
-        lastBPM = bpm;
+    public void RotateHorizontal(float speed=10f)
+    {
+        if(!_enableRotation || GrainCloud == null) return;
+        _modelTransformTarget.Rotation *= Quaternion.Euler(Vector3.up * Time.deltaTime * speed);
+        GrainCloud.MoveTo(_modelTransformTarget);
     }
 }

@@ -4,9 +4,6 @@ using UnityEngine;
 using NWaves.Signals;
 using UnityEngine.Pool;
 
-public interface IPlaybackHandler {
-    public void HandlePlayback(WindowedPlaybackEvent playbackEvent);
-}
 
 // IPlaybackHandler
 public class BufferPlaybackHandler : MonoBehaviour
@@ -48,6 +45,8 @@ public class BufferPlaybackHandler : MonoBehaviour
         scheduledPlayer.SetAudioBuffer(buffer);
     }
 
+
+
     /// <summary>
     /// Play buffer given a WindowedPlaybackEvent using the instantaneous player
     /// </summary>
@@ -58,8 +57,12 @@ public class BufferPlaybackHandler : MonoBehaviour
     /// <summary>
     /// Play buffer in the future given a WindowedPlaybackEvent using the scheduled player
     /// </summary>
-    public ScheduledEvent PlayScheduled(WindowedPlaybackEvent playbackEvent, double scheduleTime = 0d) {
-        return scheduledPlayer.SchedulePlay(playbackEvent, scheduleTime);
+    public ScheduledEvent PlayScheduled(
+            WindowedPlaybackEvent playbackEvent, 
+            double scheduleTime = 0d, 
+            ScheduleCancellationToken cancellationToken = null)
+    {
+        return scheduledPlayer.SchedulePlay(playbackEvent, scheduleTime, cancellationToken);
     }
 
     public void Stop() {

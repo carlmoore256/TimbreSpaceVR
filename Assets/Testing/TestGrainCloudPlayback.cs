@@ -7,24 +7,37 @@ public class TestGrainCloudPlayback : MonoBehaviour {
     public float featureChangeInterval = 5.0f;
     public int bpm = 120;
     public GranularParameters parameterValues;
-    private GrainCloud grainCloud;
+    private GrainCloud _grainCloud;
     int numFeatures = Enum.GetNames(typeof(AudioFeature)).Length;
 
 
     public Sequence sequence;
 
-    private Quaternion modelRotationTarget;
+    private Quaternion _modelRotationTarget;
 
     void Start() 
     {
         GrainCloudSpawner.SpawnFromMetadataURI(metadataURI).ContinueWith((task) => {
-            grainCloud = task.Result;
-            modelRotationTarget = Quaternion.identity;
+            _grainCloud = task.Result;
+            _modelRotationTarget = Quaternion.identity;
             
-            grainCloud.OnCloudReset += () => {
+            _grainCloud.OnCloudReset += () => {
                 Debug.Log("Cloud Reset!");
-                sequence = grainCloud.CreateLinearSequence(bpm);
-                grainCloud.Sequences.Add(sequence);
+
+                int[] indices = _grainCloud.Buffer.SortedGrainIndices(AudioFeatureUtils.RandomAudioFeature(), true);
+                BeatGenerator beatGenerator = new BeatGenerator(sequence.Clock);
+
+                int randIdx = UnityEngine.Random.Range(0 , indices.Length);
+                // var beatPattern = beatGenerator.BeatPatternFromString("x-x-x-x-x-x-x-x-");
+
+                // foreach (BeatIndex beatIndex in beatGenerator.RepeatPattern(beatPattern, numBars))
+                // {
+                //     sequence.AddSequenceableAtBeatIndex(
+                //         _grainCloud.Grains[indices[randIdx]], 
+                //         beatIndex, 
+                //         new SequenceableParameters { Gain = 0.25f }
+                //     );
+                // }
                 
                 // ----- How to Schedule -----------------
 
@@ -66,24 +79,20 @@ public class TestGrainCloudPlayback : MonoBehaviour {
             var x = AudioFeatureUtils.RandomAudioFeature();
             var y = AudioFeatureUtils.RandomAudioFeature();
             var z = AudioFeatureUtils.RandomAudioFeature();
-            grainCloud.ParameterHandler.XFeature = x;
-            grainCloud.ParameterHandler.YFeature = y;
-            grainCloud.ParameterHandler.ZFeature = z;
+            _grainCloud.ParameterHandler.XFeature = x;
+            _grainCloud.ParameterHandler.YFeature = y;
+            _grainCloud.ParameterHandler.ZFeature = z;
             Debug.Log("Updating features: X: " + x + ", Y: " + y + ", Z: " + z);
-            grainCloud.GrainModel.RotateAngle(new Vector3(0, 100, 100), 0.5f);
         }
     }
 
     void Update() {
-        if (grainCloud != null && grainCloud.GrainModel != null) {
-            modelRotationTarget *= Quaternion.Euler(Vector3.up * Time.deltaTime * 10f);
-            Vector3 currentScale = grainCloud.GrainModel.transform.localScale;
-            grainCloud.GrainModel.Reposition(
-                        grainCloud.transform.position,
-                        modelRotationTarget,
-                        currentScale,
-                        0.5f
-                    );
-        }
+        // if (grainCloud != null && grainCloud.Box != null) {
+        //     modelRotationTarget *= Quaternion.Euler(Vector3.up * Time.deltaTime * 10f);
+        //     // Vector3 currentScale = grainCloud.Box.transform.localScale;
+        //     TransformSnapshot targetTransform = grainCloud.CurrentTransform;
+        //     targetTransform.Rotation = modelRotationTarget;
+        //     grainCloud.MoveTo(targetTransform);
+        // }
     }
 }

@@ -45,7 +45,7 @@ public class BeatGenerator
                 // int bar = i / beatsPerBar;
                 // int noteValuePosition = i % beatsPerBar;
                 // Debug.Log("bar: " + bar + " noteValuePosition: " + noteValuePosition + " noteValue: " + noteValue);
-                beatIndexes.Add(new BeatIndex { Bar = 0, NoteValue = noteValue, NoteValuePosition = i });
+                beatIndexes.Add(new BeatIndex(0, noteValue, i, Clock.TimeSignature));
             }
         }
 
@@ -55,18 +55,13 @@ public class BeatGenerator
     public List<BeatIndex> RepeatPattern(List<BeatIndex> pattern, int numBars)
     {
         List<BeatIndex> repeatedPattern = new List<BeatIndex>();
+        repeatedPattern.AddRange(pattern);
 
         for (int bar = 1; bar < numBars; bar++)
         {
             foreach (BeatIndex beatIndex in pattern)
             {
-                BeatIndex newBeatIndex = new BeatIndex
-                {
-                    Bar = beatIndex.Bar + bar,
-                    // * (Clock.TimeSignature.BeatsPerBar / (int)beatIndex.NoteValue),
-                    NoteValue = beatIndex.NoteValue,
-                    NoteValuePosition = beatIndex.NoteValuePosition
-                };
+                BeatIndex newBeatIndex = new BeatIndex(beatIndex.Bar + bar, beatIndex.NoteValue, beatIndex.RelativeBeatPosition, Clock.TimeSignature);
                 repeatedPattern.Add(newBeatIndex);
             }
         }
@@ -88,7 +83,7 @@ public class BeatGenerator
                 int numBeats = beatsPerBar / (int)rhythm;
                 for (int beat = 0; beat < numBeats; beat++)
                 {
-                    pattern.Add(new BeatIndex { Bar = bar, NoteValue = rhythm, NoteValuePosition = beat });
+                    pattern.Add(new BeatIndex(beat, rhythm, bar, Clock.TimeSignature));
                 }
             }
         }
@@ -111,7 +106,7 @@ public class BeatGenerator
                 for (int beat = 0; beat < numBeats; beat++)
                 {
                     int syncopatedBeat = (beat + syncopationOffset) % numBeats;
-                    pattern.Add(new BeatIndex { Bar = bar, NoteValue = rhythm, NoteValuePosition = syncopatedBeat });
+                    pattern.Add(new BeatIndex(bar, rhythm, syncopatedBeat, Clock.TimeSignature));
                 }
             }
         }
@@ -127,14 +122,14 @@ public class BeatGenerator
         for (int bar = 0; bar < numBars; bar++)
         {
             // Downbeat
-            pattern.Add(new BeatIndex { Bar = bar, NoteValue = Clock.TimeSignature.BaseNoteValue, NoteValuePosition = 0 });
+            pattern.Add(new BeatIndex(bar, Clock.TimeSignature.BaseNoteValue, 0, Clock.TimeSignature));
 
             // Generate random note values for the algorithmic pattern
             for (int i = 1; i < Clock.TimeSignature.BeatsPerBar; i++)
             {
                 int noteValue = random.Next(1, 4) * (int)Clock.TimeSignature.BaseNoteValue;
                 int noteValuePosition = random.Next(1, Clock.TimeSignature.BeatsPerBar);
-                pattern.Add(new BeatIndex { Bar = bar, NoteValue = (NoteValue)noteValue, NoteValuePosition = noteValuePosition });
+                pattern.Add(new BeatIndex(bar, (NoteValue)noteValue, noteValuePosition, Clock.TimeSignature));
             }
         }
 
@@ -151,14 +146,14 @@ public class BeatGenerator
             {
                 case 1:
                     // Basic 4/4 kick pattern
-                    pattern.Add(new BeatIndex { Bar = bar, NoteValue = NoteValue.Quarter, NoteValuePosition = 0 });
-                    pattern.Add(new BeatIndex { Bar = bar, NoteValue = NoteValue.Quarter, NoteValuePosition = 2 });
+                    pattern.Add(new BeatIndex(bar, NoteValue.Quarter, 0, Clock.TimeSignature));
+                    pattern.Add(new BeatIndex(bar, NoteValue.Quarter, 2, Clock.TimeSignature));
                     break;
                 case 2:
                     // Slightly syncopated kick pattern
-                    pattern.Add(new BeatIndex { Bar = bar, NoteValue = NoteValue.Quarter, NoteValuePosition = 0 });
-                    pattern.Add(new BeatIndex { Bar = bar, NoteValue = NoteValue.Quarter, NoteValuePosition = 2 });
-                    pattern.Add(new BeatIndex { Bar = bar, NoteValue = NoteValue.Eighth, NoteValuePosition = 5 });
+                    pattern.Add(new BeatIndex (bar, NoteValue.Quarter, 0, Clock.TimeSignature));
+                    pattern.Add(new BeatIndex(bar, NoteValue.Quarter, 2, Clock.TimeSignature));
+                    pattern.Add(new BeatIndex(bar, NoteValue.Eighth, 5, Clock.TimeSignature));
                     break;
                     // Add more kick pattern options here as needed
             }
@@ -177,14 +172,14 @@ public class BeatGenerator
             {
                 case 1:
                     // Basic 4/4 snare pattern
-                    pattern.Add(new BeatIndex { Bar = bar, NoteValue = NoteValue.Quarter, NoteValuePosition = 1 });
-                    pattern.Add(new BeatIndex { Bar = bar, NoteValue = NoteValue.Quarter, NoteValuePosition = 3 });
+                    pattern.Add(new BeatIndex(bar, NoteValue.Quarter, 1, Clock.TimeSignature));
+                    pattern.Add(new BeatIndex(bar, NoteValue.Quarter, 3, Clock.TimeSignature));
                     break;
                 case 2:
                     // Slightly syncopated snare pattern
-                    pattern.Add(new BeatIndex { Bar = bar, NoteValue = NoteValue.Quarter, NoteValuePosition = 1 });
-                    pattern.Add(new BeatIndex { Bar = bar, NoteValue = NoteValue.Quarter, NoteValuePosition = 3 });
-                    pattern.Add(new BeatIndex { Bar = bar, NoteValue = NoteValue.Eighth, NoteValuePosition = 6 });
+                    pattern.Add(new BeatIndex(bar, NoteValue.Quarter, 1, Clock.TimeSignature));
+                    pattern.Add(new BeatIndex(bar, NoteValue.Quarter, 3, Clock.TimeSignature));
+                    pattern.Add(new BeatIndex(bar, NoteValue.Eighth, 6, Clock.TimeSignature));
                     break;
                     // Add more snare pattern options here as needed
             }
@@ -205,7 +200,7 @@ public class BeatGenerator
                     // Basic 4/4 hi-hat pattern (eighth notes)
                     for (int i = 0; i < Clock.TimeSignature.BeatsPerBar * 2; i++)
                     {
-                        pattern.Add(new BeatIndex { Bar = bar, NoteValue = NoteValue.Eighth, NoteValuePosition = i });
+                        pattern.Add(new BeatIndex(bar, NoteValue.Eighth, i, Clock.TimeSignature));
                     }
                     break;
                 case 2:
@@ -214,25 +209,25 @@ public class BeatGenerator
                     {
                         if (i % 4 == 0 || i % 4 == 2)
                         {
-                            pattern.Add(new BeatIndex { Bar = bar, NoteValue = NoteValue.Sixteenth, NoteValuePosition = i });
+                            pattern.Add(new BeatIndex(bar, NoteValue.Sixteenth, i, Clock.TimeSignature));                        
                         }
                         else
                         {
-                            pattern.Add(new BeatIndex { Bar = bar, NoteValue = NoteValue.Eighth, NoteValuePosition = i / 2 });
+                            pattern.Add(new BeatIndex(bar, NoteValue.Eighth, i / 2, Clock.TimeSignature));
                         }
                     }
                     break;
                 case 3:
                     // Syncopated 4/4 hi-hat pattern
-                    pattern.Add(new BeatIndex { Bar = bar, NoteValue = NoteValue.Eighth, NoteValuePosition = 0 });
-                    pattern.Add(new BeatIndex { Bar = bar, NoteValue = NoteValue.Sixteenth, NoteValuePosition = 2 });
-                    pattern.Add(new BeatIndex { Bar = bar, NoteValue = NoteValue.Sixteenth, NoteValuePosition = 3 });
-                    pattern.Add(new BeatIndex { Bar = bar, NoteValue = NoteValue.Eighth, NoteValuePosition = 4 });
-                    pattern.Add(new BeatIndex { Bar = bar, NoteValue = NoteValue.Sixteenth, NoteValuePosition = 6 });
-                    pattern.Add(new BeatIndex { Bar = bar, NoteValue = NoteValue.Eighth, NoteValuePosition = 8 });
-                    pattern.Add(new BeatIndex { Bar = bar, NoteValue = NoteValue.Sixteenth, NoteValuePosition = 10 });
-                    pattern.Add(new BeatIndex { Bar = bar, NoteValue = NoteValue.Eighth, NoteValuePosition = 12 });
-                    pattern.Add(new BeatIndex { Bar = bar, NoteValue = NoteValue.Sixteenth, NoteValuePosition = 14 });
+                    pattern.Add(new BeatIndex(bar, NoteValue.Eighth, 0, Clock.TimeSignature));
+                    pattern.Add(new BeatIndex(bar, NoteValue.Sixteenth, 2, Clock.TimeSignature));
+                    pattern.Add(new BeatIndex(bar, NoteValue.Sixteenth, 3, Clock.TimeSignature));
+                    pattern.Add(new BeatIndex(bar, NoteValue.Eighth, 4, Clock.TimeSignature));
+                    pattern.Add(new BeatIndex(bar, NoteValue.Sixteenth, 6, Clock.TimeSignature));
+                    pattern.Add(new BeatIndex(bar, NoteValue.Eighth, 8, Clock.TimeSignature));
+                    pattern.Add(new BeatIndex(bar, NoteValue.Sixteenth, 10, Clock.TimeSignature));
+                    pattern.Add(new BeatIndex(bar, NoteValue.Eighth, 12, Clock.TimeSignature));
+                    pattern.Add(new BeatIndex(bar, NoteValue.Sixteenth, 14, Clock.TimeSignature));
                     break;
                     // Add more hi-hat pattern options here as needed
             }

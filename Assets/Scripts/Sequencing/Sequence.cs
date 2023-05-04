@@ -1,16 +1,24 @@
 using UnityEngine;
 using System.Collections.Generic;
 using System;
-using System.Diagnostics;
-using System.Threading.Tasks;
-using System.Threading;
 using System.Linq;
 using System.Collections;
 
-public interface ISequenceObserver
-{
-    void OnSequenceUpdated(IEnumerable<SequenceItem> sequenceItems);
-}
+// public interface ISequenceObserver
+// {
+//     void OnSequenceUpdated(IEnumerable<SequenceItem> sequenceItems);
+
+//     void OnSequenceAdvance(SequenceItem sequenceItem);
+// }
+
+// public interface ISequenceSubject
+// {
+//     void AddObserver(ISequenceObserver observer);
+//     void RemoveObserver(ISequenceObserver observer);
+//     void NotifyObservers();
+// }
+
+
 
 public class Sequence : ISequenceable, IEnumerable<SequenceItem>
 {
@@ -18,17 +26,34 @@ public class Sequence : ISequenceable, IEnumerable<SequenceItem>
     // that this will return an ordered list based on the item's RelativePlayTime
     public int Count => SequenceItems.Count;
     public SequenceItem this[int index] => SequenceItems[index];
-    public event Action<SequenceItem> OnSequenceAdvance;
 
+
+    public event Action<SequenceItem> OnSequenceAdvance;
+    
+    public event Action OnSequenceAdded;
+    public event Action OnSequenceRemoved;
+    public event Action OnSequenceCleared;
+
+    // public event EventHandler OnSequenceUpdated;
+    
+    
     public RhythmClock Clock { get; private set; } = new RhythmClock();
 
+    public bool IsPlaying { get; private set; } = false;
+
     private List<ScheduleCancellationToken> _cancellationTokens = new List<ScheduleCancellationToken>();
+    private SequenceableParameters _lastPlayParameters;
 
     public Sequence()
     {
-        Clock.OnTempoChanged += CalculatePlayTimes;
-        Clock.OnTimeSignatureChanged += CalculatePlayTimes;        
+        Clock.OnTempoChanged += () => {
+            if (IsPlaying) {
+                Stop(); Resume();
+            }
+        };
+        Clock.OnTimeSignatureChanged += CalculatePlayTimes;
     }
+
 
 
     private void CalculatePlayTimes()
@@ -40,19 +65,24 @@ public class Sequence : ISequenceable, IEnumerable<SequenceItem>
             item.RelativePlayTime = Clock.TimeFromBeatIndex(item.BeatIndex);
         }
     }
-    
+
+    # region Add/Remove Sequence Items
+
     public void AddSequenceable(ISequenceable sequenceable) {
         SequenceItems.Add(new SequenceItem { Sequenceable = sequenceable });
+        OnSequenceAdded?.Invoke();
     }
 
     public void AddSequenceableRange(IEnumerable<ISequenceable> sequenceables) {
         foreach (var sequenceable in sequenceables) {
             SequenceItems.Add(new SequenceItem { Sequenceable = sequenceable });
+            OnSequenceAdded?.Invoke();
         }
     }
 
     public void AddSequenceItem(SequenceItem sequenceItem) {
         SequenceItems.Add(sequenceItem);
+        OnSequenceAdded?.Invoke();
     }
 
     public void AddSequenceableAtTime(ISequenceable sequenceable, double time, float gain=1.0f)
@@ -63,6 +93,7 @@ public class Sequence : ISequenceable, IEnumerable<SequenceItem>
             RelativePlayTime = time
         };
         SequenceItems.Add(sequenceItem);
+        OnSequenceAdded?.Invoke();
     }
 
     public void AddSequenceableAtBeat(ISequenceable sequenceable, float beat, float gain=1.0f)
@@ -78,7 +109,7 @@ public class Sequence : ISequenceable, IEnumerable<SequenceItem>
 
     public void AddSequenceableAtBeatIndex(ISequenceable sequenceable, BeatIndex beat, SequenceableParameters parameters=null)
     {
-        UnityEngine.Debug.Log("Adding sequenceable at beat index " + beat.ToString() + " with time " + Clock.TimeFromBeatIndex(beat).ToString("F3") + " seconds");
+        // UnityEngine.Debug.Log("Adding sequenceable at beat index " + beat.ToString() + " with time " + Clock.TimeFromBeatIndex(beat).ToString("F3") + " seconds");
         SequenceItem sequenceItem = new SequenceItem
         {
             Sequenceable = sequenceable,
@@ -89,32 +120,86 @@ public class Sequence : ISequenceable, IEnumerable<SequenceItem>
             sequenceItem.Parameters = parameters;
         }
         SequenceItems.Add(sequenceItem);
+        OnSequenceAdded?.Invoke();
     }
 
 
 
     public void Remove(ISequenceable sequenceable) {
         SequenceItems.RemoveAll(item => item.Sequenceable == sequenceable);
+        OnSequenceRemoved?.Invoke();
     }
+
+    public void Clear() {
+        SequenceItems.Clear();
+        OnSequenceCleared?.Invoke();
+    }
+
+    public IEnumerable<SequenceItem> SequenceItemsBetween(BeatIndex start, BeatIndex end) {
+        return SequenceItems.Where(item => item.BeatIndex >= start && item.BeatIndex < end);
+    }
+
+    # endregion
 
     /// <summary>
     /// Cancel all scheduled events by this sequence
     /// </summary>
     public void Stop()
     {
+        IsPlaying = false;
         foreach(var token in _cancellationTokens) {
             token.Cancel();
         }
+        _cancellationTokens.Clear();
+    }
+
+    public void Resume()
+    {
+        // basically just start playing again from where clock is
+        double scheduleTime = AudioSettings.dspTime - Clock.CurrentBeatTime;
+        Schedule(scheduleTime, _lastPlayParameters);
     }
 
     public void Play(float gain=1f)
     {
-        Schedule(AudioSettings.dspTime + 0.1d, new SequenceableParameters { Gain = gain });
+        Schedule(AudioSettings.dspTime, new SequenceableParameters { Gain = gain });
     }
 
-    private void OrderSequenceItemsByStartTime()
+    public void Play(SequenceableParameters parameters)
     {
-        SequenceItems = SequenceItems.OrderBy(item => item.RelativePlayTime).ToList();
+        Schedule(AudioSettings.dspTime, parameters);
+    }
+
+    public void Restart()
+    {
+        Stop();
+        Play();
+    }
+    
+    public void RunUpdate()
+    {
+        Stop();
+        Resume();        
+    }
+
+    /// Reschedules a single item
+    public void RescheduleItem(SequenceItem item, BeatIndex newBeatIndex)
+    {
+        item.ScheduledPlayEvent.Cancel();
+        item.RelativePlayTime = Clock.TimeFromBeatIndex(newBeatIndex);
+        item.BeatIndex = newBeatIndex;
+        var absolutePlayTime = AudioSettings.dspTime + item.RelativePlayTime - Clock.CurrentBeatTime;
+        var token = item.Sequenceable.Schedule(
+            absolutePlayTime, 
+            item.Parameters
+        );
+        item.ScheduledPlayEvent = new ScheduledEvent(
+            absolutePlayTime,
+            () => AdvanceTo(item),
+            token
+        );
+        DSPSchedulerSingleton.Schedule(item.ScheduledPlayEvent);
+        _cancellationTokens.Add(token);
     }
 
 
@@ -122,77 +207,87 @@ public class Sequence : ISequenceable, IEnumerable<SequenceItem>
 
     public Guid Id { get; protected set; } = Guid.NewGuid();
 
-    // Sequence.Schedule NEVER will generate its own PlaybackEvent, those are generated by 
-    // things that will interact with the audio system. Don't confuse the OnSequenceablePlayStart with 
-    // a PlaybackEvent that fires events from the audio system. That is ultimately the entry point
-    // for any stop/start callback
-    public ScheduleCancellationToken Schedule(double time, SequenceableParameters parameters) 
+    public ScheduleCancellationToken Schedule(double scheduleTime, SequenceableParameters parameters) 
     {
-        CalculatePlayTimes();
-
+        UnityEngine.Debug.Log("Scheduling sequence at time " + scheduleTime.ToString("F3") + " seconds");
         List<ScheduleCancellationToken> cancellationTokens = new List<ScheduleCancellationToken>();
         
-        // order sequence items by play time
-        var sortedSequenceItems = SequenceItems.OrderBy(item => item.RelativePlayTime);
-        // filter out any where relativePlayTime is less than 0
-        var validSequenceItems = sortedSequenceItems.Where(item => item.RelativePlayTime >= 0);
+        _lastPlayParameters = parameters;
+        CalculatePlayTimes();
+
+        double currentTime = AudioSettings.dspTime;
+        
+        // order sequence items by play time and filter out any where relativePlayTime is less than 0
+        var validSequenceItems = SequenceItems.OrderBy(item => item.RelativePlayTime)
+                                              .Where(item => item.RelativePlayTime >= 0)
+                                              .Where(item => scheduleTime + item.RelativePlayTime >= currentTime); // make sure not
+                                                                                                                    // to schedule
+                                                                                                                    // anything in the past
+        if (validSequenceItems.Count() == 0) {
+            UnityEngine.Debug.Log("[!] Error: No valid sequence items to schedule for sequence " + Id.ToString());
+            return null;
+        }
 
         var firstScheduledItem = validSequenceItems.FirstOrDefault();
         var lastScheduledItem = validSequenceItems.LastOrDefault();
+  
+        
+        // here calculate if there are any SequenceItems with a BeatIndex, and if so,
+        // take the last one and make sure that this Sequence's OnSequenceablePlayEnd fires on the final bar
+        var startTime = scheduleTime + firstScheduledItem.RelativePlayTime;
+        var lastBar = validSequenceItems.Where(item => item.BeatIndex != null)
+                                        .LastOrDefault()?.BeatIndex.Bar ?? -1;
 
+        double test = Clock.TimeFromBars(lastBar + 1);
 
-        // schedule the beginning trigger for this sequence as the earliest play time
-        var startToken = new ScheduleCancellationToken(() => {
-            UnityEngine.Debug.Log("Cancelling start token");
-        });
+        double endTime = lastBar == -1 ? scheduleTime + lastScheduledItem.RelativePlayTime : scheduleTime + Clock.TimeFromBars(lastBar + 1);
+        
+
+        var startToken = new ScheduleCancellationToken(() => UnityEngine.Debug.Log("Cancelling start token"));
+        var endToken = new ScheduleCancellationToken(() => UnityEngine.Debug.Log("Cancelling end token"));
+
         cancellationTokens.Add(startToken);
-
-        DSPSchedulerSingleton.Schedule(new ScheduledEvent(
-            scheduleTime: time + firstScheduledItem.RelativePlayTime,
-            onSchedule: () => OnSequenceablePlayStart?.Invoke(),
-            cancellationToken: startToken
-        ));
-
-        // schedule the end trigger for this sequence as the last play time
-        // double endTime = time + lastScheduledItem.RelativePlayTime;
-        // here calculate if there are any SequenceItems with a BeatIndex, and if 
-        // so take the last one and make sure that this Sequence's OnSequenceablePlayEnd fires
-        // on the final bar
-
-        var lastBar = validSequenceItems.Where(item => item.BeatIndex != null).LastOrDefault()?.BeatIndex.Bar ?? -1;
-        double endTime = lastBar == -1 ? time + lastScheduledItem.RelativePlayTime : Clock.TimeFromBars(lastBar + 1);
-        
-        var endToken = new ScheduleCancellationToken(() => {
-            UnityEngine.Debug.Log("Cancelling end token");
-        });
         cancellationTokens.Add(endToken);
-        
-        DSPSchedulerSingleton.Schedule(new ScheduledEvent(
-            scheduleTime: endTime,
-            onSchedule: () => OnSequenceablePlayEnd?.Invoke(),
-            cancellationToken: endToken
-        ));
 
-
+        ScheduledEvent.CreateAndSchedule(startTime, SequenceablePlayStart, startToken);
+        ScheduledEvent.CreateAndSchedule(endTime, SequenceablePlayEnd, endToken);
+    
+        // iteare through the sequence items, and schedule them relative to the 
+        // scheduled playtime of this sequence that has been requested
         foreach(var item in validSequenceItems) {
 
-            if (item.RelativePlayTime < 0) continue;
+            var absolutePlayTime = scheduleTime + item.RelativePlayTime;
 
-            var token = item.Sequenceable.Schedule(
-                time + item.RelativePlayTime, 
-                item.Parameters.Merge(parameters)
+            // noob issue of having item go out of scope,
+            // so we need to make sure we capture it in a local variable
+            // remember this for later because it was hard to debug
+            // BE CAREFUL WHEN ASSIGNING LAMBDAS WITH THE CONTEXT OF LOCAL VARS
+            var currentItem = item;
+
+            SequenceableParameters mergedParameters = currentItem.Parameters.Merge(parameters);
+
+            var token = currentItem.Sequenceable.Schedule(
+                absolutePlayTime, 
+                mergedParameters
             );
 
-            Action cb = null;
-            cb = () => {
-                OnSequenceAdvance?.Invoke(item);
-                item.Sequenceable.OnSequenceablePlayStart -= cb;
-            };
-            item.Sequenceable.OnSequenceablePlayStart += cb;
+            currentItem.Parameters.Color = mergedParameters.Color;
 
-            // make sure the cancellation token also includes unregistering the OnPlayStart
-            token.OnCancel += () => item.Sequenceable.OnSequenceablePlayStart -= cb;
+            // what if instead of relying on the audiobuffer to register the OnSequenceablePlayStart and End, we separately 
+            // schedule these alongside it. That way, sequence is always in control of those events. 
 
+            // make new scheduled event, set the cancellation token as the same
+            // so cancelling one cancels both. This reduces the issues with having a duality
+            // of this event, and the one that goes to the audio system. If they're both canceled,
+            // that's that
+            currentItem.ScheduledPlayEvent = new ScheduledEvent(
+                absolutePlayTime,
+                () => AdvanceTo(currentItem),
+                token
+            );
+
+            // now schedule the event. It will happen within the frame around the same audio block
+            DSPSchedulerSingleton.Schedule(currentItem.ScheduledPlayEvent);
             cancellationTokens.Add(token);
         }
 
@@ -205,22 +300,38 @@ public class Sequence : ISequenceable, IEnumerable<SequenceItem>
         });
 
         _cancellationTokens.Add(sequenceableToken);
-
-        OnSchedule?.Invoke(this, (time, parameters, sequenceableToken));
-
+        OnSchedule?.Invoke(this, (scheduleTime, parameters, sequenceableToken));
         return sequenceableToken;
     }
 
+    private void AdvanceTo(SequenceItem currentItem)
+    {
+        // Trigger the sequence advance here
+        currentItem.Sequenceable.SequenceablePlayStart();
+        OnSequenceAdvance?.Invoke(currentItem);
+        Clock.CurrentBeatTime = currentItem.RelativePlayTime;
+    }
+
     public event EventHandler<(double, SequenceableParameters, ScheduleCancellationToken)> OnSchedule;
+
+    // **** MAY NO LONGER NEED THESE 
     public event Action OnSequenceablePlayStart;
     public event Action OnSequenceablePlayEnd;
+
+    // ******************************
+
     public void SequenceablePlayStart() {
+        UnityEngine.Debug.Log("CALLING SEQUENCE SEQUENCEABLE PLAY ~START~ |>");
         OnSequenceablePlayStart?.Invoke();
+        IsPlaying = true;
     }
 
     public void SequenceablePlayEnd() {
+        UnityEngine.Debug.Log("CALLING SEQUENCE SEQUENCEABLE PLAY ~END~");
         OnSequenceablePlayEnd?.Invoke();
+        IsPlaying = false;
     }
+
 
     # endregion
 
@@ -282,48 +393,3 @@ public class Sequence : ISequenceable, IEnumerable<SequenceItem>
     }
 }
 
-
-
-
-// private SequenceItem _firstScheduledItem;
-// private SequenceItem _lastScheduledItem;
-
-// private Action _sequenceStartHook = null;
-// private Action _sequenceEndHook = null;
-
-
-/// <summary>
-/// Hook this sequence's start and end events SequenceablePlayStart() and SequenceablePlayEnd()
-/// into the first and last sequenceables in the list
-/// </summary>
-// private void HookStartAndEnd() {
-//     // ----- Hook into the sequenceable's start and end events ---------------
-//     // ----- so we can fire our own start and end events for the sequence ----
-
-//     // remove any existing hooks
-//     if (_firstScheduledItem != null) {
-//         _firstScheduledItem.Sequenceable.OnSequenceablePlayStart -= _sequenceStartHook;
-//     }
-//     if (_lastScheduledItem != null) {
-//         _lastScheduledItem.Sequenceable.OnSequenceablePlayEnd -= _sequenceEndHook;
-//     }
-
-//     _firstScheduledItem = SequenceItems.OrderBy(item => item.RelativePlayTime).FirstOrDefault();
-//     _lastScheduledItem = SequenceItems.OrderByDescending(item => item.RelativePlayTime).FirstOrDefault();
-
-//     // these actions will unsubscribe themselves once they have run!
-//     _sequenceStartHook = () => {
-//         UnityEngine.Debug.Log("Sequence.Schedule: seqStart: " + _firstScheduledItem.Sequenceable);
-//         _firstScheduledItem.Sequenceable.OnSequenceablePlayStart -= _sequenceStartHook;
-//         SequenceablePlayStart();
-//     };
-
-//     _sequenceEndHook = () => {
-//         UnityEngine.Debug.Log("Sequence.Schedule: seqEnd: " + _lastScheduledItem.Sequenceable);
-//         _lastScheduledItem.Sequenceable.OnSequenceablePlayEnd -= _sequenceEndHook;
-//         SequenceablePlayEnd();
-//     };
-
-//     _firstScheduledItem.Sequenceable.OnSequenceablePlayStart += _sequenceStartHook;
-//     _lastScheduledItem.Sequenceable.OnSequenceablePlayEnd += _sequenceEndHook;
-// }

@@ -7,7 +7,6 @@ public class PlaybackEvent
     public Guid Id = Guid.NewGuid();
     public Guid SubmitterId { get; set; }
     public float Gain { get; set; }
-    public ScheduleCancellationToken CancellationToken { get; set; } = new ScheduleCancellationToken();
 
     public Action onPlayStart = null;
     public Action onPlayEnd = null;
@@ -18,12 +17,6 @@ public class PlaybackEvent
     {
         this.Gain = gain;
         this.SubmitterId = submitterID;
-    }
-
-    public PlaybackEvent(float gain, Guid submitterID, ScheduleCancellationToken cancellationToken) : this(gain, submitterID)
-    {
-        if (cancellationToken != null)
-            this.CancellationToken = cancellationToken;
     }
     
 
@@ -42,14 +35,13 @@ public class WindowedPlaybackEvent : PlaybackEvent
     public WindowedPlaybackEvent() : base() {}
 
     public WindowedPlaybackEvent(
-            WindowTime bufferWindow,
-            WindowTypes windowType,
-            float gain,
-            Guid submitterId,
-            Action onPlayStart = null,
-            Action onPlayEnd = null,
-            ScheduleCancellationToken cancellationToken=null) : base(gain, submitterId, cancellationToken) {
-
+        WindowTime bufferWindow,
+        WindowTypes windowType,
+        float gain,
+        Guid submitterId,
+        Action onPlayStart = null,
+        Action onPlayEnd = null) : base(gain, submitterId) 
+    {
         Initialize(bufferWindow, windowType, gain, submitterId);
     }
 

@@ -5,61 +5,68 @@ using UnityEngine;
 using NWaves.Signals;
 
 public class Playhead {
-    public int startSample;
-    public int endSample;
-    public int windowSamples;
-    public int position;
-    public bool hasAdvanced;
-    // public int startPad;
+    public int StartSample { get; set; }
+    public int EndSample { get; set; }
+    public int NumSamples { get; set; }
+    public int Position { get; set; }
+    public bool HasAdvanced { get; set; } = false;
+
     
     public Playhead(int startSample, int endSample) {
-        this.startSample = startSample;
-        this.endSample = endSample;
-        this.windowSamples = endSample - startSample;
-        this.position = startSample;
-        this.hasAdvanced = false;
-        // this.startPad = 0;
+        StartSample = startSample;
+        EndSample = endSample;
+        NumSamples = endSample - startSample;
+        Position = startSample;
+        HasAdvanced = false;
     }
 
     public Playhead() {
-        this.startSample = 0;
-        this.endSample = 0;
-        this.windowSamples = 0;
-        this.position = 0;
-        this.hasAdvanced = false;
-        // this.startPad = 0;
+        StartSample = 0;
+        EndSample = 0;
+        NumSamples = 0;
+        Position = 0;
+        HasAdvanced = false;
     }
 
     public void Set(WindowTime windowTime, DiscreteSignal signal) {
-        this.startSample = (int)Mathf.Floor((float)(windowTime.startTime * signal.SamplingRate));
-        this.endSample = (int)Mathf.Floor((float)(windowTime.endTime * signal.SamplingRate));
-        this.endSample = Mathf.Min(endSample, signal.Length);
-        this.position = startSample;
-        this.windowSamples = endSample - startSample;
-        this.hasAdvanced = false;
+        // StartSample = (int)Mathf.Floor((float)(windowTime.startTime * signal.SamplingRate));
+        // EndSample = (int)Mathf.Floor((float)(windowTime.endTime * signal.SamplingRate));
+        StartSample = (int)Mathf.Floor((float)(windowTime.startTime * signal.SamplingRate));
+        EndSample = (int)Mathf.Floor((float)(windowTime.endTime * signal.SamplingRate));
+        EndSample = Mathf.Min(EndSample, signal.Length);
+        Position = StartSample;
+        NumSamples = EndSample - StartSample;
+        HasAdvanced = false;
+
+        // var sampleRange = windowTime.GetSampleRange(signal.SamplingRate);
+        // StartSample = sampleRange.start;
+        // NumSamples = sampleRange.count;
+        // EndSample = Mathf.Min(sampleRange.end, signal.Length);
+        // Position = StartSample;
+        // NumSamples = EndSample - StartSample;
+        // HasAdvanced = false;
     }
 
     public float Score() {
-        float score = endSample - position;
+        float score = EndSample - Position;
         if (score == 0) return 0f;
-        score = score / (float)windowSamples;
-        // score *= Mathf.Abs(playbackEvent.rms);
+        score = score / (float)NumSamples;
         return score;
     }
 
     public int WindowIndex() {
-        return position - startSample;
+        return Position - StartSample;
     }
 
     public int SamplesRemaining() {
-        return endSample - position;
+        return EndSample - Position;
     }
 
     public bool IsFinished() {
-        return position >= endSample;
+        return Position >= EndSample;
     }
 
-    public void DebugMessage() {
-        Debug.Log($"PLAYHEAD: {position} | {startSample} -> {endSample} | Length: {windowSamples} | Current Index: {WindowIndex()}");
+    public override string ToString() {
+        return $"PLAYHEAD: {Position} | {StartSample} -> {EndSample} | Length: {NumSamples} | Current Index: {WindowIndex()}";
     }
 }

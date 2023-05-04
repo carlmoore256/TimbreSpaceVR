@@ -6,10 +6,11 @@ using System.Collections.Generic;
 /// <summary>
 /// A node that visually represents an audio grain
 /// </summary>
-public class Grain : MonoBehaviour, IPositionedSequenceable
+public class Grain : MonoBehaviour, IInteractableSequenceable, IWandInteractable
 {
     public Material material;
     public int GrainIndex { get; set; }
+    public WindowTime Window { get; set; }
 
     private LODRenderer lodRenderer;
     private SpringJoint joint;
@@ -34,22 +35,23 @@ public class Grain : MonoBehaviour, IPositionedSequenceable
 
     private GrainState currentState = GrainState.Idle;
 
-    public enum ActivationAction {
-        Play,
-        Select,
-        Delete
-    }
+    // public enum InteractionType {
+    //     Play,
+    //     Select,
+    //     Delete
+    // }
 
-    public Action<Grain, float, ActivationAction> OnActivate;
+    public event EventHandler<WandInteraction> OnWandInteract;
+
 
     // as long as the parent has a guid, we don't need a guid to locate the item under 
     // the parent if the collection is of a fixed size that generates deterministically
     // maybe if guids need to be set manually they can be done so outside of this class
-    public void Initialize(int grainIndex) {
-        GrainIndex = grainIndex;
+    public void Initialize(WindowTime window) {
+        // GrainIndex = grainIndex;
+        Window = window;
         Id = Guid.NewGuid();
     }
-
 
     # region MonoBehaviours
 
@@ -57,6 +59,10 @@ public class Grain : MonoBehaviour, IPositionedSequenceable
         transform.localScale = Vector3.zero;
         lodRenderer = new LODRenderer(transform.Find("LOD").gameObject, material);
         joint = GetComponent<SpringJoint>();
+
+        if (TsvrApplication.Settings.EnableGrainDebugGizmos) {
+            var gizmo = gameObject.GetOrAddComponent<DebugGizmo>();
+        }
     }
 
     void Update() {
@@ -65,11 +71,11 @@ public class Grain : MonoBehaviour, IPositionedSequenceable
                 activateEnd -= Time.deltaTime;
                 float lerp = 1f - ((activateEnd - Time.time) / activatedDuration);
                 lodRenderer.ChangeColorCycle(Color.Lerp(lodRenderer.GetColor(), targetColor, Mathf.Pow(lerp, 0.5f)));
-                transform.localScale = Vector3.Lerp(transform.localScale, targetTransform.scale, lerp);
+                transform.localScale = Vector3.Lerp(transform.localScale, targetTransform.Scale, lerp);
             } else {
                 // apply changes to all lods
                 lodRenderer.ChangeColor(targetColor);
-                transform.localScale = targetTransform.scale;
+                transform.localScale = targetTransform.Scale;
                 isActivated = false;
             }
         }
@@ -87,6 +93,7 @@ public class Grain : MonoBehaviour, IPositionedSequenceable
 
     public ScheduleCancellationToken Schedule(double time, SequenceableParameters parameters) {
         var token = new ScheduleCancellationToken();
+        parameters.Color = targetColor;
         OnSchedule?.Invoke(this, (time, parameters, token));
         return token;
     }
@@ -107,8 +114,22 @@ public class Grain : MonoBehaviour, IPositionedSequenceable
     /// <summary>
     /// Notifies listeners of attempt to activate, with self, value, and delta time since last activated
     /// </summary>
-    public void Activate(float value, ActivationAction activationAction) {
-        OnActivate?.Invoke(this, value, activationAction);
+    public void DoWandInteraction(WandInteraction wandInteraction) {
+
+        // potentiall here we could decide that certain WandInteractionTypes
+        // are handled by the grain itself, rather than its parent the playable collection
+        OnWandInteract?.Invoke(this, wandInteraction);
+        OnWandInteractionStart(wandInteraction.ActionType);
+    }
+
+    public void OnWandInteractionStart(WandInteractionType interactionType)
+    {
+        Debug.Log("Grain.OnWandInteractionStart");
+    }
+
+    public void OnWandInteractionEnd(WandInteractionType interactionType)
+    {
+        Debug.Log("Grain.OnWandInteractionEnd");
     }
 
 
@@ -120,7 +141,7 @@ public class Grain : MonoBehaviour, IPositionedSequenceable
         activateEnd = Time.time + duration;
         lastActivated = Time.timeAsDouble;
         lodRenderer.ChangeColor(color);
-        transform.localScale = targetTransform.scale * radiusMultiplier;
+        transform.localScale = targetTransform.Scale * radiusMultiplier;
         activatedDuration = duration;
         if (playCoroutine != null)
             StopCoroutine(playCoroutine);
@@ -139,20 +160,20 @@ public class Grain : MonoBehaviour, IPositionedSequenceable
     public void UpdatePosition(Vector3 newPosition) {
         if (positionCoroutine != null)
             StopCoroutine(positionCoroutine);
-        targetTransform.position = newPosition;
-        positionCoroutine = StartCoroutine(PositionCoroutine(targetTransform.position, durationRePosition));
+        targetTransform.Position = newPosition;
+        positionCoroutine = StartCoroutine(PositionCoroutine(targetTransform.Position, durationRePosition));
     }
 
     public void UpdateScale(float radius) {
-        if (radius > TsvrApplication.Settings.GrainMaxRadius.value)
-            radius = TsvrApplication.Settings.GrainMaxRadius.value;
-        else if (radius < TsvrApplication.Settings.GrainMinRadius.value)
-            radius = TsvrApplication.Settings.GrainMinRadius.value;
+        if (radius > TsvrApplication.Settings.GrainMaxRadius)
+            radius = TsvrApplication.Settings.GrainMaxRadius;
+        else if (radius < TsvrApplication.Settings.GrainMinRadius)
+            radius = TsvrApplication.Settings.GrainMinRadius;
         GetComponent<Rigidbody>().mass = radius * 10f;
         if (scaleCoroutine != null)
             StopCoroutine(scaleCoroutine);
-        targetTransform.scale = new Vector3(radius, radius, radius);
-        scaleCoroutine = StartCoroutine(ScaleCoroutine(targetTransform.scale, durationReScale));
+        targetTransform.Scale = new Vector3(radius, radius, radius);
+        scaleCoroutine = StartCoroutine(ScaleCoroutine(targetTransform.Scale, durationReScale));
     } 
 
     public void UpdateColor(Color color) {
@@ -172,8 +193,8 @@ public class Grain : MonoBehaviour, IPositionedSequenceable
             StopCoroutine(scaleCoroutine);
         if (colorCoroutine != null)
             StopCoroutine(colorCoroutine);
-        positionCoroutine = StartCoroutine(PositionCoroutine(targetTransform.position, duration));
-        scaleCoroutine = StartCoroutine(ScaleCoroutine(targetTransform.scale, duration));
+        positionCoroutine = StartCoroutine(PositionCoroutine(targetTransform.Position, duration));
+        scaleCoroutine = StartCoroutine(ScaleCoroutine(targetTransform.Scale, duration));
         colorCoroutine = StartCoroutine(ColorCoroutine(targetColor, duration));
     }
 
@@ -220,19 +241,19 @@ public class Grain : MonoBehaviour, IPositionedSequenceable
     private Coroutine playCoroutine;
     private IEnumerator PlayCoroutine(Color color, float radiusMultiplier = 1.2f, float duration = 1f) {
         lodRenderer.ChangeColor(color);
-        transform.localScale = targetTransform.scale * radiusMultiplier;
+        transform.localScale = targetTransform.Scale * radiusMultiplier;
         float time = 0f;        
         // while (time < activateEnd) {
         while (time < duration) {
             lodRenderer.ChangeColor(Color.Lerp(lodRenderer.GetColor(), targetColor, time/duration));
-            transform.localScale = Vector3.Lerp(transform.localScale, targetTransform.scale, time/duration);
+            transform.localScale = Vector3.Lerp(transform.localScale, targetTransform.Scale, time/duration);
             time += Time.deltaTime;
             yield return null;
         }
 
         yield return new WaitForSeconds(0.1f);
         lodRenderer.ChangeColor(targetColor);
-        transform.localScale = targetTransform.scale;
+        transform.localScale = targetTransform.Scale;
     }
 
     private Coroutine scaleCoroutine;

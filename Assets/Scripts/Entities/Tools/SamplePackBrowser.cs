@@ -80,9 +80,9 @@ public class SamplePackBrowser : TsvrTool
                         // make model rotation only on horizontal axis
                         modelRotation = Quaternion.Euler(0, modelRotation.eulerAngles.y, 0);
                         Debug.Log("METADATA: " + metadata);
-                        GrainModelOld newModel = GrainModelOld.SpawnFromSample(metadata, tsvrSample, modelPosition, modelRotation);
-                        Debug.Log("Just created new model, " + newModel);
-                        modelMultitool.SetSelectedModel(newModel);
+                        // GrainModelOld newModel = GrainModelOld.SpawnFromSample(metadata, tsvrSample, modelPosition, modelRotation);
+                        // Debug.Log("Just created new model, " + newModel);
+                        // modelMultitool.SetSelectedModel(newModel);
                     });
                 }
             );
