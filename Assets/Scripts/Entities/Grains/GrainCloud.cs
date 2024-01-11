@@ -11,7 +11,7 @@ using System.Linq;
 /// <summary>
 /// A collection of audio grains linked to a granular buffer and parameter handler
 /// </summary>
-public class GrainCloud : InteractableObject
+public class GrainCloud : InteractableObject // @refactor: InteractableObject should be a separate MonoBehaviour
 {
     public GranularBuffer Buffer { get; private set; }
     public GranularParameterHandler ParameterHandler { get; private set; }
@@ -57,6 +57,7 @@ public class GrainCloud : InteractableObject
         _box.SetColor(Color.white);
     }
 
+    // this can probably be moved to an interface
     public override InspectableProperties Inspect()
     {
         return _inspectableProperties;
